@@ -1,0 +1,54 @@
+Course Code,Course Title,Prerequisite Code,Prerequisite Title
+UNR1403,Academic English,-,None
+UNR1302,Fundamentals of Business,-,None
+UNRxxxx,University Req. Elective,-,None
+EBA1203,Calculus I,-,None
+EBA1110,Physics,-,None
+CCS1101,Introduction to Computing,-,None
+CIS1000,Introduction to Information Systems,-,None
+EBA0201 *,Precalculus,-,None
+GLA0001 *,Remedial English,-,None
+UNR2101,Communication and Presentation Skills,UNR1403,Academic English
+EBA1204,Calculus II,EBA1203,Calculus I
+EBAxxxx,Science Elective,-,None
+CCS1001,Discrete Structures,CCS1101,Introduction to Computing
+CCS1302,Problem Solving and Programming,CCS1101,Introduction to Computing
+CCS2102,Digital Logic Design,CCS1101,Introduction to Computing
+CCS2103,Introduction to Computer Architecture,CCS1102,Digital Logic Design
+CCS2303,Object-Oriented Programming,CCS1302,Problem Solving and Programming
+EBA2204,Linear algebra,EBA1204,Calculus II
+CCS2201,Introduction to Networks,CCS1302,Problem Solving and Programming
+CIS2101,Database Systems,CCS1302,Problem Solving and Programming
+EBA2203,Probability & Statistics,EBA1204,Calculus II
+CCS2401,Data Structures and Algorithms,CCS2303,Object Oriented Programming
+CSE2001,Introduction to Software Engineering,"CCS2303,CIS1000","Object Oriented Programming, Introduction to IS"
+CCS2304,Advanced Programming Applications,CCS2303,Object Oriented Programming
+CCS2305,Web Programming,CIS2101,Database Systems
+CCY2001,Introduction to Cybersecurity,CCS2201,Introduction to Networks
+CNC1401,Entrepreneurship Skills,15 CR. or more,
+UNR1407, Academic Writing,UNR1403,
+CIT3200,Professional Training in Mobile Apps Programming,-,
+CITxxxx,Professional Training I,-,
+CIS4901,Project I,90 CR. or more,
+CISxxxx,Major Elective,-,
+CISxxxx,Major Elective,-,
+CITxxxx,Professional Training II,-,
+CIS4902,Project II,CIS4901,
+CISxxxx,Major Elective,-,
+CISxxxx,Major Elective,-,
+CITxxxx,Professional Training III,-,
+CNC3402,introduction to accounting              ,-,
+CIS3002,information systems theory & practice   ,"CIS1000,CIS2101",
+CCS3601,introduction to artificial intelligence ,"CCS1001,CCS2401",
+CCS3203,operating systems                       ,"CCS2103,CCS2401",
+CIS3001,systems analysis & design               ,"CIS1000,CCS2303",
+CAI3101,introduction to artificial intelligence ,"CCS1001,CCS2401",
+CNC3404,global business                         ,-,
+CNC3403,principles of marketing                 ,-,
+CIS3102,advanced database systems               ,CIS2101,
+CSE3402,project management                      ,CSE2001,
+CIS3301,e-business fundamentals                 ,"CIS1000,CCS2305",
+CNC4405,business process management             ,-,
+CIS4103,big data analytics                      ,"EBA2203,CAI3101",
+CIS4303,decision support systems                ,CAI3101,
+CIS4201,is security                             ,"CCS3203,CCY2001",

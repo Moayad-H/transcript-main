@@ -1,0 +1,24 @@
+﻿Course Code,Course Title,Prerequisite Code
+CCS4004,Optimization Techniques,"EBA2204,CCS1302"
+CCS4005,Introduction to Bioinformatics,"CCS2401,EBA2203"
+CCS4207,Embedded Systems Programming,"CCS2103,CCS1302
+"
+CCS4208,Cloud Computing,"CCS3203,CCS2201"
+CCS4209,Fundamentals of Internet of Things,"CCS2201,CCS2304"
+CCS4205,Distributed Systems,CCS3203
+CCS4206,Network Protocols &  Programming,"CCS2201,CCS2304"
+CCS4307,Compilers,"CCS3202,CCS4306"
+CCS4308,Game Programming,"CCS2303,CCS3501"
+CCS4309,Functional Programming,CCS4306
+CCS4404,Data Compression,"CCS2401,EBA2203"
+CCS4406,Quantum Computing Algorithms,"CCS3403,EBA2204"
+CCS4405,Information Retrieval,"CCS2401,EBA2204"
+CCS4504,Multimedia Acquisition and Communications,"CCS2304,CCS2201"
+CCS4505,Digital Image Processing,"CCS2401,EBA2204"
+CCS4503,Virtual Environments,CCS3501
+CAI3105,Advanced Artificial Intelligence,CAI3101
+CAI3103,Deep Learning,CAI3101
+CCS4604,Software Agents,CCS3601
+CCS4605,Robotics Applications,"CCS3601,CCS2103"
+CCS4606,Natural Language Processing,"CCS3601,EBA2203"
+CCS4210,high performance computing,CCS3203

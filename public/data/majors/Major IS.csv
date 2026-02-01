@@ -1,0 +1,12 @@
+﻿Course Code,Course Title,Prerequisite Code
+CIS4302,mobile computing applications           ,CCS2304
+CIS4105,knowledge management                    ,CAI3101
+CIS4202,digital transformation                  ,CIS3002
+CIS4203,is audit                                ,CIS3002
+CIS3104,data mining applications                ,CAI3101
+EBA3201,advanced statistics                     ,EBA2203
+CIS4003,enterprise resource planning            ,CIS3001
+CIS4004,strategic planning for is               ,CIS3001
+CIS4104,distributed database systems            ,CIS3102
+CIS4306,geospatial information systems          ,"CIS2101,CIS1000"
+CIS4305,multimedia information systems          ,"CIS2101,CCS2401"

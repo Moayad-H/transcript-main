@@ -1,0 +1,16 @@
+﻿Course Code,Course Title,Prerequisite Code
+CSE4204,Software Engineering for Large Scale Systems,"CSE3101,CSE4203"
+CSE4205,Software Product Line Engineering,CSE4203
+CSE4206,Formal Methods in Software Engineering,"CCS1001,CSE2001"
+CSE4207,Software Engineering for Cloud Applications,"CCS3203,CSE3202"
+CSE4208,Software Engineering for Embedded Systems,"CSE2001,CCS2103"
+CSE4209,Architecting IoT Systems,"CCS2201,CSE4203"
+CSE4210,Software Engineering for AI-enabled Systems,"CSE2001,CِِAI3101"
+CSE4211,Software Architecture for Blockchain Applications,CSE4203
+CSE4302,Software Quality Assurance,CSE2001
+CSE4403,Agile Software Development,CSE2001
+CSE4404,Software Deployment and Operations,"CSE3202,CCS2305"
+CSE4405,Software Configuration Management,CSE4203
+CSE4406,Software Maintenance and Evolution,"CSE3202,CSE4301"
+CSE4407,Software Risk Management,CSE2001
+CSE4408,Security in Software Engineering,"CSE2001,CCY2001"

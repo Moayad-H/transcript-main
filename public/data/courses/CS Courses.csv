@@ -1,0 +1,54 @@
+Course Code,Course Title,Prerequisite Code,Prerequisite Title
+UNR1403,Academic English,-,None
+UNR1302,Fundamentals of Business,-,None
+UNRxxxx,University Req. Elective,-,None
+EBA1203,Calculus I,-,None
+EBA1110,Physics,-,None
+CCS1101,Introduction to Computing,-,None
+CIS1000,Introduction to Information Systems,-,None
+EBA0201 *,Precalculus,-,None
+GLA0001 *,Remedial English,-,None
+UNR2101,Communication and Presentation Skills,UNR1403,Academic English
+EBA1204,Calculus II,EBA1203,Calculus I
+EBAxxxx,Science Elective,-,None
+CCS1001,Discrete Structures,CCS1101,Introduction to Computing
+CCS1302,Problem Solving and Programming,CCS1101,Introduction to Computing
+CCS2102,Digital Logic Design,CCS1101,Introduction to Computing
+CCS2103,Introduction to Computer Architecture,CCS2102,Digital Logic Design
+CCS2303,Object-Oriented Programming,CCS1302,Problem Solving and Programming
+EBA2204,Linear algebra,EBA1204,Calculus II
+CCS2201,Introduction to Networks,CCS1302,Problem Solving and Programming
+CIS2101,Database Systems,CCS1302,Problem Solving and Programming
+EBA2203,Probability & Statistics,EBA1204,Calculus II
+CCS2401,Data Structures and Algorithms,CCS2303,Object Oriented Programming
+CSE2001,Introduction to Software Engineering,"CCS2303,CIS1000","Object Oriented Programming, Introduction to IS"
+CCS2304,Advanced Programming Applications,CCS2303,Object Oriented Programming
+CCS2305,Web Programming,CIS2101,Database Systems
+CCY2001,Introduction to Cybersecurity,CCS2201,Introduction to Networks
+UNR4201,Professional Ethics and Practice Law,30 CR. or more,
+CNC1401,Entrepreneurship Skills,15 CR. or more,
+CAI3101,Introduction to Artificial Intelligence,"CCS1001,CCS2401","Discrete Structures, Data Structures"
+EBA3202,Differential Equations,EBA1204,Calculus II
+CCS3202,Systems Programming,"CCS2303,CCS2103","Object Oriented Programming, Introduction to Computer Architecture"
+CCS3402,Theory of Computation,CCS1001,Discrete Structures
+CCS3203,Operating Systems,"CCS2103,CCS2401","Introduction to Computer Architecture, Data Structures"
+CIT3200,Professional Training in Mobile Apps Programming,-,
+EBA3201,Advanced Statistics,EBA2203,
+CCS3501,Computer Graphics,"CCS2401,EBA2204",
+CCS3403,Computing Algorithms,CCS2401,
+CCS3002,Numerical Methods,"EBA2204,CCS1302",
+CCS3003,System Modeling and Simulation,"EBA2203,CCS2303",
+CITxxxx,Professional Training I,-,
+CCS4306,Structure of Programming Languages,"CCS3402,CCS3202",
+CCS4903,Computing and Society,90 CR or more,
+CCS4901,Project I,93 CR or more,
+CCSxxxx,Major Elective,-,
+CCSxxxx,Major Elective,-,
+CITxxxx,Professional Training II,-,
+CCS4204,Computer System Security,"CCS3203,CCY2001",
+CCS4502,Human Computer Interaction,CSE2001,
+CCS4902,Project II,CCS4901,
+CCSxxxx,Major Elective,-,
+CCSxxxx,Major Elective,-,
+CITxxxx,Professional Training III,-,
+UNR1407, Academic Writing,UNR1403,
