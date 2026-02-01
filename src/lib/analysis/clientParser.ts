@@ -93,6 +93,9 @@ export function getUngradedCourses(courses: StudiedCourse[]): StudiedCourse[] {
 
 /**
  * Calculate total credit hours
+ * Standard courses: 3 credit hours
+ * UNR and CNC courses: 2 credit hours
+ * Professional training: 0 credit hours
  */
 export function calculateCreditHours(
   courses: StudiedCourse[],
@@ -102,5 +105,12 @@ export function calculateCreditHours(
   const completedCourses = courses.filter((course) =>
     validGrades.includes(course.grade as any)
   );
-  return (completedCourses.length - professionalTrainingCount) * 3;
+  
+  let totalCredits = 0;
+  for (const course of completedCourses) {
+    const isTwoCredit = course.code.startsWith("UNR") || course.code.startsWith("CNC");
+    totalCredits += isTwoCredit ? 2 : 3;
+  }
+
+  return totalCredits - professionalTrainingCount * 3;
 }

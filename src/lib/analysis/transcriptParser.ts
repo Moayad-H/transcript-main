@@ -261,7 +261,9 @@ export function getUngradedCourses(courses: StudiedCourse[]): StudiedCourse[] {
 
 /**
  * Calculate total credit hours from completed courses
- * Assumes 3 credit hours per course (except professional training)
+ * Standard courses: 3 credit hours
+ * UNR and CNC courses: 2 credit hours
+ * Professional training: 0 credit hours
  */
 export function calculateCreditHours(
   courses: StudiedCourse[],
@@ -272,6 +274,20 @@ export function calculateCreditHours(
     validGrades.includes(course.grade)
   );
 
-  // Professional training courses don't count toward credit hours
-  return (completedCourses.length - professionalTrainingCount) * 3;
+  let totalCredits = 0;
+  for (const course of completedCourses) {
+    // Professional training is handled separately by professionalTrainingCount subtraction
+    // or we can identify it by code/title if we had more info here.
+    // Currently the logic subtracts them from the total count * 3.
+    // We need to adjust this because now not all courses are 3 credits.
+    
+    // Check if it's UNR or CNC
+    const isTwoCredit = course.code.startsWith("UNR") || course.code.startsWith("CNC");
+    totalCredits += isTwoCredit ? 2 : 3;
+  }
+
+  // Handle professional training (they were counted as 3 in the loop above if they don't start with UNR/CNC)
+  // Usually professional training starts with CCS (e.g. CCS4001, CCS4002), so they would be 3 credits.
+  // The current logic subtracts (professionalTrainingCount * 3) from total.
+  return totalCredits - professionalTrainingCount * 3;
 }
