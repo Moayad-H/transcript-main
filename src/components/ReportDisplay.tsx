@@ -44,6 +44,25 @@ export function ReportDisplay({ report, onReset }: ReportDisplayProps) {
 
   return (
     <div className="max-w-5xl mx-auto">
+      <button
+        onClick={onReset}
+        className="mb-6 flex items-center text-blue-600 hover:text-blue-800 transition-colors font-medium print:hidden"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5 mr-1"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fillRule="evenodd"
+            d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+            clipRule="evenodd"
+          />
+        </svg>
+        Back to Upload
+      </button>
+
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         {/* Header */}
         <div className="bg-blue-600 text-white p-8 print:bg-blue-600">
