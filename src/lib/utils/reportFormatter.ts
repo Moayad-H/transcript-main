@@ -19,6 +19,7 @@ export function formatReportAsText(report: AnalysisReport): string {
   lines.push(`Student: ${report.studentName}`);
   lines.push(`Department: ${report.department}`);
   lines.push(`Total Credit Hours: ${report.totalCreditHours}`);
+  lines.push(`Expected Credit Hours (incl. pending "U" grades): ${report.expectedCreditHours}`);
   lines.push(`Completed Courses: ${report.completedCourses}`);
   lines.push("");
 

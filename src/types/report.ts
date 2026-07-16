@@ -43,6 +43,7 @@ export interface AnalysisReport {
 
   // Summary
   totalCreditHours: number;
+  expectedCreditHours: number;
   completedCourses: number;
 }
 

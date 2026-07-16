@@ -92,6 +92,16 @@ export function getUngradedCourses(courses: StudiedCourse[]): StudiedCourse[] {
 }
 
 /**
+ * Credit value for a single course
+ * Standard courses: 3 credit hours
+ * UNR and CNC courses: 2 credit hours
+ */
+function getCourseCreditValue(course: StudiedCourse): number {
+  const isTwoCredit = course.code.startsWith("UNR") || course.code.startsWith("CNC");
+  return isTwoCredit ? 2 : 3;
+}
+
+/**
  * Calculate total credit hours
  * Standard courses: 3 credit hours
  * UNR and CNC courses: 2 credit hours
@@ -105,12 +115,21 @@ export function calculateCreditHours(
   const completedCourses = courses.filter((course) =>
     validGrades.includes(course.grade as any)
   );
-  
+
   let totalCredits = 0;
   for (const course of completedCourses) {
-    const isTwoCredit = course.code.startsWith("UNR") || course.code.startsWith("CNC");
-    totalCredits += isTwoCredit ? 2 : 3;
+    totalCredits += getCourseCreditValue(course);
   }
 
   return totalCredits - professionalTrainingCount * 3;
+}
+
+/**
+ * Calculate credit hours pending from courses graded "U" (ungraded/in progress)
+ */
+export function calculateUngradedCreditHours(courses: StudiedCourse[]): number {
+  return getUngradedCourses(courses).reduce(
+    (total, course) => total + getCourseCreditValue(course),
+    0
+  );
 }

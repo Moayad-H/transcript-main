@@ -14,6 +14,7 @@ import {
   getStudiedCourseCodes,
   getUngradedCourses,
   calculateCreditHours,
+  calculateUngradedCreditHours,
   getWithdrawnFailedCourses,
 } from "./transcriptParser";
 import {
@@ -69,6 +70,7 @@ export async function generateReport(
     transcriptData.courses,
     professionalTraining.length
   );
+  const ungradedCreditHours = calculateUngradedCreditHours(transcriptData.courses);
 
   // Get completed electives
   const completedMajorElectives = getCompletedElectives(
@@ -135,6 +137,7 @@ export async function generateReport(
     ),
     outOfPlanCourses,
     totalCreditHours: creditHours,
+    expectedCreditHours: creditHours + ungradedCreditHours,
     completedCourses: transcriptData.courses.length,
   };
 }
@@ -153,6 +156,7 @@ export function formatReportAsText(report: AnalysisReport): string {
   lines.push(`Student: ${report.studentName}`);
   lines.push(`Department: ${report.department}`);
   lines.push(`Total Credit Hours: ${report.totalCreditHours}`);
+  lines.push(`Expected Credit Hours (incl. pending "U" grades): ${report.expectedCreditHours}`);
   lines.push(`Completed Courses: ${report.completedCourses}`);
   lines.push("");
 

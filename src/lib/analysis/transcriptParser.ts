@@ -260,6 +260,16 @@ export function getUngradedCourses(courses: StudiedCourse[]): StudiedCourse[] {
 }
 
 /**
+ * Credit value for a single course
+ * Standard courses: 3 credit hours
+ * UNR and CNC courses: 2 credit hours
+ */
+function getCourseCreditValue(course: StudiedCourse): number {
+  const isTwoCredit = course.code.startsWith("UNR") || course.code.startsWith("CNC");
+  return isTwoCredit ? 2 : 3;
+}
+
+/**
  * Calculate total credit hours from completed courses
  * Standard courses: 3 credit hours
  * UNR and CNC courses: 2 credit hours
@@ -269,25 +279,28 @@ export function calculateCreditHours(
   courses: StudiedCourse[],
   professionalTrainingCount: number = 0
 ): number {
-  const validGrades = [...GRADES.PASSING];
+  const validGrades = [...GRADES.PASSING] as string[];
   const completedCourses = courses.filter((course) =>
     validGrades.includes(course.grade)
   );
 
   let totalCredits = 0;
   for (const course of completedCourses) {
-    // Professional training is handled separately by professionalTrainingCount subtraction
-    // or we can identify it by code/title if we had more info here.
-    // Currently the logic subtracts them from the total count * 3.
-    // We need to adjust this because now not all courses are 3 credits.
-    
-    // Check if it's UNR or CNC
-    const isTwoCredit = course.code.startsWith("UNR") || course.code.startsWith("CNC");
-    totalCredits += isTwoCredit ? 2 : 3;
+    totalCredits += getCourseCreditValue(course);
   }
 
   // Handle professional training (they were counted as 3 in the loop above if they don't start with UNR/CNC)
   // Usually professional training starts with CCS (e.g. CCS4001, CCS4002), so they would be 3 credits.
   // The current logic subtracts (professionalTrainingCount * 3) from total.
   return totalCredits - professionalTrainingCount * 3;
+}
+
+/**
+ * Calculate credit hours pending from courses graded "U" (ungraded/in progress)
+ */
+export function calculateUngradedCreditHours(courses: StudiedCourse[]): number {
+  return getUngradedCourses(courses).reduce(
+    (total, course) => total + getCourseCreditValue(course),
+    0
+  );
 }

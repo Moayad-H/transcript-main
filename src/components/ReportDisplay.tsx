@@ -70,7 +70,7 @@ export function ReportDisplay({ report, onReset }: ReportDisplayProps) {
           <p className="text-blue-100 mt-2">
             CCIT - College of Computing and Information Technology
           </p>
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
             <div>
               <span className="text-blue-200">Student:</span>
               <p className="font-semibold">{report.studentName}</p>
@@ -82,6 +82,10 @@ export function ReportDisplay({ report, onReset }: ReportDisplayProps) {
             <div>
               <span className="text-blue-200">Credit Hours:</span>
               <p className="font-semibold">{report.totalCreditHours}</p>
+            </div>
+            <div>
+              <span className="text-blue-200">Expected Credit Hours:</span>
+              <p className="font-semibold">{report.expectedCreditHours}</p>
             </div>
           </div>
         </div>
