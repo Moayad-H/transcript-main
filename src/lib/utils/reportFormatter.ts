@@ -21,6 +21,9 @@ export function formatReportAsText(report: AnalysisReport): string {
   lines.push(`Total Credit Hours: ${report.totalCreditHours}`);
   lines.push(`Expected Credit Hours (incl. pending "U" grades): ${report.expectedCreditHours}`);
   lines.push(`Completed Courses: ${report.completedCourses}`);
+  if (report.gpa !== null) {
+    lines.push(`G.P.A: ${report.gpa}`);
+  }
   lines.push("");
 
   // Ungraded courses

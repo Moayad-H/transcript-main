@@ -84,7 +84,7 @@ export function ReportDisplay({
           <p className="text-blue-100 mt-2">
             CCIT - College of Computing and Information Technology
           </p>
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4 text-sm">
             <div>
               <span className="text-blue-200">Student:</span>
               <p className="font-semibold">{report.studentName}</p>
@@ -101,6 +101,12 @@ export function ReportDisplay({
               <span className="text-blue-200">Expected Credit Hours:</span>
               <p className="font-semibold">{report.expectedCreditHours}</p>
             </div>
+            {report.gpa !== null && (
+              <div>
+                <span className="text-blue-200">G.P.A:</span>
+                <p className="font-semibold">{report.gpa}</p>
+              </div>
+            )}
           </div>
         </div>
 

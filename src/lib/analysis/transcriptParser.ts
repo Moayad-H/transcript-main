@@ -51,6 +51,9 @@ export async function parseTranscriptPDF(
     // Extract student info
     const { name, id, department } = extractStudentInfoFromText(fullText);
 
+    // Extract cumulative GPA as printed on the transcript
+    const gpa = extractGpaFromText(fullText);
+
     // Extract courses using semester-based parsing
     const allCourses = extractCoursesFromText(fullText);
 
@@ -64,6 +67,7 @@ export async function parseTranscriptPDF(
       department,
       courses: validCourses,
       remedialCourses,
+      gpa,
     };
   } catch (error) {
     console.error("PDF parsing error:", error);
@@ -111,6 +115,24 @@ function extractStudentInfoFromText(text: string): {
   }
 
   return { name: studentName, id: studentId, department };
+}
+
+/**
+ * Extract the cumulative G.P.A as printed on the transcript.
+ * Written as "G.P.A: (number)". When several G.P.A values appear (per-semester
+ * plus cumulative), the last one is the cumulative figure.
+ */
+function extractGpaFromText(text: string): number | null {
+  const gpaPattern = /G\.?\s*P\.?\s*A\.?\s*:?\s*(\d+(?:\.\d+)?)/gi;
+  let match;
+  let lastValue: number | null = null;
+  while ((match = gpaPattern.exec(text)) !== null) {
+    const value = parseFloat(match[1]);
+    if (!Number.isNaN(value)) {
+      lastValue = value;
+    }
+  }
+  return lastValue;
 }
 
 /**

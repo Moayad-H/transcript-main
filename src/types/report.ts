@@ -45,6 +45,9 @@ export interface AnalysisReport {
   totalCreditHours: number;
   expectedCreditHours: number;
   completedCourses: number;
+
+  // Cumulative G.P.A as printed on the transcript (null if not found)
+  gpa: number | null;
 }
 
 export interface ReportGenerationRequest {

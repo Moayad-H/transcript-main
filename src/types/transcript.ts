@@ -11,6 +11,7 @@ export interface TranscriptData {
   department: Department;
   courses: StudiedCourse[];
   remedialCourses: string[]; // 'Precalculus' or 'Remedial English'
+  gpa?: number | null; // Cumulative G.P.A as printed on the transcript
 }
 
 export interface ParsedTranscript {

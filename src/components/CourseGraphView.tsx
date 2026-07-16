@@ -15,11 +15,59 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { AnalysisReport, TranscriptData, Department } from "@/types";
+import { canonicalizeCode, isTwoCreditCourse } from "@/lib/constants";
 import {
   buildCourseGraph,
   CourseStatus,
   GraphCourseNode,
 } from "@/lib/analysis/courseGraphBuilder";
+
+// GPA grade points (per the CCIT scale). U/W/I/F carry 0 points.
+const GRADE_POINTS: Record<string, number> = {
+  "A+": 4.0,
+  "A": 3.7,
+  "A-": 3.4,
+  "B+": 3.2,
+  "B": 3.0,
+  "B-": 2.8,
+  "C+": 2.6,
+  "C": 2.4,
+  "C-": 2.2,
+  "D+": 2.0,
+  "D": 1.5,
+  "D-": 1.0,
+  "F": 0,
+  "U": 0,
+  "W": 0,
+  "I": 0,
+};
+
+// Letter grades a student can project onto a not-yet-graded course. All of
+// these count toward the GPA (numerator and denominator).
+const PROJECTABLE_GRADES = [
+  "A+",
+  "A",
+  "A-",
+  "B+",
+  "B",
+  "B-",
+  "C+",
+  "C",
+  "C-",
+  "D+",
+  "D",
+  "D-",
+  "F",
+];
+
+// Transcript grades that count toward the *current* GPA. Excludes W/U/I (not a
+// completed grade) and P/Tr (pass/transfer — no grade points).
+const GPA_COUNTED_GRADES = new Set(PROJECTABLE_GRADES);
+
+/** Credit-hour value of a course code (2 for UNR/CNC1401, else 3). */
+function creditValueForCode(code: string): number {
+  return isTwoCreditCourse(canonicalizeCode(code)) ? 2 : 3;
+}
 
 interface CourseGraphViewProps {
   report: AnalysisReport;
@@ -34,8 +82,8 @@ type Override = "completed" | "ungraded" | "none";
 // Click-cycle order for manual mode: Auto -> Finished -> Registered -> Not taken -> Auto.
 const OVERRIDE_CYCLE: (Override | undefined)[] = [
   undefined,
-  "completed",
   "ungraded",
+  "completed",
   "none",
 ];
 
@@ -159,6 +207,9 @@ export default function CourseGraphView({
   // Manual planning mode: click courses to override their status.
   const [manualMode, setManualMode] = useState(false);
   const [overrides, setOverrides] = useState<Map<string, Override>>(new Map());
+  // GPA calculator: assign hypothetical grades to registered courses.
+  const [gpaMode, setGpaMode] = useState(false);
+  const [projGrades, setProjGrades] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
     let cancelled = false;
@@ -191,8 +242,10 @@ export default function CourseGraphView({
         }));
         setGraph({ nodes, edges });
         setSelectedId(null);
-        // A fresh transcript invalidates any manual planning overrides.
+        // A fresh transcript invalidates any manual planning overrides and
+        // projected grades.
         setOverrides(new Map());
+        setProjGrades(new Map());
       })
       .catch((err) => {
         if (!cancelled) {
@@ -226,10 +279,12 @@ export default function CourseGraphView({
   }, [graph]);
 
   // Effective status per node, applying manual overrides and recomputing
-  // downstream availability from prerequisites. This is what gets rendered.
-  const effectiveStatus = useMemo(() => {
-    const result = new Map<string, CourseStatus>();
-    if (!graph) return result;
+  // downstream availability from prerequisites AND credit-hour gates. Also
+  // returns the running achieved credit-hour total. This is what gets rendered.
+  const { statuses: effectiveStatus, achievedCreditHours } = useMemo(() => {
+    const statuses = new Map<string, CourseStatus>();
+    if (!graph)
+      return { statuses, achievedCreditHours: report.totalCreditHours };
 
     const originalStatus = (n: Node) => (n.data as CourseNodeData).status;
 
@@ -238,19 +293,35 @@ export default function CourseGraphView({
     for (const n of graph.nodes) {
       const ov = overrides.get(n.id);
       const done =
-        ov === "completed" || (ov === undefined && originalStatus(n) === "completed");
+        ov === "completed" ||
+        (ov === undefined && originalStatus(n) === "completed");
       if (done) completedSet.add(n.id);
     }
 
-    // Recompute available/blocked for a not-yet-taken course from its prereqs.
+    // Achieved credit hours = the parsed baseline, adjusted by manual overrides
+    // that add or remove a completed course. This feeds the credit-hour gates.
+    let achieved = report.totalCreditHours;
+    for (const n of graph.nodes) {
+      const ov = overrides.get(n.id);
+      if (ov === undefined) continue;
+      const wasCompleted = originalStatus(n) === "completed";
+      const nowCompleted = ov === "completed";
+      const cv = creditValueForCode((n.data as CourseNodeData).code);
+      if (nowCompleted && !wasCompleted) achieved += cv;
+      else if (!nowCompleted && wasCompleted) achieved -= cv;
+    }
+
+    // Recompute available/blocked for a not-yet-taken course from its prereqs,
+    // or — for a credit-hour gate — from the running achieved credit total.
     const recompute = (n: Node): CourseStatus => {
-      const prereqs = prereqsByTarget.get(n.id) ?? [];
-      if (prereqs.length === 0) {
-        // No course-edge prereqs. Credit-hour gates can't be recomputed here,
-        // so keep the report's original verdict; otherwise it's open.
-        const orig = originalStatus(n);
-        return (n.data as CourseNodeData).creditReq ? orig : "available";
+      const creditReq = (n.data as CourseNodeData).creditReq;
+      if (creditReq) {
+        const m = creditReq.match(/(\d+)/);
+        const need = m ? parseInt(m[1], 10) : 0;
+        return achieved >= need ? "available" : "blocked";
       }
+      const prereqs = prereqsByTarget.get(n.id) ?? [];
+      if (prereqs.length === 0) return "available";
       return prereqs.every((p) => completedSet.has(p)) ? "available" : "blocked";
     };
 
@@ -265,10 +336,52 @@ export default function CourseGraphView({
         const orig = originalStatus(n);
         s = orig === "available" || orig === "blocked" ? recompute(n) : orig;
       }
-      result.set(n.id, s);
+      statuses.set(n.id, s);
     }
-    return result;
-  }, [graph, overrides, prereqsByTarget]);
+    return { statuses, achievedCreditHours: achieved };
+  }, [graph, overrides, prereqsByTarget, report.totalCreditHours]);
+
+  // Current GPA from the parsed transcript: achieved points / GPA credit hours.
+  const currentGpa = useMemo(() => {
+    let points = 0;
+    let ch = 0;
+    for (const c of transcriptData.courses) {
+      if (!GPA_COUNTED_GRADES.has(c.grade)) continue;
+      const cv = creditValueForCode(c.code);
+      points += GRADE_POINTS[c.grade] * cv;
+      ch += cv;
+    }
+    return { points, ch, gpa: ch > 0 ? points / ch : 0 };
+  }, [transcriptData]);
+
+  // Courses currently "registered" (ungraded) — the ones you can project a
+  // future grade onto.
+  const registeredNodes = useMemo<Node[]>(() => {
+    if (!graph) return [];
+    return graph.nodes.filter((n) => effectiveStatus.get(n.id) === "ungraded");
+  }, [graph, effectiveStatus]);
+
+  // Projected GPA = current GPA plus the hypothetical grades assigned to
+  // registered courses.
+  const projectedGpa = useMemo(() => {
+    let points = currentGpa.points;
+    let ch = currentGpa.ch;
+    let count = 0;
+    if (graph) {
+      const byId = new Map(graph.nodes.map((n) => [n.id, n]));
+      for (const [id, grade] of projGrades) {
+        const n = byId.get(id);
+        // Only count a grade that's still on a registered course.
+        if (!n || effectiveStatus.get(id) !== "ungraded") continue;
+        if (!(grade in GRADE_POINTS)) continue;
+        const cv = creditValueForCode((n.data as CourseNodeData).code);
+        points += GRADE_POINTS[grade] * cv;
+        ch += cv;
+        count += 1;
+      }
+    }
+    return { gpa: ch > 0 ? points / ch : 0, ch, count };
+  }, [currentGpa, graph, projGrades, effectiveStatus]);
 
   // Selected node + all its transitive prerequisites (the full unlock chain).
   const highlightSet = useMemo(() => {
@@ -379,24 +492,133 @@ export default function CourseGraphView({
         >
           {manualMode ? "Manual planning: ON" : "Manual planning: OFF"}
         </button>
-        {manualMode && (
-          <>
-            <span className="text-xs text-gray-500">
-              Click a course to cycle: Auto → Finished → Registered → Not taken.
-              Availability updates from prerequisites.
+        <button
+          type="button"
+          onClick={() => setGpaMode((m) => !m)}
+          className={`text-sm font-medium px-3 py-1.5 rounded-md border transition-colors ${
+            gpaMode
+              ? "bg-emerald-600 border-emerald-600 text-white"
+              : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+          }`}
+        >
+          {gpaMode ? "GPA calculator: ON" : "GPA calculator: OFF"}
+        </button>
+
+        {/* Achieved credit-hour tally (updates live with manual overrides). */}
+        <span className="text-sm font-medium px-3 py-1.5 rounded-md bg-gray-100 border border-gray-200 text-gray-700">
+          Achieved credit hours:{" "}
+          <span className="font-bold text-gray-900">{achievedCreditHours}</span>
+          {achievedCreditHours !== report.totalCreditHours && (
+            <span className="ml-1 text-indigo-600">
+              ({achievedCreditHours > report.totalCreditHours ? "+" : ""}
+              {achievedCreditHours - report.totalCreditHours} vs transcript)
             </span>
-            {overrides.size > 0 && (
-              <button
-                type="button"
-                onClick={() => setOverrides(new Map())}
-                className="text-xs font-medium px-2 py-1 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 ml-auto"
-              >
-                Reset {overrides.size} change{overrides.size === 1 ? "" : "s"}
-              </button>
-            )}
-          </>
+          )}
+        </span>
+
+        {manualMode && overrides.size > 0 && (
+          <button
+            type="button"
+            onClick={() => setOverrides(new Map())}
+            className="text-xs font-medium px-2 py-1 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 ml-auto"
+          >
+            Reset {overrides.size} change{overrides.size === 1 ? "" : "s"}
+          </button>
         )}
       </div>
+
+      {manualMode && (
+        <p className="text-xs text-gray-500 mb-3 -mt-1">
+          Click a course to cycle: Auto → Registered → Finished → Not taken.
+          Availability and credit hours update from prerequisites.
+        </p>
+      )}
+
+      {/* GPA calculator panel */}
+      {gpaMode && (
+        <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50/50 p-4">
+          <div className="flex flex-wrap items-center gap-6 mb-3">
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">
+                Current GPA
+              </div>
+              <div className="text-2xl font-bold text-gray-900">
+                {currentGpa.gpa.toFixed(3)}
+              </div>
+            </div>
+            <div className="text-2xl text-gray-300">→</div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">
+                Projected GPA
+              </div>
+              <div className="text-2xl font-bold text-emerald-700">
+                {projectedGpa.gpa.toFixed(3)}
+              </div>
+            </div>
+            {projectedGpa.count > 0 && (
+              <button
+                type="button"
+                onClick={() => setProjGrades(new Map())}
+                className="text-xs font-medium px-2 py-1 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 ml-auto"
+              >
+                Clear grades
+              </button>
+            )}
+          </div>
+
+          {registeredNodes.length === 0 ? (
+            <p className="text-xs text-gray-500">
+              No registered courses to project. Turn on Manual planning and mark
+              courses as “Registered” to assign hypothetical grades.
+            </p>
+          ) : (
+            <div className="space-y-1.5">
+              <p className="text-xs text-gray-500 mb-2">
+                Assign a hypothetical grade to each registered course to see your
+                projected GPA.
+              </p>
+              {registeredNodes.map((n) => {
+                const d = n.data as CourseNodeData;
+                return (
+                  <div
+                    key={n.id}
+                    className="flex items-center gap-2 text-sm bg-white rounded border border-gray-200 px-2 py-1.5"
+                  >
+                    <span className="font-mono text-xs font-semibold bg-gray-100 px-1.5 py-0.5 rounded">
+                      {d.code}
+                    </span>
+                    <span className="flex-1 truncate text-gray-700">
+                      {d.title}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {creditValueForCode(d.code)} cr
+                    </span>
+                    <select
+                      value={projGrades.get(n.id) ?? ""}
+                      onChange={(e) =>
+                        setProjGrades((prev) => {
+                          const next = new Map(prev);
+                          if (e.target.value === "") next.delete(n.id);
+                          else next.set(n.id, e.target.value);
+                          return next;
+                        })
+                      }
+                      className="text-sm border border-gray-300 rounded px-1.5 py-1 bg-white"
+                    >
+                      <option value="">—</option>
+                      {PROJECTABLE_GRADES.map((g) => (
+                        <option key={g} value={g}>
+                          {g} ({GRADE_POINTS[g].toFixed(2)})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Legend */}
       <div className="flex flex-wrap gap-3 mb-4">

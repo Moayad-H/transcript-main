@@ -123,5 +123,6 @@ export async function generateReportClient(
     totalCreditHours: creditHours,
     expectedCreditHours: creditHours + ungradedCreditHours,
     completedCourses: transcriptData.courses.length,
+    gpa: transcriptData.gpa ?? null,
   };
 }
