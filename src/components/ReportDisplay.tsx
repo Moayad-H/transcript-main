@@ -1,16 +1,30 @@
 "use client";
 
-import { AnalysisReport } from "@/types";
+import { useState } from "react";
+import dynamic from "next/dynamic";
+import { AnalysisReport, TranscriptData } from "@/types";
 import { ReportSection } from "./ReportSection";
 import { formatReportAsText } from "@/lib/analysis/reportGenerator";
 import { downloadTextFile } from "@/lib/utils/helpers";
 
+// Client-only: React Flow measures the DOM, so keep it out of the static export prerender.
+const CourseGraphView = dynamic(() => import("./CourseGraphView"), {
+  ssr: false,
+});
+
 interface ReportDisplayProps {
   report: AnalysisReport;
+  transcriptData: TranscriptData;
   onReset: () => void;
 }
 
-export function ReportDisplay({ report, onReset }: ReportDisplayProps) {
+export function ReportDisplay({
+  report,
+  transcriptData,
+  onReset,
+}: ReportDisplayProps) {
+  const [view, setView] = useState<"report" | "graph">("report");
+
   const handleDownload = async () => {
     try {
       const response = await fetch("/api/download-report", {
@@ -90,6 +104,36 @@ export function ReportDisplay({ report, onReset }: ReportDisplayProps) {
           </div>
         </div>
 
+        {/* View toggle */}
+        <div className="px-6 pt-4 flex gap-2 border-b print:hidden">
+          <button
+            onClick={() => setView("report")}
+            className={`px-4 py-2 rounded-t-lg font-medium transition-colors ${
+              view === "report"
+                ? "bg-white text-blue-600 border border-b-white border-gray-200 -mb-px"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Report
+          </button>
+          <button
+            onClick={() => setView("graph")}
+            className={`px-4 py-2 rounded-t-lg font-medium transition-colors ${
+              view === "graph"
+                ? "bg-white text-blue-600 border border-b-white border-gray-200 -mb-px"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Course Graph
+          </button>
+        </div>
+
+        {view === "graph" && (
+          <CourseGraphView report={report} transcriptData={transcriptData} />
+        )}
+
+        {view === "report" && (
+          <>
         {/* Actions */}
         <div className="p-6 border-b flex gap-3 print:hidden">
           <button
@@ -352,6 +396,8 @@ export function ReportDisplay({ report, onReset }: ReportDisplayProps) {
             )}
           </ReportSection>
         </div>
+          </>
+        )}
       </div>
     </div>
   );

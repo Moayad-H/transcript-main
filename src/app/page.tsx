@@ -72,8 +72,12 @@ export default function Home() {
           <FileUpload onFileUpload={handleFileUpload} loading={loading} />
         )}
 
-        {step === "report" && report && (
-          <ReportDisplay report={report} onReset={handleReset} />
+        {step === "report" && report && transcriptData && (
+          <ReportDisplay
+            report={report}
+            transcriptData={transcriptData}
+            onReset={handleReset}
+          />
         )}
       </main>
 
