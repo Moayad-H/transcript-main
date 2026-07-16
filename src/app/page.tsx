@@ -87,9 +87,9 @@ export default function Home() {
       </main>
 
       <footer className="mt-16 py-6 text-center text-sm text-gray-600">
-        <p>Copyright 2024 Eng. Moheeb and Eng. Hagar</p>
+        <p>Copyright 2026 Dr. Moheeb and Eng. Hagar</p>
         <p className="mt-1">
-          CCIT - College of Computing and Information Technology
+          CCIT - College of Computing and Information Technology - Cairo
         </p>
       </footer>
     </div>

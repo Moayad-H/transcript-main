@@ -126,7 +126,7 @@ export function formatReportAsText(report: AnalysisReport): string {
   lines.push("");
 
   lines.push("=".repeat(60));
-  lines.push("Copyright 2024 Eng. Moheeb and Eng. Hagar");
+  lines.push("Copyright 2026 Dr. Moheeb and Eng. Hagar");
   lines.push("=".repeat(60));
 
   return lines.join("\n");

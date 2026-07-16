@@ -135,8 +135,8 @@ type CourseNodeData = Pick<
   "code" | "title" | "status" | "isElectiveSlot" | "creditReq"
 > & {
   // Set when a node is selected: this node is either the selection, a
-  // prerequisite of it, or dimmed because it's unrelated.
-  emphasis?: "selected" | "prereq" | null;
+  // prerequisite of it, a course that depends on it, or dimmed (unrelated).
+  emphasis?: "selected" | "prereq" | "dependent" | null;
   dim?: boolean;
   // Manual planning mode: whether it's active, and the user's override (if any).
   manualMode?: boolean;
@@ -150,6 +150,8 @@ function CourseNode({ data }: NodeProps<Node<CourseNodeData>>) {
       ? "ring-2 ring-offset-1 ring-blue-600"
       : data.emphasis === "prereq"
       ? "ring-2 ring-offset-1 ring-amber-500"
+      : data.emphasis === "dependent"
+      ? "ring-2 ring-offset-1 ring-teal-500"
       : data.override
       ? "ring-2 ring-offset-1 ring-indigo-500"
       : "";
@@ -303,6 +305,18 @@ export default function CourseGraphView({
     return map;
   }, [graph]);
 
+  // source node id -> the courses that list it as a prerequisite (target ids).
+  const dependentsBySource = useMemo(() => {
+    const map = new Map<string, string[]>();
+    if (!graph) return map;
+    for (const e of graph.edges) {
+      const list = map.get(e.source) ?? [];
+      list.push(e.target);
+      map.set(e.source, list);
+    }
+    return map;
+  }, [graph]);
+
   // Effective status per node, applying manual overrides and recomputing
   // downstream availability from prerequisites AND credit-hour gates. Also
   // returns the running achieved credit-hour total. This is what gets rendered.
@@ -408,23 +422,43 @@ export default function CourseGraphView({
     return { gpa: ch > 0 ? points / ch : 0, ch, count };
   }, [currentGpa, graph, projGrades, effectiveStatus]);
 
-  // Selected node + all its transitive prerequisites (the full unlock chain).
+  // Two chains from the selected node:
+  //  - prereqSet: all its transitive prerequisites (what must come before it).
+  //  - dependentSet: everything it transitively unlocks (what it's a prereq of).
+  // The selected id is deliberately excluded from both.
+  const { prereqSet, dependentSet } = useMemo(() => {
+    const prereqSet = new Set<string>();
+    const dependentSet = new Set<string>();
+    if (!selectedId) return { prereqSet, dependentSet };
+
+    const walk = (adjacency: Map<string, string[]>, out: Set<string>) => {
+      const stack = [selectedId];
+      const seen = new Set<string>([selectedId]);
+      while (stack.length) {
+        const cur = stack.pop()!;
+        for (const next of adjacency.get(cur) ?? []) {
+          if (!seen.has(next)) {
+            seen.add(next);
+            out.add(next);
+            stack.push(next);
+          }
+        }
+      }
+    };
+    walk(prereqsByTarget, prereqSet);
+    walk(dependentsBySource, dependentSet);
+    return { prereqSet, dependentSet };
+  }, [selectedId, prereqsByTarget, dependentsBySource]);
+
+  // Every node touched by the selection (both chains plus the node itself).
   const highlightSet = useMemo(() => {
     const set = new Set<string>();
     if (!selectedId) return set;
     set.add(selectedId);
-    const stack = [selectedId];
-    while (stack.length) {
-      const cur = stack.pop()!;
-      for (const src of prereqsByTarget.get(cur) ?? []) {
-        if (!set.has(src)) {
-          set.add(src);
-          stack.push(src);
-        }
-      }
-    }
+    for (const id of prereqSet) set.add(id);
+    for (const id of dependentSet) set.add(id);
     return set;
-  }, [selectedId, prereqsByTarget]);
+  }, [selectedId, prereqSet, dependentSet]);
 
   // Highlight-on-click is disabled while planning, so selection only applies
   // outside manual mode.
@@ -448,8 +482,10 @@ export default function CourseGraphView({
             ? null
             : n.id === activeSelection
             ? "selected"
-            : inChain
+            : prereqSet.has(n.id)
             ? "prereq"
+            : dependentSet.has(n.id)
+            ? "dependent"
             : null,
           dim: selecting ? !inChain : false,
         },
@@ -457,28 +493,35 @@ export default function CourseGraphView({
     });
     // Headers are static; append them so they render above the columns.
     return [...termNodes, ...courseNodes];
-  }, [graph, termNodes, effectiveStatus, manualMode, overrides, activeSelection, highlightSet]);
+  }, [graph, termNodes, effectiveStatus, manualMode, overrides, activeSelection, highlightSet, prereqSet, dependentSet]);
 
   const displayEdges = useMemo<Edge[]>(() => {
     if (!graph) return [];
     if (!activeSelection) return graph.edges;
+    const upstream = new Set<string>([activeSelection, ...prereqSet]);
+    const downstream = new Set<string>([activeSelection, ...dependentSet]);
     return graph.edges.map((e) => {
-      const onChain = highlightSet.has(e.source) && highlightSet.has(e.target);
+      // An edge belongs to the prereq chain if both ends are upstream, or to
+      // the dependents chain if both ends are downstream.
+      const onPrereq = upstream.has(e.source) && upstream.has(e.target);
+      const onDependent = downstream.has(e.source) && downstream.has(e.target);
+      const color = onPrereq ? "#f59e0b" : onDependent ? "#14b8a6" : "#e2e8f0";
+      const onChain = onPrereq || onDependent;
       return {
         ...e,
         animated: onChain,
         style: {
-          stroke: onChain ? "#f59e0b" : "#e2e8f0",
+          stroke: color,
           strokeWidth: onChain ? 2 : 1,
           opacity: onChain ? 1 : 0.35,
         },
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          color: onChain ? "#f59e0b" : "#e2e8f0",
+          color,
         },
       };
     });
-  }, [graph, activeSelection, highlightSet]);
+  }, [graph, activeSelection, prereqSet, dependentSet]);
 
   const handleNodeClick = useCallback(
     (_: unknown, node: Node) => {
@@ -661,7 +704,10 @@ export default function CourseGraphView({
         ))}
         {!manualMode && (
           <span className="text-xs text-gray-400 ml-auto self-center">
-            Tip: click a course to highlight its prerequisites
+            Tip: click a course to highlight its{" "}
+            <span className="text-amber-600 font-medium">prerequisites</span> and
+            the{" "}
+            <span className="text-teal-600 font-medium">courses it unlocks</span>
           </span>
         )}
       </div>
