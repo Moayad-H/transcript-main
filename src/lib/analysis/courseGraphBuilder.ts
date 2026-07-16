@@ -12,7 +12,7 @@
 import { AnalysisReport, TranscriptData, Department } from "@/types";
 import { loadDepartmentData } from "@/lib/data/csvLoader";
 import { getStudiedCourseCodes } from "./transcriptParser";
-import { ELECTIVE_KEYWORDS } from "@/lib/constants";
+import { ELECTIVE_KEYWORDS, canonicalizeCode } from "@/lib/constants";
 
 export type CourseStatus =
   | "completed"
@@ -47,10 +47,8 @@ export interface CourseGraph {
 const COL_SPACING = 280;
 const ROW_SPACING = 110;
 
-/** Normalize a course code exactly like courseAnalyzer / transcriptParser do. */
-function normalizeCode(code: string): string {
-  return code.replace(/[^A-Z0-9]/gi, "").toUpperCase();
-}
+/** Normalize + resolve equivalences, exactly like courseAnalyzer / transcriptParser. */
+const normalizeCode = canonicalizeCode;
 
 /** Which elective category (if any) a plan row represents, by its title. */
 function electiveCategory(title: string): string | null {
@@ -188,6 +186,13 @@ export async function buildCourseGraph(
     const norm = normalizeCode(course.code);
     const category = electiveCategory(course.title);
     const isElectiveSlot = category !== null;
+
+    // A plan may list the same course under equivalent codes (e.g. the IS plan
+    // has both CCS3601 and CAI3101 rows for Intro to AI). After canonicalization
+    // they share a code, so render only the first as a single node.
+    if (!isElectiveSlot && codeToId.has(norm)) {
+      return;
+    }
 
     // Elective placeholders can share/lack codes, so give them unique ids.
     const id = isElectiveSlot ? `elective-${category}-${index}` : norm;

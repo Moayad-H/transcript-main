@@ -9,7 +9,12 @@ import {
   StudiedCourse,
   CourseRequirement,
 } from "@/types";
-import { ELECTIVE_KEYWORDS, SPECIAL_COURSES, GRADES } from "@/lib/constants";
+import {
+  ELECTIVE_KEYWORDS,
+  SPECIAL_COURSES,
+  GRADES,
+  canonicalizeCode,
+} from "@/lib/constants";
 
 /**
  * Get elective courses that student has completed
@@ -19,11 +24,11 @@ export function getCompletedElectives(
   studiedCodes: string[],
   electiveCourses: ElectiveCourse[]
 ): ElectiveCourse[] {
-  const studiedSet = new Set(studiedCodes.map((code) => code.trim()));
+  const studiedSet = new Set(studiedCodes.map((code) => canonicalizeCode(code)));
   const electives: ElectiveCourse[] = [];
 
   for (const elective of electiveCourses) {
-    if (studiedSet.has(elective.code.trim())) {
+    if (studiedSet.has(canonicalizeCode(elective.code))) {
       electives.push(elective);
     }
   }
@@ -118,11 +123,12 @@ export function checkPrerequisites(
   }
 
   // Multiple prerequisites (comma-separated)
+  const studiedSet = new Set(studiedCodes.map((c) => canonicalizeCode(c)));
   const prerequisites = prereqCode.split(",").map((p) => p.trim());
   const missing: string[] = [];
 
   for (const prereq of prerequisites) {
-    if (prereq && !studiedCodes.includes(prereq)) {
+    if (prereq && !studiedSet.has(canonicalizeCode(prereq))) {
       missing.push(prereq);
     }
   }
@@ -145,17 +151,23 @@ export function getAvailableCourses(
   creditHours: number
 ): Course[] {
   const available: Course[] = [];
-  // Normalize studied codes: keep only alphanumeric characters
-  const studiedSet = new Set(
-    studiedCodes.map((c) => c.replace(/[^A-Z0-9]/gi, "").toUpperCase())
-  );
+  // Normalize studied codes and resolve cross-department equivalences.
+  const studiedSet = new Set(studiedCodes.map((c) => canonicalizeCode(c)));
+  // Track codes already offered so a course listed under equivalent codes in the
+  // same plan (e.g. IS lists both CCS3601 and CAI3101) is offered only once.
+  const offeredSet = new Set<string>();
 
   for (const course of coursePlan) {
-    // Normalize plan code: keep only alphanumeric characters
-    const normalizedCode = course.code.replace(/[^A-Z0-9]/gi, "").toUpperCase();
+    // Normalize plan code and resolve cross-department equivalences.
+    const normalizedCode = canonicalizeCode(course.code);
 
     // Skip if already completed
     if (studiedSet.has(normalizedCode)) {
+      continue;
+    }
+
+    // Skip if an equivalent code was already offered
+    if (offeredSet.has(normalizedCode)) {
       continue;
     }
 
@@ -214,6 +226,7 @@ export function getAvailableCourses(
     const prereqCheck = checkPrerequisites(course, studiedCodes, creditHours);
     if (prereqCheck.met) {
       available.push(course);
+      offeredSet.add(normalizedCode);
     }
   }
 
@@ -231,17 +244,19 @@ export function getOutOfPlanCourses(
   completedScienceElectives: ElectiveCourse[],
   completedUniversityElectives: ElectiveCourse[]
 ): StudiedCourse[] {
-  const planCodes = new Set(coursePlan.map((c) => c.code.trim()));
-  const majorCodes = new Set(completedMajorElectives.map((c) => c.code.trim()));
+  const planCodes = new Set(coursePlan.map((c) => canonicalizeCode(c.code)));
+  const majorCodes = new Set(
+    completedMajorElectives.map((c) => canonicalizeCode(c.code))
+  );
   const scienceCodes = new Set(
-    completedScienceElectives.map((c) => c.code.trim())
+    completedScienceElectives.map((c) => canonicalizeCode(c.code))
   );
   const universityCodes = new Set(
-    completedUniversityElectives.map((c) => c.code.trim())
+    completedUniversityElectives.map((c) => canonicalizeCode(c.code))
   );
 
   return studiedCourses.filter((course) => {
-    const code = course.code.trim();
+    const code = canonicalizeCode(course.code);
     return (
       !planCodes.has(code) &&
       !majorCodes.has(code) &&

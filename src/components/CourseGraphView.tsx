@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -25,6 +25,25 @@ interface CourseGraphViewProps {
   report: AnalysisReport;
   transcriptData: TranscriptData;
 }
+
+// Manual override a user can set on a course in planning mode.
+// "completed" => finished, "ungraded" => registered/in-progress,
+// "none" => explicitly mark as not taken (clears a parsed status).
+type Override = "completed" | "ungraded" | "none";
+
+// Click-cycle order for manual mode: Auto -> Finished -> Registered -> Not taken -> Auto.
+const OVERRIDE_CYCLE: (Override | undefined)[] = [
+  undefined,
+  "completed",
+  "ungraded",
+  "none",
+];
+
+const OVERRIDE_LABEL: Record<Override, string> = {
+  completed: "Finished",
+  ungraded: "Registered",
+  none: "Not taken",
+};
 
 // Status -> presentation. Colors mirror the ReportSection badge palette.
 const STATUS_STYLES: Record<
@@ -71,6 +90,9 @@ type CourseNodeData = Pick<
   // prerequisite of it, or dimmed because it's unrelated.
   emphasis?: "selected" | "prereq" | null;
   dim?: boolean;
+  // Manual planning mode: whether it's active, and the user's override (if any).
+  manualMode?: boolean;
+  override?: Override | null;
 };
 
 function CourseNode({ data }: NodeProps<Node<CourseNodeData>>) {
@@ -80,6 +102,8 @@ function CourseNode({ data }: NodeProps<Node<CourseNodeData>>) {
       ? "ring-2 ring-offset-1 ring-blue-600"
       : data.emphasis === "prereq"
       ? "ring-2 ring-offset-1 ring-amber-500"
+      : data.override
+      ? "ring-2 ring-offset-1 ring-indigo-500"
       : "";
   return (
     <div
@@ -87,7 +111,7 @@ function CourseNode({ data }: NodeProps<Node<CourseNodeData>>) {
         styles.card
       } ${data.isElectiveSlot ? "border-dashed" : ""} ${ring} ${
         data.dim ? "opacity-25" : "opacity-100"
-      }`}
+      } ${data.manualMode ? "cursor-pointer" : ""}`}
     >
       <Handle type="target" position={Position.Left} className="!bg-gray-400" />
       <div className="flex items-center justify-between gap-2">
@@ -101,6 +125,11 @@ function CourseNode({ data }: NodeProps<Node<CourseNodeData>>) {
         )}
       </div>
       <p className="mt-1 text-xs leading-snug line-clamp-2">{data.title}</p>
+      {data.override && (
+        <span className="mt-1 inline-block text-[10px] font-semibold uppercase tracking-wide bg-indigo-600 text-white px-1.5 py-0.5 rounded">
+          Manual: {OVERRIDE_LABEL[data.override]}
+        </span>
+      )}
       <Handle type="source" position={Position.Right} className="!bg-gray-400" />
     </div>
   );
@@ -127,6 +156,9 @@ export default function CourseGraphView({
   const [error, setError] = useState<string | null>(null);
   // Currently selected course node (click to highlight its prerequisites).
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Manual planning mode: click courses to override their status.
+  const [manualMode, setManualMode] = useState(false);
+  const [overrides, setOverrides] = useState<Map<string, Override>>(new Map());
 
   useEffect(() => {
     let cancelled = false;
@@ -159,6 +191,8 @@ export default function CourseGraphView({
         }));
         setGraph({ nodes, edges });
         setSelectedId(null);
+        // A fresh transcript invalidates any manual planning overrides.
+        setOverrides(new Map());
       })
       .catch((err) => {
         if (!cancelled) {
@@ -191,6 +225,51 @@ export default function CourseGraphView({
     return map;
   }, [graph]);
 
+  // Effective status per node, applying manual overrides and recomputing
+  // downstream availability from prerequisites. This is what gets rendered.
+  const effectiveStatus = useMemo(() => {
+    const result = new Map<string, CourseStatus>();
+    if (!graph) return result;
+
+    const originalStatus = (n: Node) => (n.data as CourseNodeData).status;
+
+    // First pass: which courses count as completed (parsed or manually marked).
+    const completedSet = new Set<string>();
+    for (const n of graph.nodes) {
+      const ov = overrides.get(n.id);
+      const done =
+        ov === "completed" || (ov === undefined && originalStatus(n) === "completed");
+      if (done) completedSet.add(n.id);
+    }
+
+    // Recompute available/blocked for a not-yet-taken course from its prereqs.
+    const recompute = (n: Node): CourseStatus => {
+      const prereqs = prereqsByTarget.get(n.id) ?? [];
+      if (prereqs.length === 0) {
+        // No course-edge prereqs. Credit-hour gates can't be recomputed here,
+        // so keep the report's original verdict; otherwise it's open.
+        const orig = originalStatus(n);
+        return (n.data as CourseNodeData).creditReq ? orig : "available";
+      }
+      return prereqs.every((p) => completedSet.has(p)) ? "available" : "blocked";
+    };
+
+    for (const n of graph.nodes) {
+      const ov = overrides.get(n.id);
+      let s: CourseStatus;
+      if (ov === "completed") s = "completed";
+      else if (ov === "ungraded") s = "ungraded";
+      else if (ov === "none") s = recompute(n);
+      else {
+        // No override: keep terminal statuses, recompute the open/blocked ones.
+        const orig = originalStatus(n);
+        s = orig === "available" || orig === "blocked" ? recompute(n) : orig;
+      }
+      result.set(n.id, s);
+    }
+    return result;
+  }, [graph, overrides, prereqsByTarget]);
+
   // Selected node + all its transitive prerequisites (the full unlock chain).
   const highlightSet = useMemo(() => {
     const set = new Set<string>();
@@ -209,31 +288,40 @@ export default function CourseGraphView({
     return set;
   }, [selectedId, prereqsByTarget]);
 
-  // Apply selection styling to nodes/edges without rebuilding the graph.
+  // Highlight-on-click is disabled while planning, so selection only applies
+  // outside manual mode.
+  const activeSelection = manualMode ? null : selectedId;
+
+  // Apply status/selection styling to nodes without rebuilding the graph.
   const displayNodes = useMemo<Node[]>(() => {
     if (!graph) return [];
-    if (!selectedId) {
-      return graph.nodes.map((n) => ({
-        ...n,
-        data: { ...n.data, emphasis: null, dim: false },
-      }));
-    }
     return graph.nodes.map((n) => {
+      const status = effectiveStatus.get(n.id) ?? (n.data as CourseNodeData).status;
       const inChain = highlightSet.has(n.id);
+      const selecting = activeSelection != null;
       return {
         ...n,
         data: {
           ...n.data,
-          emphasis: n.id === selectedId ? "selected" : inChain ? "prereq" : null,
-          dim: !inChain,
+          status,
+          manualMode,
+          override: overrides.get(n.id) ?? null,
+          emphasis: !selecting
+            ? null
+            : n.id === activeSelection
+            ? "selected"
+            : inChain
+            ? "prereq"
+            : null,
+          dim: selecting ? !inChain : false,
         },
       };
     });
-  }, [graph, selectedId, highlightSet]);
+  }, [graph, effectiveStatus, manualMode, overrides, activeSelection, highlightSet]);
 
   const displayEdges = useMemo<Edge[]>(() => {
     if (!graph) return [];
-    if (!selectedId) return graph.edges;
+    if (!activeSelection) return graph.edges;
     return graph.edges.map((e) => {
       const onChain = highlightSet.has(e.source) && highlightSet.has(e.target);
       return {
@@ -250,17 +338,66 @@ export default function CourseGraphView({
         },
       };
     });
-  }, [graph, selectedId, highlightSet]);
+  }, [graph, activeSelection, highlightSet]);
 
-  const handleNodeClick = useMemo(
-    () => (_: unknown, node: Node) =>
-      setSelectedId((cur) => (cur === node.id ? null : node.id)),
-    []
+  const handleNodeClick = useCallback(
+    (_: unknown, node: Node) => {
+      if (manualMode) {
+        // Cycle the override: Auto -> Finished -> Registered -> Not taken -> Auto.
+        setOverrides((prev) => {
+          const next = new Map(prev);
+          const cur = next.get(node.id);
+          const idx = OVERRIDE_CYCLE.indexOf(cur);
+          const val = OVERRIDE_CYCLE[(idx + 1) % OVERRIDE_CYCLE.length];
+          if (val === undefined) next.delete(node.id);
+          else next.set(node.id, val);
+          return next;
+        });
+        return;
+      }
+      setSelectedId((cur) => (cur === node.id ? null : node.id));
+    },
+    [manualMode]
   );
-  const handlePaneClick = useMemo(() => () => setSelectedId(null), []);
+  const handlePaneClick = useCallback(() => setSelectedId(null), []);
 
   return (
     <div className="p-6">
+      {/* Controls */}
+      <div className="flex flex-wrap items-center gap-3 mb-3">
+        <button
+          type="button"
+          onClick={() => {
+            setManualMode((m) => !m);
+            setSelectedId(null);
+          }}
+          className={`text-sm font-medium px-3 py-1.5 rounded-md border transition-colors ${
+            manualMode
+              ? "bg-indigo-600 border-indigo-600 text-white"
+              : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+          }`}
+        >
+          {manualMode ? "Manual planning: ON" : "Manual planning: OFF"}
+        </button>
+        {manualMode && (
+          <>
+            <span className="text-xs text-gray-500">
+              Click a course to cycle: Auto → Finished → Registered → Not taken.
+              Availability updates from prerequisites.
+            </span>
+            {overrides.size > 0 && (
+              <button
+                type="button"
+                onClick={() => setOverrides(new Map())}
+                className="text-xs font-medium px-2 py-1 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 ml-auto"
+              >
+                Reset {overrides.size} change{overrides.size === 1 ? "" : "s"}
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
       {/* Legend */}
       <div className="flex flex-wrap gap-3 mb-4">
         {LEGEND.map((status) => (
@@ -272,9 +409,11 @@ export default function CourseGraphView({
             <span className="text-gray-600">{STATUS_STYLES[status].label}</span>
           </div>
         ))}
-        <span className="text-xs text-gray-400 ml-auto self-center">
-          Tip: click a course to highlight its prerequisites
-        </span>
+        {!manualMode && (
+          <span className="text-xs text-gray-400 ml-auto self-center">
+            Tip: click a course to highlight its prerequisites
+          </span>
+        )}
       </div>
 
       <div className="h-[70vh] w-full rounded-lg border border-gray-200 bg-gray-50">

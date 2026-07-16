@@ -2,9 +2,11 @@
 
 import { useCallback, useState } from "react";
 import { validateFile } from "@/lib/utils/fileValidation";
+import { DEPARTMENTS, DEPARTMENT_NAMES } from "@/lib/constants";
+import { Department } from "@/types";
 
 interface FileUploadProps {
-  onFileUpload: (file: File) => void;
+  onFileUpload: (file: File, department?: Department) => void;
   loading: boolean;
 }
 
@@ -12,6 +14,7 @@ export function FileUpload({ onFileUpload, loading }: FileUploadProps) {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [department, setDepartment] = useState<Department | "">("");
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -57,7 +60,7 @@ export function FileUpload({ onFileUpload, loading }: FileUploadProps) {
 
   const handleSubmit = () => {
     if (selectedFile) {
-      onFileUpload(selectedFile);
+      onFileUpload(selectedFile, department || undefined);
     }
   };
 
@@ -134,6 +137,32 @@ export function FileUpload({ onFileUpload, loading }: FileUploadProps) {
             </p>
           </div>
         )}
+
+        <div className="mt-6">
+          <label
+            htmlFor="department-select"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Department
+          </label>
+          <select
+            id="department-select"
+            value={department}
+            onChange={(e) => setDepartment(e.target.value as Department | "")}
+            disabled={loading}
+            className="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+          >
+            <option value="">Auto-detect from transcript</option>
+            {DEPARTMENTS.map((dept) => (
+              <option key={dept} value={dept}>
+                {DEPARTMENT_NAMES[dept]} ({dept})
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-500 mt-1">
+            Choose a department to override the one detected from the transcript.
+          </p>
+        </div>
 
         <button
           onClick={handleSubmit}

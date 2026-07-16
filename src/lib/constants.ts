@@ -62,7 +62,38 @@ export const ELECTIVE_KEYWORDS = {
   UNIVERSITY: "University",
 } as const;
 
+// Course code equivalences: the same course appears under different codes across
+// department plans. Each alias maps to a single canonical code so a course taken
+// under one code counts everywhere the other code is referenced (completion,
+// prerequisites, out-of-plan detection, graph status).
+//
+// CCS3601 (CS/IS/GM plans) and CAI3101 (AI/SE/CY plans) are both
+// "Introduction to Artificial Intelligence".
+const COURSE_CODE_EQUIVALENCE: Record<string, string> = {
+  CCS3601: "CAI3101",
+};
+
+/**
+ * Normalize a raw course code for comparison: strip non-alphanumeric characters,
+ * uppercase, then resolve known cross-department equivalences to a canonical code.
+ * Use this anywhere two course codes are compared.
+ */
+export function canonicalizeCode(code: string): string {
+  const normalized = code.replace(/[^A-Z0-9]/gi, "").toUpperCase();
+  return COURSE_CODE_EQUIVALENCE[normalized] ?? normalized;
+}
+
 export const CREDIT_HOURS_PER_COURSE = 3;
+
+// Courses worth 2 credit hours instead of the standard 3.
+// Covers all University Requirements courses (UNR prefix) plus Entrepreneurship
+// Skills (CNC1401). Other CNC courses (business electives) are standard 3-credit.
+export const TWO_CREDIT_HOURS = 2;
+export const TWO_CREDIT_COURSE_CODES = new Set<string>(["CNC1401"]);
+
+export function isTwoCreditCourse(code: string): boolean {
+  return code.startsWith(COURSE_PREFIXES.UNIVERSITY) || TWO_CREDIT_COURSE_CODES.has(code);
+}
 
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 export const ALLOWED_FILE_TYPES = ["application/pdf"];

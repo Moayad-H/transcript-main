@@ -4,7 +4,7 @@ import { useState } from "react";
 import { FileUpload } from "@/components/FileUpload";
 import { ReportDisplay } from "@/components/ReportDisplay";
 import { Header } from "@/components/Header";
-import { TranscriptData, AnalysisReport } from "@/types";
+import { TranscriptData, AnalysisReport, Department } from "@/types";
 import { parseTranscriptPDF } from "@/lib/analysis/transcriptParser";
 import { generateReport } from "@/lib/analysis/reportGenerator";
 
@@ -19,7 +19,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleFileUpload = async (file: File) => {
+  const handleFileUpload = async (file: File, department?: Department) => {
     setLoading(true);
     setError(null);
 
@@ -30,6 +30,11 @@ export default function Home() {
 
       // Parse transcript - extracts student info, courses, and department
       const data = await parseTranscriptPDF(buffer);
+
+      // Apply user-selected department, overriding the one inferred from the PDF
+      if (department) {
+        data.department = department;
+      }
 
       setTranscriptData(data);
 

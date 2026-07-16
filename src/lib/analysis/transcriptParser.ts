@@ -4,7 +4,7 @@
  */
 
 import { StudiedCourse, TranscriptData, Department } from "@/types";
-import { GRADES } from "@/lib/constants";
+import { GRADES, TWO_CREDIT_HOURS, CREDIT_HOURS_PER_COURSE, isTwoCreditCourse, canonicalizeCode } from "@/lib/constants";
 
 interface PDFTextItem {
   str: string;
@@ -235,21 +235,29 @@ function processRemedialCourses(courses: StudiedCourse[]): {
 export function getStudiedCourseCodes(courses: StudiedCourse[]): string[] {
   const completedGrades = new Set([...GRADES.PASSING, ...GRADES.UNGRADED] as string[]);
   
-  // Normalize codes: keep only alphanumeric characters (remove spaces, *, etc.)
+  // Normalize codes (alphanumeric only, uppercased) and resolve cross-department
+  // equivalences so a course taken under either code counts as the same course.
   return courses
     .filter(course => completedGrades.has(course.grade))
-    .map((course) =>
-    course.code.replace(/[^A-Z0-9]/gi, "").toUpperCase()
-  );
+    .map((course) => canonicalizeCode(course.code));
 }
 
 /**
- * Get withdrawn or failed courses
+ * Get withdrawn or failed courses.
+ * A course that was later retaken and passed (or is currently in progress) is
+ * considered completed and excluded from this list.
  */
 export function getWithdrawnFailedCourses(courses: StudiedCourse[]): StudiedCourse[] {
   const failedOrWithdrawnGrades = new Set([...GRADES.FAILING, ...GRADES.WITHDRAWN] as string[]);
-  
-  return courses.filter(course => failedOrWithdrawnGrades.has(course.grade));
+
+  // Codes of courses that have a passing/ungraded attempt (i.e. completed on retake)
+  const completedCodes = new Set(getStudiedCourseCodes(courses));
+
+  return courses.filter(
+    (course) =>
+      failedOrWithdrawnGrades.has(course.grade) &&
+      !completedCodes.has(canonicalizeCode(course.code))
+  );
 }
 
 /**
@@ -262,17 +270,17 @@ export function getUngradedCourses(courses: StudiedCourse[]): StudiedCourse[] {
 /**
  * Credit value for a single course
  * Standard courses: 3 credit hours
- * UNR and CNC courses: 2 credit hours
+ * University Requirements (UNR*) and Entrepreneurship Skills (CNC1401): 2 credit hours
  */
 function getCourseCreditValue(course: StudiedCourse): number {
-  const isTwoCredit = course.code.startsWith("UNR") || course.code.startsWith("CNC");
-  return isTwoCredit ? 2 : 3;
+  if(course.code == "GLA0001" || course.code == "EBA0201" ) {return 0;} // Ignore Remedial English and Precalculus for credit hours
+  return isTwoCreditCourse(course.code) ? TWO_CREDIT_HOURS : CREDIT_HOURS_PER_COURSE;
 }
 
 /**
  * Calculate total credit hours from completed courses
  * Standard courses: 3 credit hours
- * UNR and CNC courses: 2 credit hours
+ * UNR and CNC courses in Semester 1 & 2: 2 credit hours
  * Professional training: 0 credit hours
  */
 export function calculateCreditHours(
@@ -283,15 +291,25 @@ export function calculateCreditHours(
   const completedCourses = courses.filter((course) =>
     validGrades.includes(course.grade)
   );
+  
 
+  // Count each course once, even if it appears under equivalent codes
+  // (e.g. CCS3601 and CAI3101 are the same course).
+  const seen = new Set<string>();
   let totalCredits = 0;
   for (const course of completedCourses) {
-    totalCredits += getCourseCreditValue(course);
+    const canonical = canonicalizeCode(course.code);
+    if (seen.has(canonical)) continue;
+    seen.add(canonical);
+    var courseCreditValue = getCourseCreditValue(course);
+    console.log(`Adding ${course.code} (${course.title}) - ${courseCreditValue} credits`);
+    totalCredits += courseCreditValue;
   }
 
   // Handle professional training (they were counted as 3 in the loop above if they don't start with UNR/CNC)
   // Usually professional training starts with CCS (e.g. CCS4001, CCS4002), so they would be 3 credits.
   // The current logic subtracts (professionalTrainingCount * 3) from total.
+  console.log(`Total credits before professional training adjustment: ${totalCredits} - Professional training count: ${professionalTrainingCount} - Adjusted total: ${totalCredits - professionalTrainingCount * 3}`);
   return totalCredits - professionalTrainingCount * 3;
 }
 
@@ -299,8 +317,12 @@ export function calculateCreditHours(
  * Calculate credit hours pending from courses graded "U" (ungraded/in progress)
  */
 export function calculateUngradedCreditHours(courses: StudiedCourse[]): number {
-  return getUngradedCourses(courses).reduce(
-    (total, course) => total + getCourseCreditValue(course),
-    0
-  );
+  // Count each course once, even under equivalent codes.
+  const seen = new Set<string>();
+  return getUngradedCourses(courses).reduce((total, course) => {
+    const canonical = canonicalizeCode(course.code);
+    if (seen.has(canonical)) return total;
+    seen.add(canonical);
+    return total + getCourseCreditValue(course);
+  }, 0);
 }
