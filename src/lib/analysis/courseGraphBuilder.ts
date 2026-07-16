@@ -363,8 +363,15 @@ export async function buildCourseGraph(
     if (plan) {
       let semester = plan.codeToSemester.get(norm);
       if (semester === undefined && isElectiveSlot) {
-        const queue = plan.electiveQueues[category!] ?? [];
-        semester = queue[electiveQueueIdx[category!]++];
+        // "Professional Ethics" trips the PROFESSIONAL keyword but isn't one of
+        // the plan's Professional Training slots — leave it unplaced (it lands
+        // in the trailing "Other" column) so the real trainings keep the queue.
+        const isProfessionalNonTraining =
+          category === "PROFESSIONAL" && !/training/i.test(course.title);
+        if (!isProfessionalNonTraining) {
+          const queue = plan.electiveQueues[category!] ?? [];
+          semester = queue[electiveQueueIdx[category!]++];
+        }
       }
       if (semester !== undefined) nodeSemester.set(id, semester);
     }
