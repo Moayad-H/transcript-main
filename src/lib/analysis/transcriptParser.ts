@@ -269,7 +269,7 @@ export function calculateCreditHours(
   courses: StudiedCourse[],
   professionalTrainingCount: number = 0
 ): number {
-  const validGrades = [...GRADES.PASSING, "U"];
+  const validGrades = [...GRADES.PASSING];
   const completedCourses = courses.filter((course) =>
     validGrades.includes(course.grade)
   );
