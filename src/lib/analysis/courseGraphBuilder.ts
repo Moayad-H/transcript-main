@@ -38,9 +38,16 @@ export interface GraphCourseEdge {
   target: string;
 }
 
+/** A layout column header (e.g. a semester), for rendering above its column. */
+export interface GraphColumn {
+  x: number;
+  label: string;
+}
+
 export interface CourseGraph {
   nodes: GraphCourseNode[];
   edges: GraphCourseEdge[];
+  columns: GraphColumn[];
 }
 
 // Layout spacing (px)
@@ -57,6 +64,91 @@ function electiveCategory(title: string): string | null {
   if (title.includes(ELECTIVE_KEYWORDS.MAJOR)) return "MAJOR";
   if (title.includes(ELECTIVE_KEYWORDS.UNIVERSITY)) return "UNIVERSITY";
   return null;
+}
+
+/**
+ * The official department study plan, parsed from
+ * `public/data/department_plans/{DEPT}.md`. It tells us which semester (1..8)
+ * each course belongs to, so the graph columns follow the real curriculum
+ * sequence instead of a derived prerequisite depth.
+ */
+interface PlanSemesters {
+  /** canonical course code -> semester number (real, coded courses). */
+  codeToSemester: Map<string, number>;
+  /** category -> semesters of its placeholder rows, in plan reading order. */
+  electiveQueues: Record<string, number[]>;
+  /** Highest semester seen (for placing unmatched nodes in a trailing column). */
+  maxSemester: number;
+}
+
+/**
+ * Strip footnote markers a plan may attach to a code (a leading "1"/"2"
+ * reference number or a trailing "*") before canonicalizing. Plan codes like
+ * "1EBA0201", "2GLA0001", or "EBA 2204" then line up with the CSV/transcript.
+ */
+function planCodeToCanonical(rawCode: string): string {
+  return normalizeCode(rawCode.replace(/^\s*\d+/, "").replace(/\*/g, ""));
+}
+
+/**
+ * Fetch and parse a department's markdown study plan into semester assignments.
+ * Returns null if the plan can't be loaded, so the caller can fall back to the
+ * prerequisite-depth layout.
+ */
+async function loadPlanSemesters(
+  department: Department
+): Promise<PlanSemesters | null> {
+  let text: string;
+  try {
+    const res = await fetch(`/data/department_plans/${department}.md`);
+    if (!res.ok) return null;
+    text = await res.text();
+  } catch {
+    return null;
+  }
+
+  const codeToSemester = new Map<string, number>();
+  const electiveQueues: Record<string, number[]> = {
+    PROFESSIONAL: [],
+    SCIENCE: [],
+    MAJOR: [],
+    UNIVERSITY: [],
+  };
+  let currentSemester = 0;
+  let maxSemester = 0;
+
+  for (const line of text.split(/\r?\n/)) {
+    const semHeader = line.match(/^#+\s*Semester\s+(\d+)/i);
+    if (semHeader) {
+      currentSemester = parseInt(semHeader[1], 10);
+      maxSemester = Math.max(maxSemester, currentSemester);
+      continue;
+    }
+    // Table rows only ("| code | title |"); skip the header/separator rows.
+    if (!line.trimStart().startsWith("|") || currentSemester === 0) continue;
+    const cells = line
+      .split("|")
+      .slice(1, -1)
+      .map((c) => c.trim());
+    if (cells.length < 2) continue;
+    const [rawCode, title] = cells;
+    if (!rawCode || /course\s*code/i.test(rawCode) || /^-+$/.test(rawCode)) {
+      continue;
+    }
+
+    const category = electiveCategory(title);
+    if (category) {
+      electiveQueues[category].push(currentSemester);
+    } else {
+      const canon = planCodeToCanonical(rawCode);
+      if (canon && !codeToSemester.has(canon)) {
+        codeToSemester.set(canon, currentSemester);
+      }
+    }
+  }
+
+  if (codeToSemester.size === 0) return null;
+  return { codeToSemester, electiveQueues, maxSemester };
 }
 
 /**
@@ -85,14 +177,44 @@ function parsePrereq(prereqCode: string): {
 }
 
 /**
- * Assign each node an x/y position using a layered layout where the column is
- * the longest prerequisite chain depth (left = no prereqs, right = deepest).
+ * Assign x/y positions from the study plan: each column is a semester (1..8),
+ * and nodes stack top-to-bottom within their semester's column. Unmatched
+ * nodes are grouped in a trailing column so they don't scatter.
+ */
+function layoutBySemester(
+  nodes: GraphCourseNode[],
+  nodeSemester: Map<string, number>,
+  maxSemester: number
+): GraphColumn[] {
+  // Column for anything the plan didn't place (one past the last semester).
+  const fallbackCol = maxSemester; // semesters are 1-based -> columns 0..max-1
+  const rowByCol = new Map<number, number>();
+  for (const n of nodes) {
+    const sem = nodeSemester.get(n.id);
+    const col = sem ? sem - 1 : fallbackCol;
+    const row = rowByCol.get(col) ?? 0;
+    n.position = { x: col * COL_SPACING, y: row * ROW_SPACING };
+    rowByCol.set(col, row + 1);
+  }
+
+  // One header per column that actually has nodes.
+  return [...rowByCol.keys()]
+    .sort((a, b) => a - b)
+    .map((col) => ({
+      x: col * COL_SPACING,
+      label: col === fallbackCol ? "Other" : `Term ${col + 1}`,
+    }));
+}
+
+/**
+ * Fallback layout (no study plan available): a layered layout where the column
+ * is the longest prerequisite chain depth (left = no prereqs, right = deepest).
  * Elective slots are pushed into a trailing column so they don't scatter.
  */
-function layout(
+function layoutByDepth(
   nodes: GraphCourseNode[],
   incoming: Map<string, string[]>
-): void {
+): GraphColumn[] {
   const depthCache = new Map<string, number>();
   const inProgress = new Set<string>();
 
@@ -136,6 +258,9 @@ function layout(
   electiveNodes.forEach((n, i) => {
     n.position = { x: electiveCol * COL_SPACING, y: i * ROW_SPACING };
   });
+
+  // Depth columns aren't semesters, so they get no "Term" headers.
+  return [];
 }
 
 /**
@@ -147,7 +272,21 @@ export async function buildCourseGraph(
   transcriptData: TranscriptData,
   report: AnalysisReport
 ): Promise<CourseGraph> {
-  const { courses } = await loadDepartmentData(department);
+  const [{ courses }, plan] = await Promise.all([
+    loadDepartmentData(department),
+    loadPlanSemesters(department),
+  ]);
+
+  // Running cursor into each category's plan-semester queue, so the Nth
+  // elective slot of a category maps to the Nth placeholder in the plan.
+  const electiveQueueIdx: Record<string, number> = {
+    PROFESSIONAL: 0,
+    SCIENCE: 0,
+    MAJOR: 0,
+    UNIVERSITY: 0,
+  };
+  // node id -> semester number, from the study plan (for the column layout).
+  const nodeSemester = new Map<string, number>();
 
   // Status lookup sets (all normalized).
   const studiedSet = new Set(getStudiedCourseCodes(transcriptData.courses));
@@ -219,6 +358,17 @@ export async function buildCourseGraph(
       status = "blocked";
     }
 
+    // Semester (study-plan column) for this node: coded courses by canonical
+    // code; elective/professional slots by consuming their category's queue.
+    if (plan) {
+      let semester = plan.codeToSemester.get(norm);
+      if (semester === undefined && isElectiveSlot) {
+        const queue = plan.electiveQueues[category!] ?? [];
+        semester = queue[electiveQueueIdx[category!]++];
+      }
+      if (semester !== undefined) nodeSemester.set(id, semester);
+    }
+
     nodes.push({
       id,
       code: course.code || (isElectiveSlot ? "Elective" : ""),
@@ -253,7 +403,12 @@ export async function buildCourseGraph(
     resolvedIncoming.set(nodeId, resolved);
   }
 
-  layout(nodes, resolvedIncoming);
+  // Position by study-plan semesters when available; otherwise fall back to the
+  // derived prerequisite-depth layout.
+  const columns =
+    plan && nodeSemester.size > 0
+      ? layoutBySemester(nodes, nodeSemester, plan.maxSemester)
+      : layoutByDepth(nodes, resolvedIncoming);
 
-  return { nodes, edges };
+  return { nodes, edges, columns };
 }

@@ -41,7 +41,7 @@ Both files independently implement near-identical logic — `getStudiedCourseCod
    - Loads department CSVs via `csvLoader.ts` (`public/data/courses/{DEPT} Courses.csv`, `public/data/majors/Major {DEPT}.csv`, `public/data/electives/science.csv`, `public/data/electives/university.csv`).
    - Delegates eligibility/requirement logic to `courseAnalyzer.ts` (prerequisite checks, elective matching, out-of-plan detection, professional training).
    - Assembles the flat `AnalysisReport` (`src/types/report.ts`).
-3. `ReportDisplay.tsx` renders the `AnalysisReport`; `ReportSection.tsx` is the reusable list renderer for each category.
+3. `ReportDisplay.tsx` renders the `AnalysisReport`; `ReportSection.tsx` is the reusable list renderer for each category. It also holds a `"report" | "graph"` view toggle — the "Course Graph" tab lazy-loads `CourseGraphView.tsx` (via `next/dynamic`), passing both `report` and the raw `transcriptData`.
 
 There is no backend/API route (`src/app` has no subfolders) — everything runs in the browser. `/api/download-report` is referenced in `ReportDisplay.tsx` but falls back to a pure client-side text download (`reportFormatter.ts` + `helpers.ts`) if the fetch fails, since no such route currently exists in the repo.
 
@@ -59,3 +59,15 @@ There is no backend/API route (`src/app` has no subfolders) — everything runs 
 Departments are `CS | SE | IS | CY | AI | GM` (`constants.ts`). Each has a course-plan CSV, a major-electives CSV, and shares the two elective CSVs (science, university). Course prefixes map to categories (`COURSE_PREFIXES`): `CCS` (CS core), `EBA` (engineering/math), `UNR` (university), `CIS`/`CAI`/`CCY` (major-specific), `CNC` (entrepreneurship), `CIT` (IT — excluded from out-of-plan warnings per `logic.md`). Elective placeholder rows in the course-plan CSVs are detected by title keyword (`ELECTIVE_KEYWORDS`: "Prof", "Major", "Science El", "University") rather than course code.
 
 Special remedial courses (`SPECIAL_COURSES`) have cross-dependency rules — e.g. Calculus I (`EBA1203`) is blocked while Precalculus (`EBA0201`) remediation is still owed; `UNR1403` is blocked while Remedial English (`GLA0001`) is still owed. This logic lives in `courseAnalyzer.ts`'s remedial handling and is documented in `logic.md`.
+
+### Course-code canonicalization
+
+`canonicalizeCode()` (`constants.ts`) is the single normalization used everywhere two codes are compared — it strips non-alphanumerics, uppercases, and resolves cross-plan equivalences (e.g. `CCS3601` ⇄ `CAI3101`, both "Introduction to AI"). The transcript parser, `courseAnalyzer.ts`, and `courseGraphBuilder.ts` all key off it, so a course taken under one code counts everywhere the equivalent code appears. When adding a code alias, add it to `COURSE_CODE_EQUIVALENCE`, not to individual call sites. `isTwoCreditCourse()` (UNR-prefixed or `CNC1401`) is the shared 2-vs-3 credit rule.
+
+### Course prerequisite graph view
+
+`CourseGraphView.tsx` (React Flow / `@xyflow/react`) renders the department's full course plan as a prerequisite DAG, color-coded by the student's status. The pure, testable node/edge builder is `courseGraphBuilder.ts` (`buildCourseGraph`), which reuses the same canonicalization and prerequisite-parsing rules as the report so the graph never disagrees with it. Node status is derived from the `AnalysisReport` sets (completed/available/ungraded/failed) plus per-category elective-slot counting; edges come from parsing each course's `prerequisiteCode` (a `"… CR"` prerequisite is a credit-hour gate, rendered as a badge with no edge rather than an edge).
+
+**Layout is driven by the study plans in `public/data/department_plans/{DEPT}.md`** — one markdown table per semester (1–8). `loadPlanSemesters()` parses these into a code→semester map plus per-category elective-slot queues; `layoutBySemester()` then makes each column a semester. If a plan file is missing/unparseable, it falls back to `layoutByDepth()` (columns = longest prerequisite-chain depth). Plan codes carry footnote noise the parser strips (leading `1`/`2` reference numbers, trailing `*`, embedded spaces) before canonicalizing to match the CSVs.
+
+The view has two interactive modes layered over the base graph (styling is recomputed via `useMemo`, never by rebuilding the graph): **Manual planning** (click a node to cycle Auto → Registered → Finished → Not taken; availability and the live achieved-credit-hour tally recompute downstream from prerequisites and credit gates) and a **GPA calculator** (project hypothetical grades onto registered/ungraded courses; grade points use the CCIT scale in `CourseGraphView.tsx`, distinct from `constants.ts` `GRADES`). Clicking a node outside manual mode highlights its full transitive prerequisite chain.

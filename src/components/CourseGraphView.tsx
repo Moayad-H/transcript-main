@@ -183,7 +183,18 @@ function CourseNode({ data }: NodeProps<Node<CourseNodeData>>) {
   );
 }
 
-const nodeTypes = { course: CourseNode };
+/** Non-interactive column header rendered above each semester's column. */
+function TermHeaderNode({ data }: NodeProps<Node<{ label: string }>>) {
+  return (
+    <div className="w-56 text-center select-none pointer-events-none">
+      <span className="inline-block text-lg font-bold uppercase tracking-wide text-gray-800 bg-white/80 border border-gray-400 rounded px-15 py-3 shadow-sm">
+        {data.label}
+      </span>
+    </div>
+  );
+}
+
+const nodeTypes = { course: CourseNode, term: TermHeaderNode };
 
 const LEGEND: CourseStatus[] = [
   "completed",
@@ -201,6 +212,8 @@ export default function CourseGraphView({
   const [graph, setGraph] = useState<{ nodes: Node[]; edges: Edge[] } | null>(
     null
   );
+  // Non-interactive semester column headers ("Term 1", "Term 2", …).
+  const [termNodes, setTermNodes] = useState<Node[]>([]);
   const [error, setError] = useState<string | null>(null);
   // Currently selected course node (click to highlight its prerequisites).
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -240,7 +253,17 @@ export default function CourseGraphView({
           markerEnd: { type: MarkerType.ArrowClosed },
           style: { stroke: "#94a3b8" },
         }));
+        // Column headers sit just above the top row of course cards.
+        const headers: Node[] = result.columns.map((c) => ({
+          id: `term-${c.x}`,
+          type: "term",
+          position: { x: c.x, y: -72 },
+          data: { label: c.label },
+          draggable: false,
+          selectable: false,
+        }));
         setGraph({ nodes, edges });
+        setTermNodes(headers);
         setSelectedId(null);
         // A fresh transcript invalidates any manual planning overrides and
         // projected grades.
@@ -262,7 +285,9 @@ export default function CourseGraphView({
 
   const miniMapColor = useMemo(
     () => (node: Node) =>
-      STATUS_STYLES[(node.data as CourseNodeData).status]?.mini ?? "#9ca3af",
+      node.type === "term"
+        ? "#989A9C"
+        : STATUS_STYLES[(node.data as CourseNodeData).status]?.mini ?? "#9ca3af",
     []
   );
 
@@ -408,7 +433,7 @@ export default function CourseGraphView({
   // Apply status/selection styling to nodes without rebuilding the graph.
   const displayNodes = useMemo<Node[]>(() => {
     if (!graph) return [];
-    return graph.nodes.map((n) => {
+    const courseNodes = graph.nodes.map((n) => {
       const status = effectiveStatus.get(n.id) ?? (n.data as CourseNodeData).status;
       const inChain = highlightSet.has(n.id);
       const selecting = activeSelection != null;
@@ -430,7 +455,9 @@ export default function CourseGraphView({
         },
       };
     });
-  }, [graph, effectiveStatus, manualMode, overrides, activeSelection, highlightSet]);
+    // Headers are static; append them so they render above the columns.
+    return [...termNodes, ...courseNodes];
+  }, [graph, termNodes, effectiveStatus, manualMode, overrides, activeSelection, highlightSet]);
 
   const displayEdges = useMemo<Edge[]>(() => {
     if (!graph) return [];
@@ -455,6 +482,7 @@ export default function CourseGraphView({
 
   const handleNodeClick = useCallback(
     (_: unknown, node: Node) => {
+      if (node.type === "term") return; // headers aren't interactive
       if (manualMode) {
         // Cycle the override: Auto -> Finished -> Registered -> Not taken -> Auto.
         setOverrides((prev) => {
