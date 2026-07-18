@@ -19,16 +19,22 @@ import {
 /**
  * Get elective courses that student has completed
  * Ports Python's get_elective function
+ * Excludes ungraded (U) courses — they are in-progress, not completed
  */
 export function getCompletedElectives(
-  studiedCodes: string[],
+  studiedCourses: StudiedCourse[],
   electiveCourses: ElectiveCourse[]
 ): ElectiveCourse[] {
-  const studiedSet = new Set(studiedCodes.map((code) => canonicalizeCode(code)));
+  const passingGrades = new Set([...GRADES.PASSING] as string[]);
+  const completedCodes = new Set(
+    studiedCourses
+      .filter((c) => passingGrades.has(c.grade))
+      .map((c) => canonicalizeCode(c.code))
+  );
   const electives: ElectiveCourse[] = [];
 
   for (const elective of electiveCourses) {
-    if (studiedSet.has(canonicalizeCode(elective.code))) {
+    if (completedCodes.has(canonicalizeCode(elective.code))) {
       electives.push(elective);
     }
   }

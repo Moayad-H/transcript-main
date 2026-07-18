@@ -60,15 +60,15 @@ export async function generateReportClient(
 
   // Get completed electives
   const completedMajorElectives = getCompletedElectives(
-    studiedCodes,
+    transcriptData.courses,
     majorElectives
   );
   const completedScienceElectives = getCompletedElectives(
-    studiedCodes,
+    transcriptData.courses,
     cleanScienceElectives
   );
   const completedUniversityElectives = getCompletedElectives(
-    studiedCodes,
+    transcriptData.courses,
     cleanUniversityElectives
   );
 
