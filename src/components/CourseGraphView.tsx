@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -15,12 +15,18 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { AnalysisReport, TranscriptData, Department } from "@/types";
-import { canonicalizeCode, isTwoCreditCourse } from "@/lib/constants";
+import {
+  canonicalizeCode,
+  isTwoCreditCourse,
+  DEPARTMENTS,
+  DEPARTMENT_NAMES,
+} from "@/lib/constants";
 import {
   buildCourseGraph,
   CourseStatus,
   GraphCourseNode,
 } from "@/lib/analysis/courseGraphBuilder";
+import { generateReport } from "@/lib/analysis/reportGenerator";
 
 // GPA grade points (per the CCIT scale). U/W/I/F carry 0 points.
 const GRADE_POINTS: Record<string, number> = {
@@ -208,9 +214,21 @@ const LEGEND: CourseStatus[] = [
 ];
 
 export default function CourseGraphView({
-  report,
+  report: initialReport,
   transcriptData,
 }: CourseGraphViewProps) {
+  // The department currently viewed. Defaults to the transcript's detected
+  // department but can be switched to see the same transcript against another
+  // department's plan.
+  const [activeDept, setActiveDept] = useState<Department>(
+    initialReport.department as Department
+  );
+  // The report driving the graph. For the detected department this is the
+  // report passed in; for any other department it's regenerated on the fly
+  // from the same transcript.
+  const [report, setReport] = useState<AnalysisReport>(initialReport);
+  const [deptLoading, setDeptLoading] = useState(false);
+
   const [graph, setGraph] = useState<{ nodes: Node[]; edges: Edge[] } | null>(
     null
   );
@@ -225,6 +243,42 @@ export default function CourseGraphView({
   // GPA calculator: assign hypothetical grades to registered courses.
   const [gpaMode, setGpaMode] = useState(false);
   const [projGrades, setProjGrades] = useState<Map<string, string>>(new Map());
+
+  // A fresh transcript (new upload) resets the viewed department and report
+  // back to the detected one.
+  useEffect(() => {
+    setActiveDept(initialReport.department as Department);
+    setReport(initialReport);
+  }, [initialReport]);
+
+  // Guards against a stale regenerated report landing after the user has
+  // switched departments again.
+  const deptRequestRef = useRef(0);
+
+  // Switch the viewed department: reuse the passed report for the detected
+  // department, otherwise regenerate it from the same transcript.
+  const handleDeptChange = useCallback(
+    (dept: Department) => {
+      const token = ++deptRequestRef.current;
+      setActiveDept(dept);
+      if (dept === initialReport.department) {
+        setDeptLoading(false);
+        setReport(initialReport);
+        return;
+      }
+      setDeptLoading(true);
+      generateReport(initialReport.studentName, dept, transcriptData)
+        .then((r) => {
+          if (deptRequestRef.current !== token) return; // superseded
+          setReport(r);
+          setDeptLoading(false);
+        })
+        .catch(() => {
+          if (deptRequestRef.current === token) setDeptLoading(false);
+        });
+    },
+    [initialReport, transcriptData]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -549,6 +603,31 @@ export default function CourseGraphView({
     <div className="p-6">
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-3 mb-3">
+        {/* Department switcher: view this transcript against another plan. */}
+        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          Department:
+          <select
+            value={activeDept}
+            onChange={(e) => handleDeptChange(e.target.value as Department)}
+            className="text-sm border border-gray-300 rounded-md px-2 py-1.5 bg-white"
+          >
+            {DEPARTMENTS.map((d) => (
+              <option key={d} value={d}>
+                {DEPARTMENT_NAMES[d]} ({d})
+                {d === initialReport.department ? " — detected" : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+        {deptLoading && (
+          <span className="text-xs text-gray-500">Loading plan…</span>
+        )}
+        {activeDept !== initialReport.department && !deptLoading && (
+          <span className="text-xs text-amber-600">
+            Viewing against {activeDept} plan (not the detected department)
+          </span>
+        )}
+
         <button
           type="button"
           onClick={() => {

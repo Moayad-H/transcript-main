@@ -72,7 +72,7 @@ Manual department choice is supported (user can override the auto-detected depar
 | `electives/science.csv`, `electives/university.csv` | Shared across all depts. |
 | `department_plans/{DEPT}.md` | Per-semester study plan (markdown tables, semesters 1–8) — **drives graph column layout.** |
 
-Departments: **CS, SE, IS, CY, AI, GM** (`GM` = Game Development). Note: no `Major GM.csv` currently exists.
+Departments: **CS, SE, IS, CY, AI, GM** (`GM` = Mulitmedia). Note: no `Major GM.csv` currently exists.
 
 ---
 

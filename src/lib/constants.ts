@@ -12,7 +12,7 @@ export const DEPARTMENT_NAMES: Record<Department, string> = {
   IS: "Information Systems",
   CY: "Cybersecurity",
   AI: "Artificial Intelligence",
-  GM: "Game Development",
+  GM: "Multimedia",
 };
 
 export const GRADES = {
