@@ -4,7 +4,7 @@
  */
 
 import { StudiedCourse, TranscriptData, Department } from "@/types";
-import { GRADES, TWO_CREDIT_HOURS, CREDIT_HOURS_PER_COURSE, isTwoCreditCourse, canonicalizeCode } from "@/lib/constants";
+import { GRADES, TWO_CREDIT_HOURS, CREDIT_HOURS_PER_COURSE, isTwoCreditCourse, canonicalizeCode, PRACTICAL_TRAINING_CODE } from "@/lib/constants";
 
 interface PDFTextItem {
   str: string;
@@ -332,7 +332,17 @@ export function calculateCreditHours(
   // Usually professional training starts with CCS (e.g. CCS4001, CCS4002), so they would be 3 credits.
   // The current logic subtracts (professionalTrainingCount * 3) from total.
   console.log(`Total credits before professional training adjustment: ${totalCredits} - Professional training count: ${professionalTrainingCount} - Adjusted total: ${totalCredits - professionalTrainingCount * 3}`);
-  return totalCredits - professionalTrainingCount * 3;
+
+  // Practical Training (CIT4000) is pass/fail, like Professional Training, and
+  // doesn't count toward credit hours even though it was added to the loop above.
+  const practicalTraining = completedCourses.find(
+    (course) => canonicalizeCode(course.code) === canonicalizeCode(PRACTICAL_TRAINING_CODE)
+  );
+  const practicalTrainingCredits = practicalTraining
+    ? getCourseCreditValue(practicalTraining)
+    : 0;
+
+  return totalCredits - professionalTrainingCount * 3 - practicalTrainingCredits;
 }
 
 /**

@@ -44,6 +44,13 @@ export const SPECIAL_COURSES = {
   CALCULUS_I: "EBA1203",
 } as const;
 
+// Practical Training: pass/fail core course, registerable once the student
+// has reached 90 credit hours (gated the same way as other "N CR" prereqs).
+// Like Professional Training, it doesn't count toward total credit hours.
+export const PRACTICAL_TRAINING_CODE = "CIT4000";
+export const PRACTICAL_TRAINING_MIN_CREDIT_HOURS = 90;
+export const GRADUATION_CREDIT_HOURS = 132;
+
 export const COURSE_PREFIXES = {
   COMPUTER_SCIENCE: "CCS",
   ENGINEERING: "EBA",

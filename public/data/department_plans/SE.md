@@ -93,3 +93,4 @@
 | CSExxxx | Major Elective |
 | CSExxxx | Major Elective |
 | CITxxxx | Professional Training III |
+| CIT4000 | Practical Training |

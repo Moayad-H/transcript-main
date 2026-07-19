@@ -21,10 +21,15 @@ import {
   getCompletedElectives,
   getElectiveRequirements,
   getProfessionalTraining,
+  getPracticalTrainingStatus,
   removeElectivesInCore,
   getAvailableCourses,
   getOutOfPlanCourses,
 } from "./courseAnalyzer";
+import {
+  PRACTICAL_TRAINING_MIN_CREDIT_HOURS,
+  GRADUATION_CREDIT_HOURS,
+} from "@/lib/constants";
 
 /**
  * Generate complete analysis report for a student
@@ -64,6 +69,7 @@ export async function generateReport(
   const ungradedCourses = getUngradedCourses(transcriptData.courses);
   const withdrawnFailedCourses = getWithdrawnFailedCourses(transcriptData.courses);
   const professionalTraining = getProfessionalTraining(transcriptData.courses);
+  const practicalTraining = getPracticalTrainingStatus(transcriptData.courses);
 
   // Calculate credit hours
   const creditHours = calculateCreditHours(
@@ -109,6 +115,38 @@ export async function generateReport(
     completedUniversityElectives
   );
 
+  const remainingMajorElectives = Math.max(
+    0,
+    requirements.majorElectives - completedMajorElectives.length
+  );
+  const remainingScienceElectives = Math.max(
+    0,
+    requirements.scienceElectives - completedScienceElectives.length
+  );
+  const remainingUniversityRequirements = Math.max(
+    0,
+    requirements.universityRequirements - completedUniversityElectives.length
+  );
+  const remainingProfessionalTraining = Math.max(
+    0,
+    requirements.professionalTraining - professionalTraining.length
+  );
+
+  // Graduation: the 132 credit-hour requirement plus every outstanding
+  // requirement (electives, professional + practical training) cleared.
+  const graduationCreditRequirementMet = creditHours >= GRADUATION_CREDIT_HOURS;
+  const creditHoursToGraduation = Math.max(
+    0,
+    GRADUATION_CREDIT_HOURS - creditHours
+  );
+  const graduationEligible =
+    graduationCreditRequirementMet &&
+    remainingMajorElectives === 0 &&
+    remainingScienceElectives === 0 &&
+    remainingUniversityRequirements === 0 &&
+    remainingProfessionalTraining === 0 &&
+    practicalTraining.completed;
+
   return {
     studentName,
     department,
@@ -116,29 +154,25 @@ export async function generateReport(
     withdrawnFailedCourses,
     availableCourses,
     completedMajorElectives,
-    remainingMajorElectives: Math.max(
-      0,
-      requirements.majorElectives - completedMajorElectives.length
-    ),
+    remainingMajorElectives,
     completedScienceElectives,
-    remainingScienceElectives: Math.max(
-      0,
-      requirements.scienceElectives - completedScienceElectives.length
-    ),
+    remainingScienceElectives,
     completedUniversityRequirements: completedUniversityElectives,
-    remainingUniversityRequirements: Math.max(
-      0,
-      requirements.universityRequirements - completedUniversityElectives.length
-    ),
+    remainingUniversityRequirements,
     completedProfessionalTraining: professionalTraining,
-    remainingProfessionalTraining: Math.max(
-      0,
-      requirements.professionalTraining - professionalTraining.length
-    ),
+    remainingProfessionalTraining,
+    practicalTrainingCompleted: practicalTraining.completed,
+    practicalTrainingUngraded: practicalTraining.ungraded,
+    practicalTrainingEligible: creditHours >= PRACTICAL_TRAINING_MIN_CREDIT_HOURS,
+    practicalTrainingWarning:
+      creditHours >= GRADUATION_CREDIT_HOURS && !practicalTraining.completed,
     outOfPlanCourses,
     totalCreditHours: creditHours,
     expectedCreditHours: creditHours + ungradedCreditHours,
     completedCourses: transcriptData.courses.length,
+    creditHoursToGraduation,
+    graduationCreditRequirementMet,
+    graduationEligible,
     gpa: transcriptData.gpa ?? null,
   };
 }
@@ -161,6 +195,17 @@ export function formatReportAsText(report: AnalysisReport): string {
   lines.push(`Completed Courses: ${report.completedCourses}`);
   if (report.gpa !== null) {
     lines.push(`G.P.A: ${report.gpa}`);
+  }
+  if (report.graduationEligible) {
+    lines.push("Graduation: ELIGIBLE — all requirements met (132+ Cr.)");
+  } else if (report.graduationCreditRequirementMet) {
+    lines.push(
+      "Graduation: 132 Cr. requirement met; requirements still outstanding"
+    );
+  } else {
+    lines.push(
+      `Graduation: ${report.creditHoursToGraduation} Cr. remaining to reach 132`
+    );
   }
   lines.push("");
 
@@ -261,6 +306,26 @@ export function formatReportAsText(report: AnalysisReport): string {
     });
   }
   lines.push(`Remaining: ${report.remainingProfessionalTraining} course(s)`);
+  lines.push("");
+
+  // Practical Training (CIT4000)
+  lines.push("-".repeat(60));
+  lines.push("PRACTICAL TRAINING (CIT4000):");
+  lines.push("-".repeat(60));
+  if (report.practicalTrainingCompleted) {
+    lines.push("Completed");
+  } else if (report.practicalTrainingUngraded) {
+    lines.push("Registered, grade pending");
+  } else if (report.practicalTrainingEligible) {
+    lines.push("Eligible to register (90+ credit hours reached)");
+  } else {
+    lines.push("Not yet eligible (requires 90 credit hours)");
+  }
+  if (report.practicalTrainingWarning) {
+    lines.push(
+      "WARNING: Student is near graduation (132+ credit hours) and has not completed CIT4000. Advise registering this course."
+    );
+  }
   lines.push("");
 
   // Out of plan courses

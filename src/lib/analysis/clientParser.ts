@@ -4,7 +4,7 @@
  */
 
 import { StudiedCourse, TranscriptData } from "@/types";
-import { GRADES, TWO_CREDIT_HOURS, CREDIT_HOURS_PER_COURSE, isTwoCreditCourse, canonicalizeCode } from "@/lib/constants";
+import { GRADES, TWO_CREDIT_HOURS, CREDIT_HOURS_PER_COURSE, isTwoCreditCourse, canonicalizeCode, PRACTICAL_TRAINING_CODE } from "@/lib/constants";
 
 /**
  * Parse PDF transcript on the client side
@@ -135,7 +135,16 @@ export function calculateCreditHours(
     totalCredits += getCourseCreditValue(course);
   }
 
-  return totalCredits - professionalTrainingCount * 3;
+  // Practical Training (CIT4000) is pass/fail, like Professional Training, and
+  // doesn't count toward credit hours even though it was added to the loop above.
+  const practicalTraining = completedCourses.find(
+    (course) => canonicalizeCode(course.code) === canonicalizeCode(PRACTICAL_TRAINING_CODE)
+  );
+  const practicalTrainingCredits = practicalTraining
+    ? getCourseCreditValue(practicalTraining)
+    : 0;
+
+  return totalCredits - professionalTrainingCount * 3 - practicalTrainingCredits;
 }
 
 /**

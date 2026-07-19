@@ -107,6 +107,14 @@ export function ReportDisplay({
                 <p className="font-semibold">{report.gpa}</p>
               </div>
             )}
+            <div>
+              <span className="text-blue-200">To Graduate:</span>
+              <p className="font-semibold">
+                {report.graduationCreditRequirementMet
+                  ? "132 Cr. met"
+                  : `${report.creditHoursToGraduation} Cr. left`}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -140,6 +148,107 @@ export function ReportDisplay({
 
         {view === "report" && (
           <>
+        {/* Graduation status */}
+        {report.graduationEligible ? (
+          <div className="mx-8 mt-6 flex items-start gap-3 rounded-lg border border-green-300 bg-green-50 p-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 flex-shrink-0 text-green-600"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <div>
+              <p className="font-semibold text-green-800">
+                Graduation requirements met
+              </p>
+              <p className="text-sm text-green-700">
+                Student has {report.totalCreditHours} credit hours (≥ 132) and
+                has cleared all remaining requirements. Eligible to graduate.
+              </p>
+            </div>
+          </div>
+        ) : report.graduationCreditRequirementMet ? (
+          <div className="mx-8 mt-6 flex items-start gap-3 rounded-lg border border-blue-300 bg-blue-50 p-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 flex-shrink-0 text-blue-600"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <div>
+              <p className="font-semibold text-blue-800">
+                132 Cr. credit requirement met
+              </p>
+              <p className="text-sm text-blue-700">
+                Student has {report.totalCreditHours} credit hours, but some
+                graduation requirements are still outstanding (see sections
+                below). Not yet eligible to graduate.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="mx-8 mt-6 flex items-start gap-3 rounded-lg border border-gray-300 bg-gray-50 p-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 flex-shrink-0 text-gray-500"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <div>
+              <p className="font-semibold text-gray-800">
+                {report.creditHoursToGraduation} credit hours to graduation
+              </p>
+              <p className="text-sm text-gray-600">
+                Student has {report.totalCreditHours} of the 132 credit hours
+                required to graduate.
+              </p>
+            </div>
+          </div>
+        )}
+        {report.practicalTrainingWarning && (
+          <div className="mx-8 mt-6 flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 flex-shrink-0 text-amber-500"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l6.28 11.18c.75 1.334-.213 2.987-1.742 2.987H3.72c-1.53 0-2.493-1.653-1.743-2.987l6.28-11.18zM11 14a1 1 0 11-2 0 1 1 0 012 0zm-.25-6.25a.75.75 0 00-1.5 0v3.5a.75.75 0 001.5 0v-3.5z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <div>
+              <p className="font-semibold text-amber-800">
+                Practical Training (CIT4000) not yet completed
+              </p>
+              <p className="text-sm text-amber-700">
+                Student has {report.totalCreditHours} credit hours and is near
+                graduation but has not completed CIT4000 – Practical
+                Training. Advise registering this course.
+              </p>
+            </div>
+          </div>
+        )}
         {/* Actions */}
         <div className="p-6 border-b flex gap-3 print:hidden">
           <button
@@ -378,6 +487,47 @@ export function ReportDisplay({
             <p className="text-sm font-medium text-gray-800 mt-4">
               Remaining: {report.remainingProfessionalTraining} course(s)
             </p>
+          </ReportSection>
+
+          {/* Practical Training (CIT4000) */}
+          <ReportSection
+            title="Practical Training (CIT4000)"
+            badge={
+              report.practicalTrainingCompleted
+                ? "Completed"
+                : report.practicalTrainingUngraded
+                ? "In Progress"
+                : report.practicalTrainingEligible
+                ? "Available"
+                : "Not Yet Eligible"
+            }
+            badgeColor={
+              report.practicalTrainingCompleted
+                ? "green"
+                : report.practicalTrainingUngraded
+                ? "yellow"
+                : "teal"
+            }
+          >
+            {report.practicalTrainingCompleted ? (
+              <p className="text-gray-700">
+                CIT4000 – Practical Training has been completed.
+              </p>
+            ) : report.practicalTrainingUngraded ? (
+              <p className="text-gray-700">
+                CIT4000 – Practical Training is registered; grade pending.
+              </p>
+            ) : report.practicalTrainingEligible ? (
+              <p className="text-gray-700">
+                Student has reached 90+ credit hours and can register
+                CIT4000 – Practical Training.
+              </p>
+            ) : (
+              <p className="text-gray-500 italic">
+                Requires 90 credit hours to register (student has{" "}
+                {report.totalCreditHours}).
+              </p>
+            )}
           </ReportSection>
 
           {/* Out of Plan Courses */}

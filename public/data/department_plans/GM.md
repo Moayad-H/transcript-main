@@ -93,3 +93,4 @@
 | CGM4xxx | Major Elective |
 | CGM4xxx | Major Elective |
 | CITxxxx | Professional Training III |
+| CIT4000 | Practical Training |

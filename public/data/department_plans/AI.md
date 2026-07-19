@@ -93,3 +93,4 @@
 | CAIxxxx | Major Elective |
 | CAIxxxx | Major Elective |
 | CITxxxx | Professional Training III |
+| CIT4000 | Practical Training |

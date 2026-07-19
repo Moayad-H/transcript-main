@@ -60,6 +60,14 @@
 - **Show Remaining:** Required count - completed count
 - **Note:** These don't count toward credit hours
 
+### 6b. PRACTICAL TRAINING (CIT4000)
+
+**Rule:** Pass/fail core course, code `CIT4000`
+
+- **Display:** Own section with status (Completed / In Progress / Available / Not Yet Eligible)
+- **Logic:** Match transcript course code `CIT4000`; gated to register by 90+ credit hours
+- **Note:** Doesn't count toward credit hours; warn advisor if student has 132+ credit hours and hasn't completed it
+
 ### 7. OUT-OF-PLAN COURSES
 
 **Rule:** Courses student took but NOT in any official plan/electives
@@ -217,11 +225,30 @@ Examples:
 - **Shows:** Titles only (no course codes)
 - **Note:** Don't count toward 132 credit hours
 
+### Section 6b: Practical Training (CIT4000)
+
+**Rule:** Pass/fail core course, code `CIT4000`, listed in every department's course plan (last row of Semester 8) with prerequisite `"90 CR. or more"`
+
+- **Registration:** Gated by the standard "N CR" prerequisite check — available once the student has 90+ credit hours (same mechanism as `UNR4201`/`CNC1401`), so it also appears in "Courses You Can Register" once eligible
+- **Display:** Own section showing status — Completed / In Progress (grade `U`) / Available (90+ CR, not yet taken) / Not Yet Eligible
+- **Credit hours:** Pass/fail, like Professional Training — doesn't count toward `totalCreditHours` (excluded in `calculateCreditHours`, mirrored in `transcriptParser.ts` and `clientParser.ts`)
+- **Warning banner:** If the student has reached 132+ credit hours (`GRADUATION_CREDIT_HOURS`) and has NOT completed CIT4000, show a warning banner reminding the advisor to register the student for it
+
 ### Section 7: Out-of-Plan Courses
 
 - **When Empty:** "None"
 - **Purpose:** Warning that these courses don't count toward graduation
 - **Example:** Taking CS course when in SE major
+
+### Graduation status (132 credit-hour requirement)
+
+**Rule:** A student must achieve `GRADUATION_CREDIT_HOURS` (132) earned credit hours — plus clear every remaining requirement — to graduate.
+
+- **`creditHoursToGraduation`:** `max(0, 132 - totalCreditHours)` — credit hours still needed (uses *earned* `totalCreditHours`, not `expectedCreditHours`)
+- **`graduationCreditRequirementMet`:** `totalCreditHours >= 132`
+- **`graduationEligible`:** credit requirement met AND no remaining major/science/university electives, no remaining Professional Training, and Practical Training (CIT4000) completed
+- **Display:** Header shows "To Graduate" (`N Cr. left` or `132 Cr. met`); the report opens with a status banner — green (eligible), blue (132 met but requirements outstanding), or gray (still accumulating credits). Mirrored in the text/download export.
+- **Both parsers:** computed identically in `reportGenerator.ts` and `clientReportGenerator.ts` (keep in sync per the dual-parser note)
 
 ---
 

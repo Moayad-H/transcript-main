@@ -24,6 +24,17 @@ export function formatReportAsText(report: AnalysisReport): string {
   if (report.gpa !== null) {
     lines.push(`G.P.A: ${report.gpa}`);
   }
+  if (report.graduationEligible) {
+    lines.push("Graduation: ELIGIBLE — all requirements met (132+ Cr.)");
+  } else if (report.graduationCreditRequirementMet) {
+    lines.push(
+      "Graduation: 132 Cr. requirement met; requirements still outstanding"
+    );
+  } else {
+    lines.push(
+      `Graduation: ${report.creditHoursToGraduation} Cr. remaining to reach 132`
+    );
+  }
   lines.push("");
 
   // Ungraded courses

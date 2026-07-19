@@ -10,7 +10,8 @@ interface ReportSectionProps {
     | "red"
     | "purple"
     | "indigo"
-    | "orange";
+    | "orange"
+    | "teal";
   children: ReactNode;
 }
 
@@ -22,6 +23,7 @@ const badgeColors = {
   purple: "bg-purple-100 text-purple-800",
   indigo: "bg-indigo-100 text-indigo-800",
   orange: "bg-orange-100 text-orange-800",
+  teal: "bg-teal-100 text-teal-800",
 };
 
 export function ReportSection({

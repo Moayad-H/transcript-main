@@ -14,6 +14,7 @@ import {
   SPECIAL_COURSES,
   GRADES,
   canonicalizeCode,
+  PRACTICAL_TRAINING_CODE,
 } from "@/lib/constants";
 
 /**
@@ -87,6 +88,27 @@ export function getProfessionalTraining(courses: StudiedCourse[]): string[] {
         passingGrades.has(course.grade)
     )
     .map((course) => course.title);
+}
+
+/**
+ * Get the student's Practical Training (CIT4000) status from the transcript.
+ */
+export function getPracticalTrainingStatus(courses: StudiedCourse[]): {
+  completed: boolean;
+  ungraded: boolean;
+} {
+  const passingGrades = new Set([...GRADES.PASSING] as string[]);
+  const target = canonicalizeCode(PRACTICAL_TRAINING_CODE);
+  const course = courses.find((c) => canonicalizeCode(c.code) === target);
+
+  if (!course) {
+    return { completed: false, ungraded: false };
+  }
+
+  return {
+    completed: passingGrades.has(course.grade),
+    ungraded: course.grade === "U",
+  };
 }
 
 /**
