@@ -21,8 +21,8 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} antialiased`}>
         {children}
-        <footer className="py-4 text-center text-xs text-gray-400">
-          v{process.env.NEXT_PUBLIC_APP_VERSION}
+        <footer  className="py-4 text-center text-md text-gray-400">
+          v0.3.0+12
         </footer>
       </body>
     </html>

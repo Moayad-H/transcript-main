@@ -79,7 +79,7 @@ export function ReportDisplay({
 
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         {/* Header */}
-        <div className="bg-blue-600 text-white p-8 print:bg-blue-600">
+        <div className="bg-blue-600 text-white p-8 print:bg-blue-600" id="report-header">
           <h1 className="text-3xl font-bold">Academic Advising Report</h1>
           <p className="text-blue-100 mt-2">
             CCIT - College of Computing and Information Technology
@@ -296,7 +296,7 @@ export function ReportDisplay({
           </div>
         )}
         {/* Actions */}
-        <div className="p-6 border-b flex gap-3 print:hidden">
+        {/* <div className="p-6 border-b flex gap-3 print:hidden">
           <button
             onClick={handleDownload}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -315,7 +315,7 @@ export function ReportDisplay({
           >
             New Analysis
           </button>
-        </div>
+        </div> */}
 
         {/* Report Sections */}
         <div className="p-8 space-y-8">
