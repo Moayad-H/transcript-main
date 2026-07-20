@@ -148,6 +148,52 @@ export function ReportDisplay({
 
         {view === "report" && (
           <>
+        {/* Academic probation (half-load) */}
+        {report.onProbation && (
+          <div className="mx-8 mt-6 flex items-start gap-3 rounded-lg border border-red-300 bg-red-50 p-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 flex-shrink-0 text-red-600"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l6.28 11.18c.75 1.334-.213 2.987-1.742 2.987H3.72c-1.53 0-2.493-1.653-1.743-2.987l6.28-11.18zM11 14a1 1 0 11-2 0 1 1 0 012 0zm-.25-6.25a.75.75 0 00-1.5 0v3.5a.75.75 0 001.5 0v-3.5z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-semibold text-red-800">
+                  Academic probation (half-load)
+                </p>
+                {report.probationSemesters > 0 && (
+                  <span
+                    className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                      report.probationSemestersExceeded
+                        ? "bg-red-700 text-white"
+                        : "bg-red-200 text-red-800"
+                    }`}
+                  >
+                    Semester {report.probationSemesters} of 3
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-red-700 mt-1">
+                Cumulative G.P.A ({report.gpa}) is below 2.0. The student may
+                register at most 12 credit hours per semester, cannot register
+                Project I, and cannot graduate until the G.P.A reaches 2.0.
+              </p>
+              {report.probationSemestersExceeded && (
+                <p className="text-sm font-semibold text-red-800 mt-1">
+                  Probation limit of 3 semesters reached — student is at risk of
+                  dismissal.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
         {/* Graduation status */}
         {report.graduationEligible ? (
           <div className="mx-8 mt-6 flex items-start gap-3 rounded-lg border border-green-300 bg-green-50 p-4">

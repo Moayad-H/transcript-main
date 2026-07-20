@@ -51,6 +51,25 @@ export const PRACTICAL_TRAINING_CODE = "CIT4000";
 export const PRACTICAL_TRAINING_MIN_CREDIT_HOURS = 90;
 export const GRADUATION_CREDIT_HOURS = 132;
 
+// Academic probation ("half-load"): a student whose cumulative GPA falls below
+// PROBATION_GPA_THRESHOLD is placed on probation. While on probation they may
+// register at most PROBATION_HALF_LOAD_CREDITS credit hours, cannot register
+// Project I, and cannot graduate. Probation may last at most
+// PROBATION_MAX_SEMESTERS semesters before dismissal.
+export const PROBATION_GPA_THRESHOLD = 2.0;
+export const PROBATION_HALF_LOAD_CREDITS = 12;
+export const PROBATION_MAX_SEMESTERS = 3;
+
+/**
+ * Whether a course title is "Project I" (the pre-graduation project gated on a
+ * ≥ 2.0 GPA). Project I appears under different codes per department
+ * (CCS4901 / CSE4901 / CIS4901 / CCY4901 / CGM4901), so it's matched by title.
+ * "Project II" must NOT match.
+ */
+export function isProjectOneTitle(title: string): boolean {
+  return /\bproject\s+i\b/i.test(title.trim());
+}
+
 export const COURSE_PREFIXES = {
   COMPUTER_SCIENCE: "CCS",
   ENGINEERING: "EBA",

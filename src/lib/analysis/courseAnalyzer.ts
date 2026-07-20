@@ -15,6 +15,8 @@ import {
   GRADES,
   canonicalizeCode,
   PRACTICAL_TRAINING_CODE,
+  PROBATION_GPA_THRESHOLD,
+  isProjectOneTitle,
 } from "@/lib/constants";
 
 /**
@@ -176,8 +178,11 @@ export function getAvailableCourses(
   studiedCodes: string[],
   professionalTrainingCount: number,
   remedialCourses: string[],
-  creditHours: number
+  creditHours: number,
+  gpa: number | null = null
 ): Course[] {
+  // A student on probation (known GPA < 2.0) cannot register Project I.
+  const onProbation = gpa !== null && gpa < PROBATION_GPA_THRESHOLD;
   const available: Course[] = [];
   // Normalize studied codes and resolve cross-department equivalences.
   const studiedSet = new Set(studiedCodes.map((c) => canonicalizeCode(c)));
@@ -216,6 +221,11 @@ export function getAvailableCourses(
 
     // Skip major electives
     if (course.title.includes(ELECTIVE_KEYWORDS.MAJOR)) {
+      continue;
+    }
+
+    // A student on probation cannot register Project I until GPA reaches 2.0
+    if (onProbation && isProjectOneTitle(course.title)) {
       continue;
     }
 

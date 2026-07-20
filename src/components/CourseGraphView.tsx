@@ -20,6 +20,8 @@ import {
   isTwoCreditCourse,
   DEPARTMENTS,
   DEPARTMENT_NAMES,
+  PROBATION_HALF_LOAD_CREDITS,
+  isProjectOneTitle,
 } from "@/lib/constants";
 import {
   buildCourseGraph,
@@ -243,6 +245,14 @@ export default function CourseGraphView({
   // GPA calculator: assign hypothetical grades to registered courses.
   const [gpaMode, setGpaMode] = useState(false);
   const [projGrades, setProjGrades] = useState<Map<string, string>>(new Map());
+  // Transient message shown when a manual action is blocked by the probation
+  // half-load cap.
+  const [capWarning, setCapWarning] = useState<string | null>(null);
+
+  // Whether the student is on academic probation (half-load): registration is
+  // capped at 12 Cr and Project I is blocked until the GPA reaches 2.0. Uses the
+  // report's official probation flag (derived from the transcript's GPA).
+  const onProbation = report.onProbation;
 
   // A fresh transcript (new upload) resets the viewed department and report
   // back to the detected one.
@@ -407,6 +417,11 @@ export default function CourseGraphView({
     // Recompute available/blocked for a not-yet-taken course from its prereqs,
     // or — for a credit-hour gate — from the running achieved credit total.
     const recompute = (n: Node): CourseStatus => {
+      // A student on probation cannot register Project I, regardless of prereqs
+      // or achieved credit hours, until their GPA recovers to 2.0.
+      if (onProbation && isProjectOneTitle((n.data as CourseNodeData).title)) {
+        return "blocked";
+      }
       const creditReq = (n.data as CourseNodeData).creditReq;
       if (creditReq) {
         const m = creditReq.match(/(\d+)/);
@@ -432,7 +447,7 @@ export default function CourseGraphView({
       statuses.set(n.id, s);
     }
     return { statuses, achievedCreditHours: achieved };
-  }, [graph, overrides, prereqsByTarget, report.totalCreditHours]);
+  }, [graph, overrides, prereqsByTarget, report.totalCreditHours, onProbation]);
 
   // Current GPA from the parsed transcript: achieved points / GPA credit hours.
   const currentGpa = useMemo(() => {
@@ -453,6 +468,17 @@ export default function CourseGraphView({
     if (!graph) return [];
     return graph.nodes.filter((n) => effectiveStatus.get(n.id) === "ungraded");
   }, [graph, effectiveStatus]);
+
+  // Total credit hours currently marked as registered (ungraded). Drives the
+  // probation half-load (12 Cr) cap.
+  const registeredCredits = useMemo(
+    () =>
+      registeredNodes.reduce(
+        (sum, n) => sum + creditValueForCode((n.data as CourseNodeData).code),
+        0
+      ),
+    [registeredNodes]
+  );
 
   // Projected GPA = current GPA plus the hypothetical grades assigned to
   // registered courses.
@@ -581,12 +607,29 @@ export default function CourseGraphView({
     (_: unknown, node: Node) => {
       if (node.type === "term") return; // headers aren't interactive
       if (manualMode) {
-        // Cycle the override: Auto -> Finished -> Registered -> Not taken -> Auto.
+        // Cycle the override: Auto -> Registered -> Finished -> Not taken -> Auto.
+        const cur = overrides.get(node.id);
+        const idx = OVERRIDE_CYCLE.indexOf(cur);
+        const val = OVERRIDE_CYCLE[(idx + 1) % OVERRIDE_CYCLE.length];
+
+        // Probation half-load: block registering a course that would push the
+        // total registered credit hours past the 12 Cr cap.
+        const alreadyRegistered = effectiveStatus.get(node.id) === "ungraded";
+        if (val === "ungraded" && onProbation && !alreadyRegistered) {
+          const nodeCredits = creditValueForCode(
+            (node.data as CourseNodeData).code
+          );
+          if (registeredCredits + nodeCredits > PROBATION_HALF_LOAD_CREDITS) {
+            setCapWarning(
+              `Probation half-load: at most ${PROBATION_HALF_LOAD_CREDITS} Cr. may be registered (${registeredCredits} Cr. already registered).`
+            );
+            return;
+          }
+        }
+        setCapWarning(null);
+
         setOverrides((prev) => {
           const next = new Map(prev);
-          const cur = next.get(node.id);
-          const idx = OVERRIDE_CYCLE.indexOf(cur);
-          const val = OVERRIDE_CYCLE[(idx + 1) % OVERRIDE_CYCLE.length];
           if (val === undefined) next.delete(node.id);
           else next.set(node.id, val);
           return next;
@@ -595,7 +638,7 @@ export default function CourseGraphView({
       }
       setSelectedId((cur) => (cur === node.id ? null : node.id));
     },
-    [manualMode]
+    [manualMode, overrides, onProbation, effectiveStatus, registeredCredits]
   );
   const handlePaneClick = useCallback(() => setSelectedId(null), []);
 
@@ -633,6 +676,7 @@ export default function CourseGraphView({
           onClick={() => {
             setManualMode((m) => !m);
             setSelectedId(null);
+            setCapWarning(null);
           }}
           className={`text-sm font-medium px-3 py-1.5 rounded-md border transition-colors ${
             manualMode
@@ -666,6 +710,23 @@ export default function CourseGraphView({
           )}
         </span>
 
+        {/* Registered-credit tally against the probation half-load cap. */}
+        {onProbation && manualMode && (
+          <span
+            className={`text-sm font-medium px-3 py-1.5 rounded-md border ${
+              registeredCredits > PROBATION_HALF_LOAD_CREDITS
+                ? "bg-red-100 border-red-300 text-red-700"
+                : "bg-red-50 border-red-200 text-red-700"
+            }`}
+          >
+            Registered:{" "}
+            <span className="font-bold">
+              {registeredCredits}/{PROBATION_HALF_LOAD_CREDITS} Cr.
+            </span>{" "}
+            (half-load)
+          </span>
+        )}
+
         {manualMode && overrides.size > 0 && (
           <button
             type="button"
@@ -676,6 +737,37 @@ export default function CourseGraphView({
           </button>
         )}
       </div>
+
+      {/* Probation (half-load) notice for the graph view. */}
+      {onProbation && (
+        <div className="mb-3 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <span className="font-semibold text-red-800">
+            Academic probation (half-load)
+          </span>
+          {report.probationSemesters > 0 && (
+            <span
+              className={`ml-2 text-xs font-bold px-2 py-0.5 rounded-full ${
+                report.probationSemestersExceeded
+                  ? "bg-red-700 text-white"
+                  : "bg-red-200 text-red-800"
+              }`}
+            >
+              Semester {report.probationSemesters} of 3
+            </span>
+          )}
+          <span className="ml-2">
+            GPA{report.gpa !== null ? ` (${report.gpa})` : ""} below 2.0 —
+            registration is capped at {PROBATION_HALF_LOAD_CREDITS} Cr. and
+            Project I is blocked.
+          </span>
+        </div>
+      )}
+
+      {capWarning && (
+        <div className="mb-3 rounded-md border border-red-400 bg-red-100 px-3 py-2 text-sm font-medium text-red-800">
+          {capWarning}
+        </div>
+      )}
 
       {manualMode && (
         <p className="text-xs text-gray-500 mb-3 -mt-1">

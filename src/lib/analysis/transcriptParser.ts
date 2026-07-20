@@ -4,7 +4,7 @@
  */
 
 import { StudiedCourse, TranscriptData, Department } from "@/types";
-import { GRADES, TWO_CREDIT_HOURS, CREDIT_HOURS_PER_COURSE, isTwoCreditCourse, canonicalizeCode, PRACTICAL_TRAINING_CODE } from "@/lib/constants";
+import { GRADES, TWO_CREDIT_HOURS, CREDIT_HOURS_PER_COURSE, isTwoCreditCourse, canonicalizeCode, PRACTICAL_TRAINING_CODE, PROBATION_GPA_THRESHOLD } from "@/lib/constants";
 
 interface PDFTextItem {
   str: string;
@@ -54,6 +54,9 @@ export async function parseTranscriptPDF(
     // Extract cumulative GPA as printed on the transcript
     const gpa = extractGpaFromText(fullText);
 
+    // Best-effort count of terms the student was on probation (GPA < 2.0)
+    const probationSemesters = extractProbationSemesters(fullText);
+
     // Extract courses using semester-based parsing
     const allCourses = extractCoursesFromText(fullText);
 
@@ -68,6 +71,7 @@ export async function parseTranscriptPDF(
       courses: validCourses,
       remedialCourses,
       gpa,
+      probationSemesters,
     };
   } catch (error) {
     console.error("PDF parsing error:", error);
@@ -133,6 +137,28 @@ function extractGpaFromText(text: string): number | null {
     }
   }
   return lastValue;
+}
+
+/**
+ * Best-effort count of semesters the student was on academic probation.
+ *
+ * Arab Academy transcripts print a cumulative "G.P.A" value for each term. A
+ * term whose cumulative standing is below the probation threshold (2.0) counts
+ * as a probation semester, so we count how many of the printed G.P.A values
+ * fall below the threshold. This is a heuristic — the exact per-term semantics
+ * vary by transcript layout — and degrades to 0 when nothing parses.
+ */
+function extractProbationSemesters(text: string): number {
+  const gpaPattern = /G\.?\s*P\.?\s*A\.?\s*:?\s*(\d+(?:\.\d+)?)/gi;
+  let match;
+  let count = 0;
+  while ((match = gpaPattern.exec(text)) !== null) {
+    const value = parseFloat(match[1]);
+    if (!Number.isNaN(value) && value < PROBATION_GPA_THRESHOLD) {
+      count += 1;
+    }
+  }
+  return count;
 }
 
 /**

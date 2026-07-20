@@ -23,6 +23,8 @@ import {
 import {
   PRACTICAL_TRAINING_MIN_CREDIT_HOURS,
   GRADUATION_CREDIT_HOURS,
+  PROBATION_GPA_THRESHOLD,
+  PROBATION_MAX_SEMESTERS,
 } from "@/lib/constants";
 
 /**
@@ -64,6 +66,11 @@ export async function generateReportClient(
   );
   const ungradedCreditHours = calculateUngradedCreditHours(transcriptData.courses);
 
+  // Academic probation: known cumulative GPA below the 2.0 threshold.
+  const gpa = transcriptData.gpa ?? null;
+  const onProbation = gpa !== null && gpa < PROBATION_GPA_THRESHOLD;
+  const probationSemesters = transcriptData.probationSemesters ?? 0;
+
   // Get completed electives
   const completedMajorElectives = getCompletedElectives(
     transcriptData.courses,
@@ -87,7 +94,8 @@ export async function generateReportClient(
     studiedCodes,
     professionalTraining.length,
     transcriptData.remedialCourses,
-    creditHours
+    creditHours,
+    gpa
   );
 
   // Get out-of-plan courses
@@ -123,13 +131,17 @@ export async function generateReportClient(
     0,
     GRADUATION_CREDIT_HOURS - creditHours
   );
+  // A student cannot graduate while on probation (GPA below 2.0). Unknown GPA
+  // doesn't block (e.g. manual entry with no GPA figure).
+  const gpaMeetsGraduation = gpa === null || gpa >= PROBATION_GPA_THRESHOLD;
   const graduationEligible =
     graduationCreditRequirementMet &&
     remainingMajorElectives === 0 &&
     remainingScienceElectives === 0 &&
     remainingUniversityRequirements === 0 &&
     remainingProfessionalTraining === 0 &&
-    practicalTraining.completed;
+    practicalTraining.completed &&
+    gpaMeetsGraduation;
 
   return {
     studentName,
@@ -157,6 +169,10 @@ export async function generateReportClient(
     creditHoursToGraduation,
     graduationCreditRequirementMet,
     graduationEligible,
-    gpa: transcriptData.gpa ?? null,
+    gpa,
+    onProbation,
+    probationSemesters,
+    probationSemestersExceeded:
+      onProbation && probationSemesters >= PROBATION_MAX_SEMESTERS,
   };
 }

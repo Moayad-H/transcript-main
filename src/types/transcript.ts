@@ -12,6 +12,9 @@ export interface TranscriptData {
   courses: StudiedCourse[];
   remedialCourses: string[]; // 'Precalculus' or 'Remedial English'
   gpa?: number | null; // Cumulative G.P.A as printed on the transcript
+  // Best-effort count of terms whose printed GPA was below the probation
+  // threshold (2.0). Heuristic — see extractProbationSemesters().
+  probationSemesters?: number;
 }
 
 export interface ParsedTranscript {

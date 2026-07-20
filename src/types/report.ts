@@ -64,6 +64,17 @@ export interface AnalysisReport {
 
   // Cumulative G.P.A as printed on the transcript (null if not found)
   gpa: number | null;
+
+  // Academic probation ("half-load"): the student's known cumulative GPA is
+  // below 2.0. While true, registration is capped at 12 Cr, Project I is
+  // blocked, and graduation is not allowed.
+  onProbation: boolean;
+  // Best-effort count of semesters the student has spent on probation (terms
+  // whose printed GPA was below 2.0). 0 when unknown/unparseable.
+  probationSemesters: number;
+  // The student has been on probation for the maximum allowed number of
+  // semesters (3) — flags dismissal risk in the UI.
+  probationSemestersExceeded: boolean;
 }
 
 export interface ReportGenerationRequest {

@@ -24,6 +24,18 @@ export function formatReportAsText(report: AnalysisReport): string {
   if (report.gpa !== null) {
     lines.push(`G.P.A: ${report.gpa}`);
   }
+  if (report.onProbation) {
+    lines.push(
+      `ACADEMIC PROBATION (half-load): GPA below 2.0 — max 12 Cr./semester, ` +
+        `Project I blocked, cannot graduate.` +
+        (report.probationSemesters > 0
+          ? ` Semester ${report.probationSemesters} of 3.`
+          : "") +
+        (report.probationSemestersExceeded
+          ? " WARNING: probation limit of 3 semesters reached."
+          : "")
+    );
+  }
   if (report.graduationEligible) {
     lines.push("Graduation: ELIGIBLE — all requirements met (132+ Cr.)");
   } else if (report.graduationCreditRequirementMet) {
