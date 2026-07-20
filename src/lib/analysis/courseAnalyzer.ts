@@ -46,6 +46,26 @@ export function getCompletedElectives(
 }
 
 /**
+ * Get elective courses the student has registered but not yet been graded on (U).
+ * These fill an elective slot as "in progress" — mirrors getCompletedElectives
+ * but for ungraded courses. (e.g. Advanced Physics / Biochemistry as a Science
+ * Elective while the grade is still pending.)
+ */
+export function getUngradedElectives(
+  studiedCourses: StudiedCourse[],
+  electiveCourses: ElectiveCourse[]
+): ElectiveCourse[] {
+  const ungradedCodes = new Set(
+    studiedCourses
+      .filter((c) => (GRADES.UNGRADED as readonly string[]).includes(c.grade))
+      .map((c) => canonicalizeCode(c.code))
+  );
+  return electiveCourses.filter((elective) =>
+    ungradedCodes.has(canonicalizeCode(elective.code))
+  );
+}
+
+/**
  * Count required elective courses from course plan
  * Ports Python's get_Count function
  */

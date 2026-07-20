@@ -24,14 +24,18 @@ export interface AnalysisReport {
 
   // Major electives
   completedMajorElectives: ElectiveCourse[];
+  // Registered but not-yet-graded (U) electives filling a category slot
+  ungradedMajorElectives: ElectiveCourse[];
   remainingMajorElectives: number;
 
   // Science electives
   completedScienceElectives: ElectiveCourse[];
+  ungradedScienceElectives: ElectiveCourse[];
   remainingScienceElectives: number;
 
   // University requirements
   completedUniversityRequirements: ElectiveCourse[];
+  ungradedUniversityRequirements: ElectiveCourse[];
   remainingUniversityRequirements: number;
 
   // Professional training

@@ -307,6 +307,13 @@ export async function buildCourseGraph(
     MAJOR: report.completedMajorElectives.length,
     UNIVERSITY: report.completedUniversityRequirements.length,
   };
+  // Registered-but-ungraded electives per category (fill a slot "in progress").
+  const ungradedByCategory: Record<string, number> = {
+    PROFESSIONAL: 0,
+    SCIENCE: report.ungradedScienceElectives.length,
+    MAJOR: report.ungradedMajorElectives.length,
+    UNIVERSITY: report.ungradedUniversityRequirements.length,
+  };
   const usedByCategory: Record<string, number> = {
     PROFESSIONAL: 0,
     SCIENCE: 0,
@@ -342,9 +349,14 @@ export async function buildCourseGraph(
 
     let status: CourseStatus;
     if (isElectiveSlot) {
-      const satisfied = satisfiedByCategory[category!] ?? 0;
+      const completed = satisfiedByCategory[category!] ?? 0;
+      const ungraded = ungradedByCategory[category!] ?? 0;
       const used = usedByCategory[category!];
-      status = used < satisfied ? "completed" : "elective";
+      // Fill completed slots first, then in-progress (ungraded) ones, then leave
+      // the rest as empty elective placeholders.
+      if (used < completed) status = "completed";
+      else if (used < completed + ungraded) status = "ungraded";
+      else status = "elective";
       usedByCategory[category!] = used + 1;
     } else if (failedSet.has(norm)) {
       status = "failed";

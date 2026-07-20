@@ -19,6 +19,7 @@ import {
 } from "./transcriptParser";
 import {
   getCompletedElectives,
+  getUngradedElectives,
   getElectiveRequirements,
   getProfessionalTraining,
   getPracticalTrainingStatus,
@@ -99,6 +100,20 @@ export async function generateReport(
     cleanUniversityElectives
   );
 
+  // Registered-but-ungraded electives (fill a slot as "in progress")
+  const ungradedMajorElectives = getUngradedElectives(
+    transcriptData.courses,
+    majorElectives
+  );
+  const ungradedScienceElectives = getUngradedElectives(
+    transcriptData.courses,
+    cleanScienceElectives
+  );
+  const ungradedUniversityElectives = getUngradedElectives(
+    transcriptData.courses,
+    cleanUniversityElectives
+  );
+
   // Get requirements count
   const requirements = getElectiveRequirements(coursePlan);
 
@@ -166,10 +181,13 @@ export async function generateReport(
     withdrawnFailedCourses,
     availableCourses,
     completedMajorElectives,
+    ungradedMajorElectives,
     remainingMajorElectives,
     completedScienceElectives,
+    ungradedScienceElectives,
     remainingScienceElectives,
     completedUniversityRequirements: completedUniversityElectives,
+    ungradedUniversityRequirements: ungradedUniversityElectives,
     remainingUniversityRequirements,
     completedProfessionalTraining: professionalTraining,
     remainingProfessionalTraining,
