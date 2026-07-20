@@ -4,7 +4,7 @@
  */
 
 import { StudiedCourse, TranscriptData } from "@/types";
-import { GRADES, TWO_CREDIT_HOURS, CREDIT_HOURS_PER_COURSE, isTwoCreditCourse, canonicalizeCode, PRACTICAL_TRAINING_CODE } from "@/lib/constants";
+import { GRADES, TWO_CREDIT_HOURS, CREDIT_HOURS_PER_COURSE, isTwoCreditCourse, canonicalizeCode, PRACTICAL_TRAINING_CODE, SPECIAL_COURSES } from "@/lib/constants";
 
 /**
  * Parse PDF transcript on the client side
@@ -106,6 +106,11 @@ export function getUngradedCourses(courses: StudiedCourse[]): StudiedCourse[] {
  * University Requirements (UNR*) and Entrepreneurship Skills (CNC1401): 2 credit hours
  */
 function getCourseCreditValue(course: StudiedCourse): number {
+  const canonical = canonicalizeCode(course.code);
+  // Ignore Remedial English and Precalculus for credit hours (0 Cr)
+  if (canonical === canonicalizeCode(SPECIAL_COURSES.REMEDIAL_ENGLISH) || canonical === canonicalizeCode(SPECIAL_COURSES.PRECALCULUS)) {
+    return 0;
+  }
   return isTwoCreditCourse(course.code) ? TWO_CREDIT_HOURS : CREDIT_HOURS_PER_COURSE;
 }
 
