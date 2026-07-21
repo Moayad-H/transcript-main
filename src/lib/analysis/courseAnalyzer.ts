@@ -16,6 +16,7 @@ import {
   canonicalizeCode,
   PRACTICAL_TRAINING_CODE,
   PROBATION_GPA_THRESHOLD,
+  PROFESSIONAL_TRAINING_REQUIRED,
   isProjectOneTitle,
 } from "@/lib/constants";
 
@@ -90,7 +91,13 @@ export function getElectiveRequirements(courses: Course[]): CourseRequirement {
   }
 
   return {
-    professionalTraining,
+    // The plan CSVs list many Professional Training options to choose from, but
+    // only a fixed number are actually required. Cap the counted requirement so
+    // the menu of options never inflates it.
+    professionalTraining: Math.min(
+      professionalTraining,
+      PROFESSIONAL_TRAINING_REQUIRED
+    ),
     scienceElectives,
     majorElectives,
     universityRequirements,

@@ -51,6 +51,12 @@ export const PRACTICAL_TRAINING_CODE = "CIT4000";
 export const PRACTICAL_TRAINING_MIN_CREDIT_HOURS = 90;
 export const GRADUATION_CREDIT_HOURS = 132;
 
+// A student must complete exactly this many Professional Training courses. The
+// course-plan CSVs list many Professional Training options (a menu to choose
+// from), but only PROFESSIONAL_TRAINING_REQUIRED of them count toward the
+// requirement, so the counted requirement is capped at this value.
+export const PROFESSIONAL_TRAINING_REQUIRED = 4;
+
 // Academic probation ("half-load"): a student whose cumulative GPA falls below
 // PROBATION_GPA_THRESHOLD is placed on probation. While on probation they may
 // register at most PROBATION_HALF_LOAD_CREDITS credit hours, cannot register
