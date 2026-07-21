@@ -104,19 +104,25 @@ function extractStudentInfoFromText(text: string): {
     studentName = nameMatch[1].trim();
   }
 
+  const dept = text.match(/:\s*(Cybersecurity(?:-\s*Cairo)?|Artificial Intelligence|Engineering Software C-S|Computer Science|Information Systems(?:\s+Cairo)?)/);
+
+  console.log(`Extracted student info - Name: ${studentName}, ID: ${studentId}, Department: ${dept}`);
   // Extract department - look for "Engineering" variants
   let department: Department = "SE";
-  if (/Engineering\s+Software|Software.*C-S/i.test(text)) {
+  if (/Engineering\s+Software|Software.*C-S/i.test(dept!= null ? dept.toString() : "")) {
     department = "SE";
-  } else if (/Computer\s+Science|CS/i.test(text)) {
+  } else if (/Computer\s+Science|CS/i.test(dept!= null ? dept.toString() : "")) {
     department = "CS";
-  } else if (/Information\s+Systems|IS/i.test(text)) {
+  } else if (/Information\s+Systems|IS/i.test(dept!= null ? dept.toString() : "")) {
     department = "IS";
-  } else if (/Artificial\s+Intelligence|AI/i.test(text)) {
-    department = "AI";
-  } else if (/Cybersecurity|CY/i.test(text)) {
+  } 
+    else if (/Cybersecurity- Cairo|CY/i.test(dept!= null ? dept.toString() : "")) {
     department = "CY";
   }
+  else if (/Artificial\s+Intelligence|AI/i.test(dept!= null ? dept.toString() : "")) {
+    department = "AI";
+  } 
+
 
   return { name: studentName, id: studentId, department };
 }
