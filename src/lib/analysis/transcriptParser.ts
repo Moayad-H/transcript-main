@@ -106,7 +106,6 @@ function extractStudentInfoFromText(text: string): {
 
   const dept = text.match(/:\s*(Cybersecurity(?:-\s*Cairo)?|Artificial Intelligence|Engineering Software C-S|Computer Science|Information Systems(?:\s+Cairo)?)/);
 
-  console.log(`Extracted student info - Name: ${studentName}, ID: ${studentId}, Department: ${dept}`);
   // Extract department - look for "Engineering" variants
   let department: Department = "SE";
   if (/Engineering\s+Software|Software.*C-S/i.test(dept!= null ? dept.toString() : "")) {
@@ -174,18 +173,6 @@ function extractProbationSemesters(text: string): number {
 function extractCoursesFromText(text: string): StudiedCourse[] {
   const courses: StudiedCourse[] = [];
 
-  // DEBUG: Find CCS2304 in text to check formatting
-  const debugCode = "CCS2304";
-  const index = text.indexOf(debugCode);
-  if (index !== -1) {
-    console.log(
-      `Context around ${debugCode}:`,
-      text.substring(index, index + 100)
-    );
-  } else {
-    console.log(`${debugCode} NOT FOUND IN TEXT`);
-  }
-
   // Course code pattern: [A-Z]{3}[0-9]{4}
   // Valid grades: A+, A, A-, B+, B, B-, C+, C, C-, D+, D, D-, F, P, U, W, I
   // Updated to allow spaces in grades (e.g. A +) and more characters in title (numbers, parens, etc.)
@@ -201,9 +188,6 @@ function extractCoursesFromText(text: string): StudiedCourse[] {
     const title = match[2].trim();
     // Normalize grade (remove spaces, e.g. "A +" -> "A+", and remove trailing dot e.g. "Tr." -> "Tr")
     const grade = match[4].replace(/\s+/g, "").replace(/\.$/, "");
-
-    // DEBUG: Log found course
-    // console.log(`Found course: ${code} - ${title} - ${grade}`);
 
     // Skip if title looks like a semester name or metadata
     if (
@@ -359,15 +343,13 @@ export function calculateCreditHours(
     const canonical = canonicalizeCode(course.code);
     if (seen.has(canonical)) continue;
     seen.add(canonical);
-    var courseCreditValue = getCourseCreditValue(course);
-    console.log(`Adding ${course.code} (${course.title}) - ${courseCreditValue} credits`);
+    const courseCreditValue = getCourseCreditValue(course);
     totalCredits += courseCreditValue;
   }
 
   // Handle professional training (they were counted as 3 in the loop above if they don't start with UNR/CNC)
   // Usually professional training starts with CCS (e.g. CCS4001, CCS4002), so they would be 3 credits.
   // The current logic subtracts (professionalTrainingCount * 3) from total.
-  console.log(`Total credits before professional training adjustment: ${totalCredits} - Professional training count: ${professionalTrainingCount} - Adjusted total: ${totalCredits - professionalTrainingCount * 3}`);
 
   // Practical Training (CIT4000) is pass/fail, like Professional Training, and
   // doesn't count toward credit hours even though it was added to the loop above.

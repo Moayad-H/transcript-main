@@ -62,12 +62,6 @@ export async function generateReport(
 
   // Extract student's course data
   const studiedCodes = getStudiedCourseCodes(transcriptData.courses);
-  console.log(
-    "Studied Codes (sample):",
-    studiedCodes.slice(0, 5),
-    "Includes CCS2304?",
-    studiedCodes.includes("CCS2304")
-  );
 
   const ungradedCourses = getUngradedCourses(transcriptData.courses);
   const withdrawnFailedCourses = getWithdrawnFailedCourses(transcriptData.courses);
@@ -126,8 +120,6 @@ export async function generateReport(
     creditHours,
     gpa
   );
-
-  console.log("Courses You Can Register:", availableCourses);
 
   // Get out-of-plan courses
   const outOfPlanCourses = getOutOfPlanCourses(

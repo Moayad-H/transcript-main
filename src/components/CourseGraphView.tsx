@@ -450,13 +450,25 @@ export default function CourseGraphView({
   }, [graph, overrides, prereqsByTarget, report.totalCreditHours, onProbation]);
 
   // Current GPA from the parsed transcript: achieved points / GPA credit hours.
+  // Repeated courses count only once — the registrar keeps the best attempt
+  // (highest grade points), so a failed course that was later retaken and
+  // passed must not drag the GPA down. Without this dedup, every failing
+  // retake is summed in and the computed GPA falls well below the official one.
   const currentGpa = useMemo(() => {
-    let points = 0;
-    let ch = 0;
+    const best = new Map<string, string>(); // canonical code -> best grade
     for (const c of transcriptData.courses) {
       if (!GPA_COUNTED_GRADES.has(c.grade)) continue;
-      const cv = creditValueForCode(c.code);
-      points += GRADE_POINTS[c.grade] * cv;
+      const key = canonicalizeCode(c.code);
+      const prev = best.get(key);
+      if (prev === undefined || GRADE_POINTS[c.grade] > GRADE_POINTS[prev]) {
+        best.set(key, c.grade);
+      }
+    }
+    let points = 0;
+    let ch = 0;
+    for (const [code, grade] of best) {
+      const cv = creditValueForCode(code);
+      points += GRADE_POINTS[grade] * cv;
       ch += cv;
     }
     return { points, ch, gpa: ch > 0 ? points / ch : 0 };
