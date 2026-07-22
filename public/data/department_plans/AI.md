@@ -78,7 +78,7 @@
 |---|---|
 | CCS4505 | Digital Image Processing |
 | CAI4201 | Natural Language Processing |
-| CSAI4901 | Project I |
+| CCS4901 | Project I |
 | CAIxxxx | Major Elective |
 | CAIxxxx | Major Elective |
 | CITxxxx | Professional Training II |
@@ -89,7 +89,7 @@
 |---|---|
 | CCS4204 | Computer System Security |
 | CAI4301 | Computer vision |
-| CAI4902 | Project II |
+| CCS4902 | Project II |
 | CAIxxxx | Major Elective |
 | CAIxxxx | Major Elective |
 | CITxxxx | Professional Training III |

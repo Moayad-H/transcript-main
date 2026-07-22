@@ -22,7 +22,7 @@ export default function RootLayout({
       <body className={`${inter.className} antialiased`}>
         {children}
         <footer  className="py-4 text-center text-md text-gray-400">
-          v0.3.1+13
+          v0.3.2 +15
         </footer>
       </body>
     </html>

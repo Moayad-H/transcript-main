@@ -333,6 +333,14 @@ export async function buildCourseGraph(
     const category = electiveCategory(course.title);
     const isElectiveSlot = category !== null;
 
+    // The course CSVs list ~40 concrete professional-training options (CIT3101,
+    // CIT4213, …) that the plan never places, so they all pile into the trailing
+    // "Other" column. Only the generic "CITxxxx" Professional Training slots
+    // belong in the graph — skip the concrete menu options entirely.
+    if (category === "PROFESSIONAL" && !/x{2,}/i.test(course.code)) {
+      return;
+    }
+
     // A plan may list the same course under equivalent codes (e.g. the IS plan
     // has both CCS3601 and CAI3101 rows for Intro to AI). After canonicalization
     // they share a code, so render only the first as a single node.

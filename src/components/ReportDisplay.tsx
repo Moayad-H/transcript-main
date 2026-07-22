@@ -57,7 +57,13 @@ export function ReportDisplay({
   };
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div
+      className={
+        view === "graph"
+          ? "relative left-1/2 right-1/2 -translate-x-1/2 w-screen px-4 sm:px-6"
+          : "max-w-5xl mx-auto"
+      }
+    >
       <button
         onClick={onReset}
         className="mb-6 flex items-center text-blue-600 hover:text-blue-800 transition-colors font-medium print:hidden"
