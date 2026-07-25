@@ -12,6 +12,7 @@
 import { AnalysisReport, TranscriptData, Department } from "@/types";
 import { loadDepartmentData } from "@/lib/data/csvLoader";
 import { getStudiedCourseCodes } from "./transcriptParser";
+import { getWaivedRemedialCodes } from "./courseAnalyzer";
 import { ELECTIVE_KEYWORDS, canonicalizeCode } from "@/lib/constants";
 
 export type CourseStatus =
@@ -56,6 +57,14 @@ const ROW_SPACING = 110;
 
 /** Normalize + resolve equivalences, exactly like courseAnalyzer / transcriptParser. */
 const normalizeCode = canonicalizeCode;
+
+/**
+ * True for the generic placeholder codes the plans/CSVs use for free slots
+ * ("CITxxxx", "CISxxxx", "EBAxxxx", …), as opposed to a real course code.
+ */
+function isPlaceholderCode(rawCode: string): boolean {
+  return /x{2,}/i.test(rawCode || "");
+}
 
 /** Which elective category (if any) a plan row represents, by its title. */
 function electiveCategory(title: string): string | null {
@@ -136,14 +145,17 @@ async function loadPlanSemesters(
       continue;
     }
 
+    const canon = planCodeToCanonical(rawCode);
     const category = electiveCategory(title);
-    if (category) {
+    // A plan row whose title reads as an elective but that carries a *concrete*
+    // code (e.g. "CIT3200 Professional Training in Mobile Apps Programming" in
+    // Semester 5) is a fixed course, not a free slot: pin it by code so it lands
+    // in its own semester and leaves the free slots ("CITxxxx Professional
+    // Training I..III") to consume the remaining queue semesters.
+    if (category && isPlaceholderCode(rawCode)) {
       electiveQueues[category].push(currentSemester);
-    } else {
-      const canon = planCodeToCanonical(rawCode);
-      if (canon && !codeToSemester.has(canon)) {
-        codeToSemester.set(canon, currentSemester);
-      }
+    } else if (canon && !codeToSemester.has(canon)) {
+      codeToSemester.set(canon, currentSemester);
     }
   }
 
@@ -299,6 +311,8 @@ export async function buildCourseGraph(
   const availableSet = new Set(
     report.availableCourses.map((c) => normalizeCode(c.code))
   );
+  // Remedial rows the student placed out of — hidden from the graph entirely.
+  const waivedRemedialSet = getWaivedRemedialCodes(transcriptData.courses);
 
   // How many slots of each elective category the student has satisfied.
   const satisfiedByCategory: Record<string, number> = {
@@ -321,6 +335,9 @@ export async function buildCourseGraph(
     UNIVERSITY: 0,
   };
 
+  // Concrete professional trainings the plan pins to a semester, already emitted.
+  const pinnedProfessional = new Set<string>();
+
   const nodes: GraphCourseNode[] = [];
   const edges: GraphCourseEdge[] = [];
   // normalized code -> node id, for resolving prerequisite edges.
@@ -333,12 +350,20 @@ export async function buildCourseGraph(
     const category = electiveCategory(course.title);
     const isElectiveSlot = category !== null;
 
+    // Skip remedial rows the student placed out of (never sat, requirement
+    // cleared by the course they remediate).
+    if (waivedRemedialSet.has(norm)) return;
+
     // The course CSVs list ~40 concrete professional-training options (CIT3101,
     // CIT4213, …) that the plan never places, so they all pile into the trailing
-    // "Other" column. Only the generic "CITxxxx" Professional Training slots
-    // belong in the graph — skip the concrete menu options entirely.
-    if (category === "PROFESSIONAL" && !/x{2,}/i.test(course.code)) {
-      return;
+    // "Other" column. Skip those menu options: only the generic "CITxxxx"
+    // Professional Training slots and the concrete trainings the plan actually
+    // pins to a semester (CIT3200, Semester 5) belong in the graph. Each CSV
+    // lists its pinned training twice (plan row + menu row) — render it once.
+    if (category === "PROFESSIONAL" && !isPlaceholderCode(course.code)) {
+      const pinned = plan?.codeToSemester.has(norm) ?? false;
+      if (!pinned || pinnedProfessional.has(norm)) return;
+      pinnedProfessional.add(norm);
     }
 
     // A plan may list the same course under equivalent codes (e.g. the IS plan

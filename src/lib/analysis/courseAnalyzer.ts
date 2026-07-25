@@ -141,6 +141,50 @@ export function getPracticalTrainingStatus(courses: StudiedCourse[]): {
 }
 
 /**
+ * Remedial slots a student has effectively bypassed, so they should never be
+ * rendered as outstanding work.
+ *
+ * A remedial course is only owed when the student actually sat it and did not
+ * pass (see processRemedialCourses). But a student who never appears against a
+ * remedial row at all, and has since cleared the course it remediates, has
+ * placed out of it — the placement test waived it. Showing it as blocked/
+ * available is noise.
+ *
+ * - Precalculus (EBA0201): waived once any Calculus course is passed.
+ * - Remedial English (GLA0001): waived once Academic English or Academic
+ *   Writing is passed.
+ *
+ * Returns the canonicalized codes to hide.
+ */
+export function getWaivedRemedialCodes(
+  studiedCourses: StudiedCourse[]
+): Set<string> {
+  const passingGrades = new Set([...GRADES.PASSING] as string[]);
+  const waived = new Set<string>();
+
+  const titleOf = (c: StudiedCourse) => c.title.toLowerCase();
+  const attempted = (match: (title: string) => boolean) =>
+    studiedCourses.some((c) => match(titleOf(c)));
+  const passed = (match: (title: string) => boolean) =>
+    studiedCourses.some((c) => passingGrades.has(c.grade) && match(titleOf(c)));
+
+  const isPrecalculus = (t: string) => t.includes("precalculus");
+  const isCalculus = (t: string) => t.includes("calculus") && !isPrecalculus(t);
+  const isRemedialEnglish = (t: string) => t.includes("remedial english");
+  const isEnglishReplacement = (t: string) =>
+    t.includes("academic english") || t.includes("academic writing");
+
+  if (!attempted(isPrecalculus) && passed(isCalculus)) {
+    waived.add(canonicalizeCode(SPECIAL_COURSES.PRECALCULUS));
+  }
+  if (!attempted(isRemedialEnglish) && passed(isEnglishReplacement)) {
+    waived.add(canonicalizeCode(SPECIAL_COURSES.REMEDIAL_ENGLISH));
+  }
+
+  return waived;
+}
+
+/**
  * Remove electives that are already in the core curriculum
  * Ports Python's remove_elective_in_Core function
  */
