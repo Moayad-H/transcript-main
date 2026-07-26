@@ -3,16 +3,22 @@
  * Parses Arab Academy transcript PDFs using layout-aware logic
  */
 
-import { StudiedCourse, TranscriptData, Department } from "@/types";
+import { Semester, StudiedCourse, TranscriptData, Department } from "@/types";
 import { GRADES, TWO_CREDIT_HOURS, CREDIT_HOURS_PER_COURSE, isTwoCreditCourse, canonicalizeCode, PRACTICAL_TRAINING_CODE, PROBATION_GPA_THRESHOLD, SPECIAL_COURSES } from "@/lib/constants";
+import { compareSemesters, parseSemesterLabel } from "./semester";
 
-interface PDFTextItem {
+/**
+ * A text fragment with its position on the page. Transcripts print two
+ * side-by-side semester tables per row, and pdf.js emits the fragments in an
+ * order that interleaves the columns and puts each semester header *after* the
+ * courses it covers — so linking a course to its semester needs coordinates,
+ * not reading order.
+ */
+interface PositionedItem {
   str: string;
-  transform: number[];
-}
-
-interface PDFTextContent {
-  items: (PDFTextItem | { type: string })[];
+  x: number;
+  y: number;
+  page: number;
 }
 
 /**
@@ -36,16 +42,28 @@ export async function parseTranscriptPDF(
     const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
     const pdf = await loadingTask.promise;
 
-    // Extract text from all pages into single string
+    // Extract text from all pages, keeping both the flat string (student info,
+    // GPA) and the positioned fragments (course/semester layout).
     let fullText = "";
+    const positionedItems: PositionedItem[] = [];
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
       const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .filter((item: any) => item.str)
-        .map((item: any) => item.str)
-        .join(" ");
-      fullText += pageText + " ";
+      // pdf.js mixes text items with marked-content markers; keep the text.
+      const items = textContent.items.filter(
+        (item): item is Extract<typeof item, { str: string }> =>
+          "str" in item && item.str.length > 0
+      );
+      fullText += items.map((item) => item.str).join(" ") + " ";
+      for (const item of items) {
+        if (!item.str.trim()) continue;
+        positionedItems.push({
+          str: item.str,
+          x: item.transform[4],
+          y: item.transform[5],
+          page: pageNum,
+        });
+      }
     }
 
     // Extract student info
@@ -57,12 +75,19 @@ export async function parseTranscriptPDF(
     // Best-effort count of terms the student was on probation (GPA < 2.0)
     const probationSemesters = extractProbationSemesters(fullText);
 
-    // Extract courses using semester-based parsing
-    const allCourses = extractCoursesFromText(fullText);
+    // Extract courses from the page layout so each one carries the semester it
+    // was taken in; fall back to the flat-text scan if the layout is unusable.
+    const layoutCourses = extractCoursesFromLayout(positionedItems);
+    const allCourses =
+      layoutCourses.length > 0 ? layoutCourses : extractCoursesFromText(fullText);
+
+    // Order attempts chronologically so "the latest attempt wins" rules (remedial
+    // status, retake advice) see the real sequence rather than PDF reading order.
+    const orderedCourses = sortCoursesChronologically(allCourses);
 
     // Remove failed and withdrawn courses, track remedial
     const { courses: validCourses, remedialCourses } =
-      processRemedialCourses(allCourses);
+      processRemedialCourses(orderedCourses);
 
     return {
       studentName: name,
@@ -166,45 +191,252 @@ function extractProbationSemesters(text: string): number {
   return count;
 }
 
+/** A course code as printed in the "COURSE NO." column, e.g. "CCS2401". */
+const COURSE_CODE_PATTERN = /^[A-Z]{3}\d{4}$/;
+
+/** Rows are printed on a shared baseline; allow for sub-point jitter. */
+const ROW_Y_TOLERANCE = 2.5;
+
 /**
- * Extract courses from full text using semester-based parsing
+ * A course line: code, title, credits attempted, then the grade. Shared by the
+ * layout and flat-text scans so both agree on what a course row looks like.
+ */
+const COURSE_LINE_PATTERN =
+  /([A-Z]{3}\d{4})\s+(.+?)\s+(\d+(?:\.\d+)?)\s+(A\s*\+|A\s*-|A|B\s*\+|B\s*-|B|C\s*\+|C\s*-|C|D\s*\+|D\s*-|D|F|P|U|W|I|Tr\.?)/;
+
+/**
+ * Turn one course line into a StudiedCourse, or null when the line is a table
+ * header / summary row rather than a course.
+ */
+function parseCourseLine(line: string): StudiedCourse | null {
+  const match = line.match(COURSE_LINE_PATTERN);
+  if (!match) return null;
+
+  const title = match[2].trim();
+  // Skip semester names and table metadata that can look like a course line.
+  if (
+    /Semester|COURSE|TITLE|ATT\.|GR\.|PTS\.|ACH\.|GPA/i.test(title) ||
+    title.length < 3
+  ) {
+    return null;
+  }
+
+  return {
+    code: match[1],
+    // Normalize the grade ("A +" -> "A+", "Tr." -> "Tr").
+    title,
+    grade: match[4].replace(/\s+/g, "").replace(/\.$/, ""),
+  };
+}
+
+/**
+ * Group positioned fragments into printed rows (same page, same baseline),
+ * ordered top-to-bottom. PDF y grows upward, so rows sort by descending y.
+ */
+function groupIntoRows(items: PositionedItem[]): PositionedItem[][] {
+  const sorted = [...items].sort(
+    (a, b) => a.page - b.page || b.y - a.y || a.x - b.x
+  );
+
+  const rows: PositionedItem[][] = [];
+  let current: PositionedItem[] = [];
+  for (const item of sorted) {
+    const reference = current[0];
+    if (
+      reference &&
+      reference.page === item.page &&
+      Math.abs(reference.y - item.y) <= ROW_Y_TOLERANCE
+    ) {
+      current.push(item);
+    } else {
+      if (current.length > 0) rows.push(current);
+      current = [item];
+    }
+  }
+  if (current.length > 0) rows.push(current);
+
+  return rows.map((row) => [...row].sort((a, b) => a.x - b.x));
+}
+
+/** Minimum horizontal gap between the two tables' code columns. */
+const MIN_COLUMN_GAP = 100;
+
+/**
+ * The x coordinate separating the transcript's two side-by-side semester
+ * tables. Course codes start each table, so the right table begins exactly at
+ * its code column — every field of the left table (title through GPA) is
+ * printed before it. The split is therefore the start of the right code
+ * column, found as the far side of the largest gap between code positions,
+ * rather than a fixed page fraction: the tables are wide enough that the left
+ * table's own columns run past the page midpoint.
+ *
+ * Returns Infinity for a single-column layout, putting every course in the
+ * left column.
+ */
+function findColumnSplit(items: PositionedItem[]): number {
+  const codeXs = items
+    .filter((item) => COURSE_CODE_PATTERN.test(item.str.trim()))
+    .map((item) => item.x)
+    .sort((a, b) => a - b);
+  if (codeXs.length === 0) return Infinity;
+
+  let gapStart = -1;
+  let widestGap = 0;
+  for (let i = 1; i < codeXs.length; i++) {
+    const gap = codeXs[i] - codeXs[i - 1];
+    if (gap > widestGap) {
+      widestGap = gap;
+      gapStart = i;
+    }
+  }
+  // A single table's codes all share one x (only sub-point jitter between them).
+  if (widestGap < MIN_COLUMN_GAP) return Infinity;
+
+  // Sit just left of the right code column so its own codes fall on the right.
+  return codeXs[gapStart] - 0.5;
+}
+
+/**
+ * Extract courses from the page layout, linking each to the semester header it
+ * is printed under.
+ *
+ * Semester headers sit above their courses in the same column, so a course
+ * belongs to the nearest header above it (largest y that is still below the
+ * header's y) within its own column.
+ */
+function extractCoursesFromLayout(items: PositionedItem[]): StudiedCourse[] {
+  if (items.length === 0) return [];
+
+  const splitX = findColumnSplit(items);
+  const columnOf = (x: number) => (x < splitX ? 0 : 1);
+  const rows = groupIntoRows(items);
+
+  const headers: {
+    semester: Semester;
+    page: number;
+    column: number;
+    y: number;
+  }[] = [];
+  const courses: {
+    course: StudiedCourse;
+    page: number;
+    column: number;
+    y: number;
+  }[] = [];
+
+  for (const row of rows) {
+    // Split the row into its two table columns.
+    const buckets = new Map<number, PositionedItem[]>();
+    for (const item of row) {
+      const column = columnOf(item.x);
+      const bucket = buckets.get(column);
+      if (bucket) bucket.push(item);
+      else buckets.set(column, [item]);
+    }
+
+    for (const [column, bucket] of buckets) {
+      // A semester header occupies its own row; match on the joined text so a
+      // header broken into several fragments still resolves.
+      const semester = parseSemesterLabel(bucket.map((i) => i.str).join(" "));
+      if (semester) {
+        headers.push({ semester, page: bucket[0].page, column, y: bucket[0].y });
+        continue;
+      }
+
+      // Otherwise each course code starts a course that runs to the next code.
+      const codeIndices = bucket
+        .map((item, index) =>
+          COURSE_CODE_PATTERN.test(item.str.trim()) ? index : -1
+        )
+        .filter((index) => index >= 0);
+
+      for (let i = 0; i < codeIndices.length; i++) {
+        const start = codeIndices[i];
+        const end = codeIndices[i + 1] ?? bucket.length;
+        const slice = bucket.slice(start, end);
+        const course = parseCourseLine(slice.map((item) => item.str).join(" "));
+        if (course) {
+          courses.push({
+            course,
+            page: slice[0].page,
+            column,
+            y: slice[0].y,
+          });
+        }
+      }
+    }
+  }
+
+  return courses.map(({ course, page, column, y }) => {
+    const semester =
+      findSemesterAbove(headers, page, y, column) ??
+      findSemesterAbove(headers, page, y, null);
+    return semester ? { ...course, semester } : course;
+  });
+}
+
+/**
+ * Nearest semester header printed above a course on the same page — restricted
+ * to one column, or any column when `column` is null (fallback for a table
+ * whose own column header is missing).
+ */
+function findSemesterAbove(
+  headers: { semester: Semester; page: number; column: number; y: number }[],
+  page: number,
+  y: number,
+  column: number | null
+): Semester | undefined {
+  let best: { semester: Semester; distance: number } | undefined;
+  for (const header of headers) {
+    if (header.page !== page) continue;
+    if (column !== null && header.column !== column) continue;
+    const distance = header.y - y;
+    if (distance <= 0) continue;
+    if (!best || distance < best.distance) {
+      best = { semester: header.semester, distance };
+    }
+  }
+  return best?.semester;
+}
+
+/**
+ * Extract courses from full text (fallback when the page layout yields nothing)
  * Course format: COURSE_CODE COURSE_TITLE CREDITS_ATTEMPTED GRADE GRADE_POINTS CREDITS_ACHIEVED
  */
 function extractCoursesFromText(text: string): StudiedCourse[] {
   const courses: StudiedCourse[] = [];
 
-  // Course code pattern: [A-Z]{3}[0-9]{4}
-  // Valid grades: A+, A, A-, B+, B, B-, C+, C, C-, D+, D, D-, F, P, U, W, I
-  // Updated to allow spaces in grades (e.g. A +) and more characters in title (numbers, parens, etc.)
-  // Also updated to handle cases where credits might be missing or formatted differently
-  // Using .+? for title to be more permissive
-  // Added Tr (Transfer) to valid grades
-  const coursePattern =
-    /([A-Z]{3}\d{4})\s+(.+?)\s+(\d+(?:\.\d+)?)\s+(A\s*\+|A\s*-|A|B\s*\+|B\s*-|B|C\s*\+|C\s*-|C|D\s*\+|D\s*-|D|F|P|U|W|I|Tr\.?)/g;
+  // Same course-line shape as the layout scan, applied repeatedly across the
+  // flattened page text. Courses parsed this way carry no semester.
+  const coursePattern = new RegExp(COURSE_LINE_PATTERN.source, "g");
 
   let match;
   while ((match = coursePattern.exec(text)) !== null) {
-    const code = match[1];
-    const title = match[2].trim();
-    // Normalize grade (remove spaces, e.g. "A +" -> "A+", and remove trailing dot e.g. "Tr." -> "Tr")
-    const grade = match[4].replace(/\s+/g, "").replace(/\.$/, "");
-
-    // Skip if title looks like a semester name or metadata
-    if (
-      /Semester|COURSE|TITLE|ATT\.|GR\.|PTS\.|ACH\.|GPA/i.test(title) ||
-      title.length < 3
-    ) {
-      continue;
-    }
-
-    courses.push({
-      code,
-      title,
-      grade,
-    });
+    const course = parseCourseLine(match[0]);
+    if (course) courses.push(course);
   }
 
   return courses;
+}
+
+/**
+ * Sort courses by the semester they were taken in, earliest first. Courses with
+ * no semester keep their original relative order at the end of the list.
+ */
+function sortCoursesChronologically(courses: StudiedCourse[]): StudiedCourse[] {
+  return [...courses]
+    .map((course, index) => ({ course, index }))
+    .sort((a, b) => {
+      const aSemester = a.course.semester;
+      const bSemester = b.course.semester;
+      if (aSemester && bSemester) {
+        return compareSemesters(aSemester, bSemester) || a.index - b.index;
+      }
+      if (aSemester) return -1;
+      if (bSemester) return 1;
+      return a.index - b.index;
+    })
+    .map(({ course }) => course);
 }
 
 /**

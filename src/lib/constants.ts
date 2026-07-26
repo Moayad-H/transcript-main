@@ -62,6 +62,16 @@ export const PROFESSIONAL_TRAINING_REQUIRED = 4;
 // register at most PROBATION_HALF_LOAD_CREDITS credit hours, cannot register
 // Project I, and cannot graduate. Probation may last at most
 // PROBATION_MAX_SEMESTERS semesters before dismissal.
+// Retake advice: a course passed with a weak grade may be repeated to raise the
+// GPA, but only within a limited window after it was taken. RETAKE_GRADES are
+// the passing grades weak enough to warrant the advice ("D+ and under");
+// RETAKE_WINDOW_TERMS is that window measured in academic terms — one academic
+// year is 3 terms (First, Second, Summer), so the same term one year earlier is
+// still inside the window.
+export const RETAKE_GRADES: readonly string[] = ["D+", "D", "D-"];
+export const TERMS_PER_ACADEMIC_YEAR = 3;
+export const RETAKE_WINDOW_TERMS = TERMS_PER_ACADEMIC_YEAR;
+
 export const PROBATION_GPA_THRESHOLD = 2.0;
 export const PROBATION_HALF_LOAD_CREDITS = 12;
 export const PROBATION_MAX_SEMESTERS = 3;

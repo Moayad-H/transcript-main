@@ -81,6 +81,24 @@ Four enforcement points, all keyed off `onProbation`:
 
 Per the dual-parser note, the `onProbation`/`probationSemesters`/`probationSemestersExceeded` fields and the graduation-GPA gate are duplicated in both `reportGenerator.ts` and `clientReportGenerator.ts`.
 
+### Semesters and retake advice
+
+Every course parsed from a PDF carries the academic term it was taken in:
+`StudiedCourse.semester?: Semester` (`{ term: "First" | "Second" | "Summer", startYear, endYear, label }`, `src/types/course.ts`).
+
+**Why this needs layout, not text.** The transcript prints **two semester tables side by side** per block, and pdf.js emits fragments in an order that interleaves both columns and puts each semester header *after* the courses it covers. Reading order therefore can't link a course to its semester. `transcriptParser.ts` now keeps each fragment's `transform` x/y (`PositionedItem`) and:
+
+1. `groupIntoRows()` buckets fragments by page + baseline y (`ROW_Y_TOLERANCE`), top-to-bottom (PDF y grows upward).
+2. `findColumnSplit()` finds the x dividing the two tables. It is the **start of the right-hand course-code column** (far side of the widest gap between code x positions), *not* the page midpoint — the left table's own grade/GPA columns run past the midpoint, so a midpoint split silently drops every left-column course. Returns `Infinity` for single-column layouts.
+3. Within a row+column, each course code (`COURSE_CODE_PATTERN`) starts a slice running to the next code; the slice is joined and matched with `COURSE_LINE_PATTERN` via `parseCourseLine()` (shared with the flat-text fallback, so the two scans can't drift).
+4. A course takes the nearest semester header **above it in its own column** (`findSemesterAbove`), falling back to any column on the page.
+
+`extractCoursesFromText()` remains as a fallback when the layout yields nothing — courses from that path have no semester. Courses are then sorted chronologically (`sortCoursesChronologically`), so "latest attempt wins" rules see the real sequence.
+
+`src/lib/analysis/semester.ts` owns the model: `parseSemesterLabel()`, `semesterIndex()` (terms since year 0 — one academic year is `TERMS_PER_ACADEMIC_YEAR` = 3), `compareSemesters()`, `getLatestSemester()`.
+
+**Retake recommendations** (`getRetakeRecommendations()`): a course whose standing grade is in `RETAKE_GRADES` (`D+`, `D`, `D-` — "D+ and under") and that was taken within `RETAKE_WINDOW_TERMS` (3 terms = one academic year) of the transcript's **latest semester**. The window is anchored on the transcript's own latest semester, not the real-world date, so advice is reproducible from the document alone. Excluded: courses already retaken with a better grade, courses with a `U` attempt (retake in progress), and courses with no semester (an unknown date can't be shown to be in-window). Surfaced as `AnalysisReport.retakeRecommendations` + `latestSemester` — computed in **both** report generators per the dual-parser note — rendered as the "Recommended Retakes" section in `ReportDisplay.tsx` and mirrored in both text formatters. Manual-entry transcripts have no semesters, so they never produce retake advice.
+
 ### Course-code canonicalization
 
 `canonicalizeCode()` (`constants.ts`) is the single normalization used everywhere two codes are compared — it strips non-alphanumerics, uppercases, and resolves cross-plan equivalences (e.g. `CCS3601` ⇄ `CAI3101`, both "Introduction to AI"). The transcript parser, `courseAnalyzer.ts`, and `courseGraphBuilder.ts` all key off it, so a course taken under one code counts everywhere the equivalent code appears. When adding a code alias, add it to `COURSE_CODE_EQUIVALENCE`, not to individual call sites. `isTwoCreditCourse()` (UNR-prefixed or `CNC1401`) is the shared 2-vs-3 credit rule.

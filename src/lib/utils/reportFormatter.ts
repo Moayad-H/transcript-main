@@ -21,6 +21,9 @@ export function formatReportAsText(report: AnalysisReport): string {
   lines.push(`Total Credit Hours: ${report.totalCreditHours}`);
   lines.push(`Expected Credit Hours (incl. pending "U" grades): ${report.expectedCreditHours}`);
   lines.push(`Completed Courses: ${report.completedCourses}`);
+  if (report.latestSemester) {
+    lines.push(`Latest Semester: ${report.latestSemester.label}`);
+  }
   if (report.gpa !== null) {
     lines.push(`G.P.A: ${report.gpa}`);
   }
@@ -58,6 +61,21 @@ export function formatReportAsText(report: AnalysisReport): string {
   } else {
     report.ungradedCourses.forEach((course) => {
       lines.push(`${course.code}: ${course.title}`);
+    });
+  }
+  lines.push("");
+
+  // Recommended retakes
+  lines.push("-".repeat(60));
+  lines.push("RECOMMENDED RETAKES (D+ or lower, within the last year):");
+  lines.push("-".repeat(60));
+  if (report.retakeRecommendations.length === 0) {
+    lines.push("None");
+  } else {
+    report.retakeRecommendations.forEach((course) => {
+      lines.push(
+        `${course.code}: ${course.title} (${course.grade}) — ${course.semester.label}`
+      );
     });
   }
   lines.push("");

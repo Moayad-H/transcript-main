@@ -113,6 +113,12 @@ export function ReportDisplay({
                 <p className="font-semibold">{report.gpa}</p>
               </div>
             )}
+            {report.latestSemester && (
+              <div>
+                <span className="text-blue-200">Latest Semester:</span>
+                <p className="font-semibold">{report.latestSemester.label}</p>
+              </div>
+            )}
             <div>
               <span className="text-blue-200">To Graduate:</span>
               <p className="font-semibold">
@@ -341,6 +347,11 @@ export function ReportDisplay({
                       {course.code}
                     </span>
                     <span className="ml-2">{course.title}</span>
+                    {course.semester && (
+                      <span className="ml-2 text-xs text-gray-500">
+                        {course.semester.label}
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -364,6 +375,11 @@ export function ReportDisplay({
                         {course.code}
                       </span>
                       <span className="ml-2">{course.title}</span>
+                      {course.semester && (
+                        <span className="ml-2 text-xs text-gray-500">
+                          {course.semester.label}
+                        </span>
+                      )}
                     </div>
                     <span
                       className={`text-sm font-bold px-2 py-1 rounded ${
@@ -379,6 +395,8 @@ export function ReportDisplay({
               </ul>
             )}
           </ReportSection>
+
+        
 
           {/* Available Courses */}
           <ReportSection
@@ -403,7 +421,50 @@ export function ReportDisplay({
               </ul>
             )}
           </ReportSection>
-
+  {/* Recommended Retakes */}
+          <ReportSection
+            title="Recommended Retakes"
+            badge={report.retakeRecommendations.length}
+            badgeColor="orange"
+          >
+            {report.retakeRecommendations.length === 0 ? (
+              <p className="text-gray-500 italic">
+                No courses graded D+ or lower within the last year
+              </p>
+            ) : (
+              <>
+                <p className="text-sm text-gray-600 mb-3">
+                  Passed with a weak grade within the last academic year of the
+                  transcript
+                  {report.latestSemester
+                    ? ` (as of ${report.latestSemester.label})`
+                    : ""}
+                  . Repeating these can still raise the G.P.A.
+                </p>
+                <ul className="space-y-2">
+                  {report.retakeRecommendations.map((course, idx) => (
+                    <li
+                      key={idx}
+                      className="text-gray-700 flex justify-between items-center gap-3"
+                    >
+                      <div>
+                        <span className="font-mono text-sm bg-orange-50 px-2 py-1 rounded">
+                          {course.code}
+                        </span>
+                        <span className="ml-2">{course.title}</span>
+                        <span className="ml-2 text-xs text-gray-500">
+                          {course.semester.label}
+                        </span>
+                      </div>
+                      <span className="text-sm font-bold px-2 py-1 rounded bg-orange-100 text-orange-800 whitespace-nowrap">
+                        {course.grade}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </ReportSection>
           {/* Major Electives */}
           <ReportSection
             title="Major Electives"

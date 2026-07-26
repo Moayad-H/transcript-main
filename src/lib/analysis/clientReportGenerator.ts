@@ -22,6 +22,10 @@ import {
   getOutOfPlanCourses,
 } from "@/lib/analysis/courseAnalyzer";
 import {
+  getLatestSemester,
+  getRetakeRecommendations,
+} from "@/lib/analysis/semester";
+import {
   PRACTICAL_TRAINING_MIN_CREDIT_HOURS,
   GRADUATION_CREDIT_HOURS,
   PROBATION_GPA_THRESHOLD,
@@ -181,6 +185,8 @@ export async function generateReportClient(
     practicalTrainingWarning:
       creditHours >= GRADUATION_CREDIT_HOURS && !practicalTraining.completed,
     outOfPlanCourses,
+    latestSemester: getLatestSemester(transcriptData.courses),
+    retakeRecommendations: getRetakeRecommendations(transcriptData.courses),
     totalCreditHours: creditHours,
     expectedCreditHours: creditHours + ungradedCreditHours,
     completedCourses: transcriptData.courses.length,

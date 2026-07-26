@@ -2,11 +2,26 @@
  * Report generation types
  */
 
-import { StudiedCourse, Course, ElectiveCourse } from "./course";
+import { StudiedCourse, Course, ElectiveCourse, Semester } from "./course";
 
 export interface ReportSection {
   title: string;
   content: string[];
+}
+
+/**
+ * A course the student should be advised to repeat: passed with a weak grade
+ * (D+ and under) recently enough to still be inside the retake window.
+ */
+export interface RetakeRecommendation {
+  code: string;
+  title: string;
+  /** The weak grade on record (D+, D or D-). */
+  grade: string;
+  /** The semester that grade was earned in. */
+  semester: Semester;
+  /** Terms elapsed between that semester and the transcript's latest semester. */
+  termsAgo: number;
 }
 
 export interface AnalysisReport {
@@ -51,6 +66,13 @@ export interface AnalysisReport {
 
   // Out of plan courses
   outOfPlanCourses: StudiedCourse[];
+
+  // The most recent semester on the transcript — the anchor the retake window
+  // is measured back from. Null when no semester could be read.
+  latestSemester: Semester | null;
+  // Courses passed with a weak grade (D+ and under) recently enough to be worth
+  // repeating (see RETAKE_WINDOW_TERMS), most recent first.
+  retakeRecommendations: RetakeRecommendation[];
 
   // Summary
   totalCreditHours: number;
