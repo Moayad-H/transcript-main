@@ -1,11 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { AnalysisReport, TranscriptData } from "@/types";
 import { ReportSection } from "./ReportSection";
 import { formatReportAsText } from "@/lib/analysis/reportGenerator";
 import { downloadTextFile } from "@/lib/utils/helpers";
+import { anonymizeReport } from "@/lib/ai/anonymize";
+import { generateAdvice } from "@/lib/ai/generateAdvice";
+import {
+  DAILY_ADVICE_LIMIT,
+  getRemainingAdviceCount,
+  recordAdviceUse,
+} from "@/lib/ai/adviceQuota";
 
 // Client-only: React Flow measures the DOM, so keep it out of the static export prerender.
 const CourseGraphView = dynamic(() => import("./CourseGraphView"), {
@@ -24,6 +31,51 @@ export function ReportDisplay({
   onReset,
 }: ReportDisplayProps) {
   const [view, setView] = useState<"report" | "graph">("report");
+
+  // AI advising notes. Kept entirely local to this component and never wired
+  // into the upload flow — the report must render in full whether or not this
+  // call is ever made or ever succeeds.
+  const [advice, setAdvice] = useState<string | null>(null);
+  const [adviceLoading, setAdviceLoading] = useState(false);
+  const [adviceError, setAdviceError] = useState<string | null>(null);
+
+  // Read after mount, not during render: localStorage does not exist during the
+  // static export's prerender, and reading it in render would desync hydration.
+  const [adviceRemaining, setAdviceRemaining] = useState<number | null>(null);
+  useEffect(() => setAdviceRemaining(getRemainingAdviceCount()), []);
+
+  const adviceExhausted = adviceRemaining !== null && adviceRemaining <= 0;
+
+  const handleGenerateAdvice = async () => {
+    if (adviceExhausted) return;
+
+    setAdviceLoading(true);
+    setAdviceError(null);
+    // Counted before the response, so a failure mid-flight cannot be retried
+    // for free. The server caps are the real bound; this only paces the UI.
+    recordAdviceUse();
+    setAdviceRemaining(getRemainingAdviceCount());
+
+    try {
+      // Only the anonymized payload leaves the browser — no name, no student ID.
+      const result = await generateAdvice(anonymizeReport(report));
+      if (result.status === "ok") {
+        setAdvice(result.advice);
+      } else if (result.status === "throttled") {
+        setAdviceError("Too many requests just now. Wait a minute and try again.");
+      } else if (result.status === "daily-limit") {
+        setAdviceError(result.message);
+        setAdviceRemaining(0);
+      } else {
+        setAdviceError(result.message);
+      }
+    } catch (error) {
+      console.error("AI notes error:", error);
+      setAdviceError("Could not generate notes. Try again.");
+    } finally {
+      setAdviceLoading(false);
+    }
+  };
 
   const handleDownload = async () => {
     try {
@@ -331,6 +383,66 @@ export function ReportDisplay({
 
         {/* Report Sections */}
         <div className="p-8 space-y-8">
+          {/* AI Advisor Notes — a summary of the sections below, generated on
+              demand. Advisory only: the sections themselves remain the record. */}
+          <ReportSection title="AI Advisor Notes" badgeColor="indigo">
+            {/* Stays visible in the printed report too — anyone reading these
+                notes on paper needs the same caveat the advisor got. */}
+            <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3">
+              <span aria-hidden="true" className="text-amber-600">
+                ⚠
+              </span>
+              <p className="text-sm text-amber-800">
+                <span className="font-semibold">Feature under testing.</span>{" "}
+                These notes are experimental and may be incomplete or wrong.
+                They are a summary of the sections below, not a substitute for
+                them — always confirm against the report before advising a
+                student. Usage is limited while the feature is being evaluated.
+              </p>
+            </div>
+
+            {advice ? (
+              <div>
+                <p className="whitespace-pre-line text-gray-700">{advice}</p>
+                <p className="mt-3 text-xs text-gray-500 italic">
+                  AI-generated — verify against the sections below before advising.
+                </p>
+              </div>
+            ) : (
+              <div className="print:hidden">
+                <p className="text-gray-500 italic mb-3">
+                  Generate a short summary of what this student should register
+                  and prioritise next semester.
+                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={handleGenerateAdvice}
+                    disabled={adviceLoading || adviceExhausted}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  >
+                    {adviceLoading ? "Generating notes…" : "Generate AI Notes"}
+                  </button>
+                  {adviceRemaining !== null && (
+                    <span
+                      className={`text-sm ${
+                        adviceExhausted ? "text-red-600 font-medium" : "text-gray-500"
+                      }`}
+                    >
+                      {adviceExhausted
+                        ? "Daily limit reached — resets tomorrow."
+                        : `${adviceRemaining} of ${DAILY_ADVICE_LIMIT} left today`}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+            {adviceError && (
+              <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3 print:hidden">
+                <p className="text-sm text-red-700">{adviceError}</p>
+              </div>
+            )}
+          </ReportSection>
+
           {/* Ungraded Courses */}
           <ReportSection
             title="Ungraded Subjects"

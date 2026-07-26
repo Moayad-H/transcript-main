@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Deno, not Next — different globals and remote imports.
+    "supabase/functions/**",
   ]),
 ]);
 
