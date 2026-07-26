@@ -13,10 +13,32 @@ export interface CourseWithGrade extends Course {
   grade: string;
 }
 
+/**
+ * An academic term as printed on the transcript, e.g.
+ * "First Semester / 2024-2025".
+ */
+export type SemesterTerm = "First" | "Second" | "Summer";
+
+export interface Semester {
+  term: SemesterTerm;
+  /** Calendar year the academic year starts in (2024 for "2024-2025"). */
+  startYear: number;
+  /** Calendar year the academic year ends in (2025 for "2024-2025"). */
+  endYear: number;
+  /** Canonical label, e.g. "First Semester / 2024-2025". */
+  label: string;
+}
+
 export interface StudiedCourse {
   code: string;
   title: string;
   grade: string;
+  /**
+   * The academic term the course was taken in, read off the transcript's
+   * semester headers. Undefined when the transcript layout couldn't be
+   * resolved or for manually entered courses.
+   */
+  semester?: Semester;
 }
 
 export interface ElectiveCourse {
