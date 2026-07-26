@@ -19,6 +19,13 @@
   }
 }
 
+/* App reads best at ~110% — scale the rem base so all Tailwind
+   spacing/typography grows with it (avoids CSS `zoom`, which breaks
+   React Flow's pointer coordinates in the course graph). */
+html {
+  font-size: 110%;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
