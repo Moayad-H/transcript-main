@@ -15,16 +15,33 @@ export interface Instructor {
   name: string;
 }
 
+/** Raw row shape returned by the RPC. `throttled` marks a rate-limited caller. */
+interface VerifyAdvisorRow {
+  staff_id: string | null;
+  name: string | null;
+  throttled?: boolean;
+}
+
+export type VerifyAdvisorResult =
+  | { status: "ok"; instructor: Instructor }
+  | { status: "invalid" }
+  | { status: "throttled" };
+
 /**
- * Verifies a staff ID + password pair. Returns the instructor on success, or
- * null when either is wrong — the two cases are deliberately indistinguishable.
+ * Verifies a staff ID + password pair.
+ *
+ * A wrong ID and a wrong password both come back as "invalid" — the two cases
+ * are deliberately indistinguishable. "throttled" means the rate limit in
+ * supabase/advisor_login_rate_limit.sql has locked this staff ID out for a
+ * while; it says nothing about whether the credentials were right.
+ *
  * Throws when Supabase is unreachable or misconfigured, so the caller can tell
  * "bad credentials" apart from "network down".
  */
 export async function verifyAdvisor(
   staffId: string,
   password: string
-): Promise<Instructor | null> {
+): Promise<VerifyAdvisorResult> {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     throw new Error(
       "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
@@ -45,6 +62,20 @@ export async function verifyAdvisor(
     throw new Error(`Could not reach the staff directory (${response.status}).`);
   }
 
-  const rows: Instructor[] = await response.json();
-  return rows.length > 0 ? rows[0] : null;
+  const rows: VerifyAdvisorRow[] = await response.json();
+  if (rows.length === 0) {
+    return { status: "invalid" };
+  }
+
+  const row = rows[0];
+  // `throttled` is absent if the rate-limit migration has not been applied yet,
+  // in which case a returned row is always a successful match.
+  if (row.throttled) {
+    return { status: "throttled" };
+  }
+
+  return {
+    status: "ok",
+    instructor: { staff_id: row.staff_id as string, name: row.name as string },
+  };
 }
