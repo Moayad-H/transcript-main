@@ -1,16 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FileUpload } from "@/components/FileUpload";
 import { ReportDisplay } from "@/components/ReportDisplay";
 import { Header } from "@/components/Header";
+import { LoginScreen } from "@/components/LoginScreen";
 import { TranscriptData, AnalysisReport, Department } from "@/types";
 import { parseTranscriptPDF } from "@/lib/analysis/transcriptParser";
 import { generateReport } from "@/lib/analysis/reportGenerator";
+import {
+  AdvisorSession,
+  clearSession,
+  loadSession,
+  saveSession,
+} from "@/lib/auth/session";
 
 type Step = "upload" | "report";
 
 export default function Home() {
+  const [advisor, setAdvisor] = useState<AdvisorSession | null>(null);
+  // localStorage is only readable after mount, so gate the first paint until checked.
+  const [sessionChecked, setSessionChecked] = useState(false);
   const [step, setStep] = useState<Step>("upload");
   const [transcriptData, setTranscriptData] = useState<TranscriptData | null>(
     null
@@ -18,6 +28,25 @@ export default function Home() {
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setAdvisor(loadSession());
+    setSessionChecked(true);
+  }, []);
+
+  const handleLogin = (session: AdvisorSession) => {
+    saveSession(session);
+    setAdvisor(session);
+  };
+
+  const handleLogout = () => {
+    clearSession();
+    setAdvisor(null);
+    setStep("upload");
+    setTranscriptData(null);
+    setReport(null);
+    setError(null);
+  };
 
   const handleFileUpload = async (file: File, department?: Department) => {
     setLoading(true);
@@ -61,9 +90,17 @@ export default function Home() {
     setError(null);
   };
 
+  if (!sessionChecked) {
+    return <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50" />;
+  }
+
+  if (!advisor) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
-      <Header />
+      <Header advisorName={advisor.name} onLogout={handleLogout} />
 
       <main className="container mx-auto px-4 py-8 max-w-6xl">
         {error && (
