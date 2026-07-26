@@ -13,7 +13,8 @@ import { AnalysisReport, TranscriptData, Department } from "@/types";
 import { loadDepartmentData } from "@/lib/data/csvLoader";
 import { getStudiedCourseCodes } from "./transcriptParser";
 import { getWaivedRemedialCodes } from "./courseAnalyzer";
-import { ELECTIVE_KEYWORDS, canonicalizeCode } from "@/lib/constants";
+import { ELECTIVE_KEYWORDS, GRADES, canonicalizeCode } from "@/lib/constants";
+import { StudiedCourse } from "@/types";
 
 export type CourseStatus =
   | "completed"
@@ -28,6 +29,8 @@ export interface GraphCourseNode {
   code: string;
   title: string;
   status: CourseStatus;
+  /** Transcript grade for a course the student actually sat (best attempt). */
+  grade?: string;
   isElectiveSlot: boolean;
   creditReq?: string; // e.g. "30 CR" when the prerequisite is a credit-hour gate
   position: { x: number; y: number };
@@ -161,6 +164,27 @@ async function loadPlanSemesters(
 
   if (codeToSemester.size === 0) return null;
   return { codeToSemester, electiveQueues, maxSemester };
+}
+
+/**
+ * canonical code -> the grade to display for that course. A retaken course
+ * appears more than once on the transcript; the registrar keeps the passing
+ * attempt, so a passing grade always wins over an F/W, and among several
+ * attempts of the same kind the latest printed one wins.
+ */
+function buildGradeMap(courses: StudiedCourse[]): Map<string, string> {
+  const passing = new Set<string>(GRADES.PASSING);
+  const grades = new Map<string, string>();
+  for (const c of courses) {
+    if (!c.grade) continue;
+    const key = normalizeCode(c.code);
+    const prev = grades.get(key);
+    if (prev !== undefined && passing.has(prev) && !passing.has(c.grade)) {
+      continue;
+    }
+    grades.set(key, c.grade);
+  }
+  return grades;
 }
 
 /**
@@ -313,6 +337,8 @@ export async function buildCourseGraph(
   );
   // Remedial rows the student placed out of — hidden from the graph entirely.
   const waivedRemedialSet = getWaivedRemedialCodes(transcriptData.courses);
+  // Grades actually earned, for display on the cards.
+  const gradeByCode = buildGradeMap(transcriptData.courses);
 
   // How many slots of each elective category the student has satisfied.
   const satisfiedByCategory: Record<string, number> = {
@@ -327,6 +353,15 @@ export async function buildCourseGraph(
     SCIENCE: report.ungradedScienceElectives.length,
     MAJOR: report.ungradedMajorElectives.length,
     UNIVERSITY: report.ungradedUniversityRequirements.length,
+  };
+  // Codes of the courses that filled each category's completed slots, in the
+  // same order the slots consume them — so a filled slot can show its grade.
+  // (Professional Training is reported by title only, so it has no grade.)
+  const completedCodesByCategory: Record<string, string[]> = {
+    PROFESSIONAL: [],
+    SCIENCE: report.completedScienceElectives.map((e) => e.code),
+    MAJOR: report.completedMajorElectives.map((e) => e.code),
+    UNIVERSITY: report.completedUniversityRequirements.map((e) => e.code),
   };
   const usedByCategory: Record<string, number> = {
     PROFESSIONAL: 0,
@@ -381,6 +416,7 @@ export async function buildCourseGraph(
     );
 
     let status: CourseStatus;
+    let grade: string | undefined;
     if (isElectiveSlot) {
       const completed = satisfiedByCategory[category!] ?? 0;
       const ungraded = ungradedByCategory[category!] ?? 0;
@@ -390,6 +426,10 @@ export async function buildCourseGraph(
       if (used < completed) status = "completed";
       else if (used < completed + ungraded) status = "ungraded";
       else status = "elective";
+      if (status === "completed") {
+        const filledBy = completedCodesByCategory[category!]?.[used];
+        if (filledBy) grade = gradeByCode.get(normalizeCode(filledBy));
+      }
       usedByCategory[category!] = used + 1;
     } else if (failedSet.has(norm)) {
       status = "failed";
@@ -401,6 +441,13 @@ export async function buildCourseGraph(
       status = "available";
     } else {
       status = "blocked";
+    }
+
+    // Coded courses carry the grade straight off the transcript. "U" says
+    // nothing beyond the status the card already shows, so it's left off.
+    if (!isElectiveSlot) {
+      const g = gradeByCode.get(norm);
+      if (g && g !== "U") grade = g;
     }
 
     // Semester (study-plan column) for this node: coded courses by canonical
@@ -426,6 +473,7 @@ export async function buildCourseGraph(
       code: course.code || (isElectiveSlot ? "Elective" : ""),
       title: course.title,
       status,
+      grade,
       isElectiveSlot,
       creditReq,
       position: { x: 0, y: 0 },

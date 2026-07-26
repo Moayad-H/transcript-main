@@ -140,7 +140,7 @@ const STATUS_STYLES: Record<
 
 type CourseNodeData = Pick<
   GraphCourseNode,
-  "code" | "title" | "status" | "isElectiveSlot" | "creditReq"
+  "code" | "title" | "status" | "grade" | "isElectiveSlot" | "creditReq"
 > & {
   // Set when a node is selected: this node is either the selection, a
   // prerequisite of it, a course that depends on it, or dimmed (unrelated).
@@ -176,6 +176,21 @@ function CourseNode({ data }: NodeProps<Node<CourseNodeData>>) {
         <span className="font-mono text-xs font-semibold bg-white/60 px-1.5 py-0.5 rounded">
           {data.code}
         </span>
+        {/* Earned grade, shown only while the card still reflects the real
+            transcript status (a manual override can flip it to hypothetical). */}
+        {data.grade &&
+          (data.status === "completed" || data.status === "failed") && (
+            <span
+              className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${
+                data.status === "failed"
+                  ? "bg-red-600 text-white"
+                  : "bg-green-600 text-white"
+              }`}
+              title={`Grade: ${data.grade}`}
+            >
+              {data.grade}
+            </span>
+          )}
         {data.creditReq && (
           <span className="text-[10px] font-bold uppercase bg-white/70 px-1.5 py-0.5 rounded">
             {data.creditReq}
@@ -308,6 +323,7 @@ export default function CourseGraphView({
             code: n.code,
             title: n.title,
             status: n.status,
+            grade: n.grade,
             isElectiveSlot: n.isElectiveSlot,
             creditReq: n.creditReq,
           },
