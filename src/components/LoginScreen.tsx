@@ -29,14 +29,21 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     setLoading(true);
     try {
       // Both the ID and the password are checked server-side, in one call.
-      const instructor = await verifyAdvisor(trimmedId, password);
+      const result = await verifyAdvisor(trimmedId, password);
 
-      if (!instructor) {
+      if (result.status === "throttled") {
+        setError(
+          "Too many sign-in attempts. Try again in about 15 minutes."
+        );
+        return;
+      }
+
+      if (result.status === "invalid") {
         setError("Incorrect staff ID or password.");
         return;
       }
 
-      onLogin(instructor);
+      onLogin(result.instructor);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Could not sign in. Try again."
