@@ -62,7 +62,7 @@ export function buildAlerts(report: AnalysisReport): AlertItem[] {
       tone: "danger",
       label:
         report.probationSemesters > 0
-          ? `Probation · semester ${report.probationSemesters} of 3`
+          ? "Probation " 
           : "Academic probation (half-load)",
       detail:
         `Cumulative G.P.A (${report.gpa}) is below 2.0. The student may register at most ` +

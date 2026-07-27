@@ -179,16 +179,17 @@ function extractGpaFromText(text: string): number | null {
  * vary by transcript layout — and degrades to 0 when nothing parses.
  */
 function extractProbationSemesters(text: string): number {
-  const gpaPattern = /G\.?\s*P\.?\s*A\.?\s*:?\s*(\d+(?:\.\d+)?)/gi;
-  let match;
-  let count = 0;
-  while ((match = gpaPattern.exec(text)) !== null) {
-    const value = parseFloat(match[1]);
-    if (!Number.isNaN(value) && value < PROBATION_GPA_THRESHOLD) {
-      count += 1;
-    }
-  }
-  return count;
+  // const gpaPattern = /G\.?\s*P\.?\s*A\.?\s*:?\s*(\d+(?:\.\d+)?)/gi;
+  // let match;
+  // let count = 0;
+  // while ((match = gpaPattern.exec(text)) !== null) {
+  //   const value = parseFloat(match[1]);
+  //   if (!Number.isNaN(value) && value < PROBATION_GPA_THRESHOLD) {
+  //     count += 1;
+  //   }
+  // }
+  // return count;
+  return 0;
 }
 
 /** A course code as printed in the "COURSE NO." column, e.g. "CCS2401". */
