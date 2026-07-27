@@ -125,7 +125,7 @@ export async function generateReport(
   // Get out-of-plan courses
   const outOfPlanCourses = getOutOfPlanCourses(
     coursePlan,
-    transcriptData.courses.filter((c) => !withdrawnFailedCourses.includes(c)),
+    transcriptData.courses.filter((c) => !withdrawnFailedCourses.includes(c) && !ungradedCourses.includes(c)),
     completedMajorElectives,
     completedScienceElectives,
     completedUniversityElectives

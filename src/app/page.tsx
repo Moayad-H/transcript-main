@@ -98,11 +98,25 @@ export default function Home() {
     return <LoginScreen onLogin={handleLogin} />;
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
-      <Header advisorName={advisor.name} onLogout={handleLogout} />
+  // The report is a full-viewport dashboard: it needs the whole width, a
+  // slimmer header, and the leftover height as a flex child.
+  const inReport = step === "report" && !!report && !!transcriptData;
 
-      <main className="container mx-auto px-4 py-8 max-w-6xl">
+  return (
+    <div className="flex min-h-0 flex-1 flex-col bg-gradient-to-br from-blue-50 to-indigo-50">
+      <Header
+        advisorName={advisor.name}
+        onLogout={handleLogout}
+        compact={inReport}
+      />
+
+      <main
+        className={
+          inReport
+            ? "flex min-h-0 flex-1 flex-col px-3 py-3 print:block print:p-0"
+            : "container mx-auto px-4 py-8 max-w-6xl"
+        }
+      >
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
             <p className="font-semibold">Error:</p>
@@ -123,7 +137,11 @@ export default function Home() {
         )}
       </main>
 
-      <footer className="mt-16 py-6 text-center text-sm text-white-600">
+      <footer
+        className={`mt-16 py-6 text-center text-sm text-white-600 print:hidden ${
+          inReport ? "hidden" : ""
+        }`}
+      >
         <p>Copyright 2026 Dr. Moheeb and Eng. Hagar</p>
         <p className="mt-1">
           CCIT - College of Computing and Information Technology - Cairo

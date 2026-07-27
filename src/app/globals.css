@@ -3,11 +3,15 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* CCIT deep navy — the single brand colour used by the header, the student
+     bar and every "brand" accent. */
+  --brand: rgb(7, 27, 82);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand: var(--brand);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -33,8 +37,30 @@ body {
 }
 
 footer {
-  background-color: rgb(2, 27, 82); 
+  background-color: rgb(2, 27, 82);
 }
 #report-header {
-  background-color: rgb(7, 27, 82); 
+  background-color: rgb(7, 27, 82);
+}
+
+/* Cockpit report view: on a desktop screen the document must not scroll, so the
+   dashboard fills exactly one viewport and each card scrolls its own body.
+   Added by ReportDisplay while it is mounted, removed when it unmounts. Below
+   1280px (and on paper) the class does nothing and the page scrolls normally. */
+@media (min-width: 1280px) {
+  body.cockpit-lock {
+    height: 100dvh;
+    overflow: hidden;
+  }
+  /* The version stamp is not worth board height on this screen. */
+  body.cockpit-lock > footer {
+    display: none;
+  }
+}
+
+@media print {
+  body.cockpit-lock {
+    height: auto;
+    overflow: visible;
+  }
 }
