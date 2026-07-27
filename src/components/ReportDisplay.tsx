@@ -650,12 +650,42 @@ export function ReportDisplay({
           {/* University Requirements */}
           <ReportSection
             title="University Requirements"
-            badge={`${report.completedUniversityRequirements.length}/${
-              report.completedUniversityRequirements.length +
-              report.remainingUniversityRequirements
-            }`}
-            badgeColor="indigo"
+            badge={`${report.completedUniversityRequirements.length}/${report.requiredUniversityRequirements}`}
+            badgeColor={
+              report.excessUniversityRequirements.length > 0 ? "red" : "indigo"
+            }
           >
+            {report.excessUniversityRequirements.length > 0 && (
+              <div className="mb-4 rounded-lg border-l-4 border-red-500 bg-red-50 p-4">
+                <p className="font-semibold text-red-800">
+                  Extra University Requirement course
+                  {report.excessUniversityRequirements.length > 1 ? "s" : ""} taken
+                </p>
+                <p className="mt-1 text-sm text-red-700">
+                  The study plan allows only{" "}
+                  {report.requiredUniversityRequirements} University Requirement
+                  course
+                  {report.requiredUniversityRequirements === 1 ? "" : "s"}, but{" "}
+                  {report.completedUniversityRequirements.length} were passed.
+                  The extra course
+                  {report.excessUniversityRequirements.length > 1 ? "s" : ""} do
+                  not count toward the degree plan, so{" "}
+                  {report.excessUniversityCreditHours} credit hour
+                  {report.excessUniversityCreditHours === 1 ? "" : "s"} were
+                  spent without progressing toward graduation.
+                </p>
+                <ul className="mt-2 space-y-1">
+                  {report.excessUniversityRequirements.map((course, idx) => (
+                    <li key={idx} className="text-sm text-red-800">
+                      <span className="font-mono bg-red-100 px-2 py-0.5 rounded">
+                        {course.code}
+                      </span>
+                      <span className="ml-2">{course.title}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {report.completedUniversityRequirements.length === 0 ? (
               <p className="text-gray-500 italic">
                 No university requirements completed yet
