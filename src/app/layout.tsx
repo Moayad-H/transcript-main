@@ -24,7 +24,7 @@ export default function RootLayout({
       <body className={`${inter.className} antialiased flex min-h-screen flex-col`}>
         <div className="flex min-h-0 flex-1 flex-col">{children}</div>
         <footer className="flex-shrink-0 py-4 text-center text-md text-gray-400 print:hidden">
-          v0.4.0 +20
+          v0.5.0 +25
         </footer>
       </body>
     </html>
