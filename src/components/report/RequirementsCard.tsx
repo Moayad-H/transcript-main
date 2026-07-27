@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { AnalysisReport } from "@/types";
 import { ElectiveCourse } from "@/types/course";
 import { CardTone, DashCard, toneChip } from "./DashCard";
@@ -31,9 +34,32 @@ function RequirementRow({
   const pendingPct =
     total > 0 ? (Math.min(ungraded.length, remaining) / total) * 100 : 0;
 
+  // Rows with any listed course can be expanded to reveal full course titles;
+  // print always renders expanded, so paper never hides the detail.
+  const hasCourses = completed.length > 0 || ungraded.length > 0;
+  const [expanded, setExpanded] = useState(false);
+
   return (
     <div className="border-b border-slate-100 py-2 last:border-0">
-      <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => hasCourses && setExpanded((v) => !v)}
+        disabled={!hasCourses}
+        aria-expanded={hasCourses ? expanded : undefined}
+        className={`flex w-full items-center gap-2 text-left ${
+          hasCourses ? "cursor-pointer" : "cursor-default"
+        }`}
+      >
+        {hasCourses && (
+          <span
+            className={`text-[10px] text-slate-400 transition-transform ${
+              expanded ? "rotate-90" : ""
+            }`}
+            aria-hidden
+          >
+            ▶
+          </span>
+        )}
         <span className="text-sm font-semibold text-slate-700">{label}</span>
         <span
           className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold ${
@@ -42,7 +68,7 @@ function RequirementRow({
         >
           {completed.length}/{total}
         </span>
-      </div>
+      </button>
 
       {/* Solid = passed, lighter = registered but not yet graded. */}
       <div className="mt-1.5 flex h-1.5 overflow-hidden rounded-full bg-slate-100">
@@ -50,29 +76,69 @@ function RequirementRow({
         <div className={bar.pending} style={{ width: `${pendingPct}%` }} />
       </div>
 
-      <div className="mt-1.5 flex flex-wrap gap-1">
+      {/* Collapsed: compact code chips. Expanded (and always in print): full
+          titles so the advisor sees which courses satisfied the requirement. */}
+      {(expanded || !hasCourses) ? null : (
+        <div className="mt-1.5 flex flex-wrap gap-1 print:hidden">
+          {completed.map((course) => (
+            <span
+              key={`c-${course.code}`}
+              title={course.title}
+              className={`rounded px-1.5 py-0.5 font-mono text-[10px] ${toneChip(tone)}`}
+            >
+              {course.code}
+            </span>
+          ))}
+          {ungraded.map((course) => (
+            <span
+              key={`u-${course.code}`}
+              title={`${course.title} — grade pending`}
+              className="rounded border border-dashed border-slate-300 px-1.5 py-0.5 font-mono text-[10px] text-slate-500"
+            >
+              {course.code}
+            </span>
+          ))}
+          {remaining > 0 && (
+            <span className="rounded border border-dashed border-slate-300 px-1.5 py-0.5 text-[10px] text-slate-500">
+              {remaining} to choose
+            </span>
+          )}
+        </div>
+      )}
+
+      <div
+        className={`mt-1.5 space-y-1 ${
+          expanded ? "" : "hidden"
+        } print:block`}
+      >
         {completed.map((course) => (
-          <span
-            key={`c-${course.code}`}
-            title={course.title}
-            className={`rounded px-1.5 py-0.5 font-mono text-[10px] ${toneChip(tone)}`}
+          <div
+            key={`ce-${course.code}`}
+            className="flex items-baseline gap-1.5 text-[11px]"
           >
-            {course.code}
-          </span>
+            <span
+              className={`shrink-0 rounded px-1.5 py-0.5 font-mono text-[10px] ${toneChip(tone)}`}
+            >
+              {course.code}
+            </span>
+            <span className="text-slate-600">{course.title}</span>
+          </div>
         ))}
         {ungraded.map((course) => (
-          <span
-            key={`u-${course.code}`}
-            title={`${course.title} — grade pending`}
-            className="rounded border border-dashed border-slate-300 px-1.5 py-0.5 font-mono text-[10px] text-slate-500"
+          <div
+            key={`ue-${course.code}`}
+            className="flex items-baseline gap-1.5 text-[11px]"
           >
-            {course.code}
-          </span>
+            <span className="shrink-0 rounded border border-dashed border-slate-300 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">
+              {course.code}
+            </span>
+            <span className="text-slate-500">{course.title} — grade pending</span>
+          </div>
         ))}
         {remaining > 0 && (
-          <span className="rounded border border-dashed border-slate-300 px-1.5 py-0.5 text-[10px] text-slate-500">
-            {remaining} to choose
-          </span>
+          <div className="text-[11px] text-slate-500">
+            {remaining} more to choose
+          </div>
         )}
       </div>
     </div>
