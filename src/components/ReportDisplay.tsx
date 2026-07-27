@@ -10,6 +10,7 @@ import { CourseRow } from "./report/CourseRow";
 import { StudentBar } from "./report/StudentBar";
 import { AlertStrip } from "./report/AlertStrip";
 import { RequirementsCard } from "./report/RequirementsCard";
+import { RegisterSection } from "./report/RegisterSection";
 import { AiNotesCard } from "./report/AiNotesCard";
 
 // Client-only: React Flow measures the DOM, so keep it out of the static export prerender.
@@ -109,22 +110,132 @@ export function ReportDisplay({
               <DashCard
                 title="Courses You Can Register"
                 tone="blue"
-                badge={report.availableCourses.length}
+                badge={
+                  report.availableCourses.length +
+                  report.availableMajorElectives.length +
+                  report.availableProfessionalTraining.length
+                }
                 className={`${CARD} xl:min-h-0`}
               >
-                {report.availableCourses.length === 0 ? (
+                {report.availableCourses.length === 0 &&
+                report.availableMajorElectives.length === 0 &&
+                report.availableProfessionalTraining.length === 0 ? (
                   <CardEmpty>No available courses at this time</CardEmpty>
                 ) : (
-                  <ul>
-                    {report.availableCourses.map((course, idx) => (
-                      <CourseRow
-                        key={idx}
-                        code={course.code}
-                        title={course.title}
-                        tone="blue"
-                      />
-                    ))}
-                  </ul>
+                  <>
+                    {report.availableCourses.length > 0 && (
+                      <>
+                        {/* A — the actual advising recommendation: a capped, plan-ordered
+                            subset the student should register this semester. Open by
+                            default since it's the answer the advisor is here for. */}
+                        <RegisterSection
+                          label="A · Recommended This Semester"
+                          count={report.recommendedCourses.length}
+                          labelClassName="text-slate-500"
+                          defaultExpanded
+                        >
+                          {report.recommendedCourses.length === 0 ? (
+                            <p className="mb-2 text-[11px] italic text-slate-400">
+                              None recommended for this semester
+                            </p>
+                          ) : (
+                            <ul className="mb-1">
+                              {report.recommendedCourses.map((course, idx) => (
+                                <CourseRow
+                                  key={idx}
+                                  code={course.code}
+                                  title={course.title}
+                                  tone="blue"
+                                />
+                              ))}
+                            </ul>
+                          )}
+                        </RegisterSection>
+
+                        {/* B — eligible but not this semester's priority. */}
+                        {report.otherEligibleCourses.length > 0 && (
+                          <RegisterSection
+                            label="B · Other Eligible Courses"
+                            count={report.otherEligibleCourses.length}
+                            labelClassName="text-slate-400"
+                            divider
+                          >
+                            <ul>
+                              {report.otherEligibleCourses.map((course, idx) => (
+                                <CourseRow
+                                  key={idx}
+                                  code={course.code}
+                                  title={course.title}
+                                  tone="slate"
+                                />
+                              ))}
+                            </ul>
+                          </RegisterSection>
+                        )}
+                      </>
+                    )}
+
+                    {/* C — the concrete major electives that fill an open major-
+                        elective slot (surfaced for years 3–4, when these come due). */}
+                    {report.availableMajorElectives.length > 0 && (
+                      <RegisterSection
+                        label={`C · Major Electives (${report.department})`}
+                        count={report.availableMajorElectives.length}
+                        labelClassName="text-indigo-500"
+                        note={
+                          <>
+                            {" "}
+                            · {report.remainingMajorElectives} slot
+                            {report.remainingMajorElectives === 1 ? "" : "s"} left
+                          </>
+                        }
+                        divider
+                      >
+                        <ul>
+                          {report.availableMajorElectives.map((course, idx) => (
+                            <CourseRow
+                              key={idx}
+                              code={course.code}
+                              title={course.title}
+                              tone="indigo"
+                            />
+                          ))}
+                        </ul>
+                      </RegisterSection>
+                    )}
+
+                    {/* D — the next Professional Training slot in the fixed
+                        Sem 5–8 sequence (surfaced from year 3, when it comes due). */}
+                    {report.availableProfessionalTraining.length > 0 && (
+                      <RegisterSection
+                        label="D · Professional Training"
+                        count={report.availableProfessionalTraining.length}
+                        labelClassName="text-teal-600"
+                        note={
+                          <>
+                            {" "}
+                            · {report.remainingProfessionalTraining} slot
+                            {report.remainingProfessionalTraining === 1 ? "" : "s"}{" "}
+                            left
+                          </>
+                        }
+                        divider
+                      >
+                        <ul>
+                          {report.availableProfessionalTraining.map(
+                            (course, idx) => (
+                              <CourseRow
+                                key={idx}
+                                code={course.code}
+                                title={course.title}
+                                tone="teal"
+                              />
+                            )
+                          )}
+                        </ul>
+                      </RegisterSection>
+                    )}
+                  </>
                 )}
               </DashCard>
             </div>

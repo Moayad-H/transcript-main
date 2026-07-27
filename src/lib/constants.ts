@@ -76,6 +76,42 @@ export const PROBATION_GPA_THRESHOLD = 2.0;
 export const PROBATION_HALF_LOAD_CREDITS = 12;
 export const PROBATION_MAX_SEMESTERS = 3;
 
+// Normal per-semester registration load, used to size the "Recommended This
+// Semester" list. Lower-year students (years 1–2) carry a heavier load than
+// upper-year students (years 3–4), who typically fold in training/projects.
+// Year is inferred from earned credit hours: year-3 advising starts around 69
+// earned Cr (advising range 69–75, ±3 around 72). Probation overrides both with
+// PROBATION_HALF_LOAD_CREDITS regardless of year.
+export const NORMAL_LOAD_LOWER_YEARS = 18; // years 1–2 (< YEAR_UPPER_CREDIT_THRESHOLD)
+export const NORMAL_LOAD_UPPER_YEARS = 15; // years 3–4
+export const YEAR_UPPER_CREDIT_THRESHOLD = 69;
+
+// Major electives are Semester 7–8 (year-4) courses in every department plan, so
+// they're only advised once the student has reached year 4. Approximated by
+// earned credit hours: three of eight semesters' worth of a 132 Cr. plan
+// (132 * 6/8 = 99) puts the student entering Semester 7.
+export const YEAR_FOUR_CREDIT_THRESHOLD = 99;
+
+// Professional Training is a fixed four-course sequence, taken one per semester
+// starting in Semester 5 (year 3), identical across every department plan:
+//   Sem 5: CIT3200  Professional Training in Mobile Apps Programming
+//   Sem 6: Professional Training I  (track-specific — student's choice)
+//   Sem 7: Professional Training II
+//   Sem 8: Professional Training III
+// Only the first slot has a fixed code; the rest depend on the track the student
+// picks (Networking, Cybersecurity, …), so they're advised by their plan label.
+// The order matches the department study plans and the course graph view, and is
+// what section D of "Courses You Can Register" recommends the next slot from.
+export const PROFESSIONAL_TRAINING_SEQUENCE: readonly {
+  code: string;
+  title: string;
+}[] = [
+  { code: "CIT3200", title: "Professional Training in Mobile Apps Programming" },
+  { code: "", title: "Professional Training I" },
+  { code: "", title: "Professional Training II" },
+  { code: "", title: "Professional Training III" },
+];
+
 /**
  * Whether a course title is "Project I" (the pre-graduation project gated on a
  * ≥ 2.0 GPA). Project I appears under different codes per department

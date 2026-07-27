@@ -25,8 +25,12 @@ import {
   getPracticalTrainingStatus,
   removeElectivesInCore,
   getAvailableCourses,
+  splitAvailableCourses,
+  getAvailableMajorElectives,
+  getAvailableProfessionalTraining,
   getOutOfPlanCourses,
 } from "./courseAnalyzer";
+import { loadPlanSemesters } from "./courseGraphBuilder";
 import { getLatestSemester, getRetakeRecommendations } from "./semester";
 import {
   PRACTICAL_TRAINING_MIN_CREDIT_HOURS,
@@ -122,6 +126,18 @@ export async function generateReport(
     gpa
   );
 
+  // Split the eligible pool into a capped, priority "recommended this semester"
+  // list (group A) and the remaining eligible courses (group B), ranked by the
+  // department plan sequence.
+  const planSemesters = await loadPlanSemesters(department);
+  const { recommended: recommendedCourses, otherEligible: otherEligibleCourses } =
+    splitAvailableCourses(
+      availableCourses,
+      planSemesters?.codeToSemester ?? null,
+      creditHours,
+      onProbation
+    );
+
   // Get out-of-plan courses
   const outOfPlanCourses = getOutOfPlanCourses(
     coursePlan,
@@ -135,6 +151,13 @@ export async function generateReport(
     0,
     requirements.majorElectives - completedMajorElectives.length
   );
+  // The concrete major-elective courses fillable right now (section C).
+  const availableMajorElectives = getAvailableMajorElectives(
+    majorElectives,
+    studiedCodes,
+    creditHours,
+    remainingMajorElectives
+  );
   const remainingScienceElectives = Math.max(
     0,
     requirements.scienceElectives - completedScienceElectives.length
@@ -146,6 +169,11 @@ export async function generateReport(
   const remainingProfessionalTraining = Math.max(
     0,
     requirements.professionalTraining - professionalTraining.length
+  );
+  // The next Professional Training slot fillable right now (section D).
+  const availableProfessionalTraining = getAvailableProfessionalTraining(
+    remainingProfessionalTraining,
+    creditHours
   );
 
   // Graduation: the 132 credit-hour requirement plus every outstanding
@@ -173,9 +201,12 @@ export async function generateReport(
     ungradedCourses,
     withdrawnFailedCourses,
     availableCourses,
+    recommendedCourses,
+    otherEligibleCourses,
     completedMajorElectives,
     ungradedMajorElectives,
     remainingMajorElectives,
+    availableMajorElectives,
     completedScienceElectives,
     ungradedScienceElectives,
     remainingScienceElectives,
@@ -184,6 +215,7 @@ export async function generateReport(
     remainingUniversityRequirements,
     completedProfessionalTraining: professionalTraining,
     remainingProfessionalTraining,
+    availableProfessionalTraining,
     practicalTrainingCompleted: practicalTraining.completed,
     practicalTrainingUngraded: practicalTraining.ungraded,
     practicalTrainingEligible: creditHours >= PRACTICAL_TRAINING_MIN_CREDIT_HOURS,
@@ -301,11 +333,45 @@ export function formatReportAsText(report: AnalysisReport): string {
   lines.push("-".repeat(60));
   lines.push("COURSES YOU CAN REGISTER:");
   lines.push("-".repeat(60));
-  if (report.availableCourses.length === 0) {
+  if (
+    report.availableCourses.length === 0 &&
+    report.availableMajorElectives.length === 0 &&
+    report.availableProfessionalTraining.length === 0
+  ) {
     lines.push("None available");
-  } else {
-    report.availableCourses.forEach((course) => {
-      lines.push(`${course.code}: ${course.title}`);
+  } else if (report.availableCourses.length > 0) {
+    lines.push("A. Recommended This Semester:");
+    if (report.recommendedCourses.length === 0) {
+      lines.push("  None recommended for this semester");
+    } else {
+      report.recommendedCourses.forEach((course) => {
+        lines.push(`  ${course.code}: ${course.title}`);
+      });
+    }
+    if (report.otherEligibleCourses.length > 0) {
+      lines.push("");
+      lines.push("B. Other Eligible Courses:");
+      report.otherEligibleCourses.forEach((course) => {
+        lines.push(`  ${course.code}: ${course.title}`);
+      });
+    }
+  }
+  if (report.availableMajorElectives.length > 0) {
+    lines.push("");
+    lines.push(
+      `C. Major Electives (${report.remainingMajorElectives} slot(s) left):`
+    );
+    report.availableMajorElectives.forEach((course) => {
+      lines.push(`  ${course.code}: ${course.title}`);
+    });
+  }
+  if (report.availableProfessionalTraining.length > 0) {
+    lines.push("");
+    lines.push(
+      `D. Professional Training (${report.remainingProfessionalTraining} slot(s) left):`
+    );
+    report.availableProfessionalTraining.forEach((course) => {
+      lines.push(`  ${course.code ? `${course.code}: ` : ""}${course.title}`);
     });
   }
   lines.push("");

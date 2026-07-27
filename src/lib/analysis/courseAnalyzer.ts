@@ -16,8 +16,17 @@ import {
   canonicalizeCode,
   PRACTICAL_TRAINING_CODE,
   PROBATION_GPA_THRESHOLD,
+  PROBATION_HALF_LOAD_CREDITS,
   PROFESSIONAL_TRAINING_REQUIRED,
+  PROFESSIONAL_TRAINING_SEQUENCE,
   isProjectOneTitle,
+  isTwoCreditCourse,
+  TWO_CREDIT_HOURS,
+  CREDIT_HOURS_PER_COURSE,
+  NORMAL_LOAD_LOWER_YEARS,
+  NORMAL_LOAD_UPPER_YEARS,
+  YEAR_UPPER_CREDIT_THRESHOLD,
+  YEAR_FOUR_CREDIT_THRESHOLD,
 } from "@/lib/constants";
 
 /**
@@ -340,6 +349,155 @@ export function getAvailableCourses(
   }
 
   return available;
+}
+
+/**
+ * Split the eligible-course pool from getAvailableCourses() into:
+ *   - recommended: the priority list for the current semester (group A), and
+ *   - otherEligible: courses the student may register but shouldn't prioritize (group B).
+ *
+ * This changes no eligibility — it only ranks and caps an already-eligible pool.
+ *
+ * Ranking: by department-plan semester (earliest first), then core-before-elective
+ * within a semester, then original plan order. Courses absent from the plan map sort
+ * last. Group A is the highest-priority prefix whose cumulative credit value fits a
+ * normal-load cap; the first course that would overflow, and everything after it,
+ * falls to group B (so A stays a contiguous, coherent semester).
+ *
+ * The cap depends on academic standing/year (earned credit hours):
+ *   - on probation  -> PROBATION_HALF_LOAD_CREDITS (12) regardless of year
+ *   - years 3–4 (earned >= YEAR_UPPER_CREDIT_THRESHOLD) -> NORMAL_LOAD_UPPER_YEARS (15)
+ *   - years 1–2     -> NORMAL_LOAD_LOWER_YEARS (18)
+ */
+export function splitAvailableCourses(
+  availableCourses: Course[],
+  codeToSemester: Map<string, number> | null,
+  completedCreditHours: number,
+  onProbation: boolean
+): { recommended: Course[]; otherEligible: Course[] } {
+  const cap = onProbation
+    ? PROBATION_HALF_LOAD_CREDITS
+    : completedCreditHours >= YEAR_UPPER_CREDIT_THRESHOLD
+      ? NORMAL_LOAD_UPPER_YEARS
+      : NORMAL_LOAD_LOWER_YEARS;
+
+  // An available concrete course reads as an elective if its title carries an
+  // elective keyword (same set getAvailableCourses uses to skip placeholder rows);
+  // core courses are prioritized ahead of electives within the same semester.
+  const isElectiveTitle = (title: string): boolean =>
+    Object.values(ELECTIVE_KEYWORDS).some((kw) => title.includes(kw));
+
+  const semesterOf = (course: Course): number =>
+    codeToSemester?.get(canonicalizeCode(course.code)) ?? Infinity;
+
+  // Stable sort: preserve original plan order as the final tiebreak.
+  const ranked = availableCourses
+    .map((course, index) => ({ course, index }))
+    .sort((a, b) => {
+      const semDiff = semesterOf(a.course) - semesterOf(b.course);
+      if (semDiff !== 0) return semDiff;
+      const electiveDiff =
+        Number(isElectiveTitle(a.course.title)) -
+        Number(isElectiveTitle(b.course.title));
+      if (electiveDiff !== 0) return electiveDiff;
+      return a.index - b.index;
+    })
+    .map((entry) => entry.course);
+
+  const recommended: Course[] = [];
+  const otherEligible: Course[] = [];
+  let running = 0;
+  let capReached = false;
+
+  for (const course of ranked) {
+    const value = isTwoCreditCourse(canonicalizeCode(course.code))
+      ? TWO_CREDIT_HOURS
+      : CREDIT_HOURS_PER_COURSE;
+    if (!capReached && running + value <= cap) {
+      recommended.push(course);
+      running += value;
+    } else {
+      capReached = true;
+      otherEligible.push(course);
+    }
+  }
+
+  return { recommended, otherEligible };
+}
+
+/**
+ * Get the major-elective courses a student can register right now.
+ *
+ * Major electives are real courses listed in the department's Major CSV, but
+ * getAvailableCourses() skips them — the course plan carries only a "Major
+ * Elective" placeholder row, not the concrete options. So a student with an open
+ * major-elective slot never sees which actual courses fill it. This surfaces
+ * that menu: the electives not already taken whose prerequisites are met.
+ *
+ * Only advised to year-4 students — major electives are Semester 7–8 courses in
+ * every department plan, so the menu stays hidden until the student reaches year
+ * 4 (earned >= YEAR_FOUR_CREDIT_THRESHOLD). Returns [] before year 4, and once
+ * every slot is filled (remaining <= 0), so the section only shows when it's
+ * both due and actionable.
+ */
+export function getAvailableMajorElectives(
+  majorElectives: ElectiveCourse[],
+  studiedCodes: string[],
+  creditHours: number,
+  remainingMajorElectives: number
+): Course[] {
+  if (remainingMajorElectives <= 0) return [];
+  if (creditHours < YEAR_FOUR_CREDIT_THRESHOLD) return [];
+
+  const studiedSet = new Set(studiedCodes.map((c) => canonicalizeCode(c)));
+  const offered = new Set<string>();
+  const available: Course[] = [];
+
+  for (const elective of majorElectives) {
+    const code = canonicalizeCode(elective.code);
+    if (studiedSet.has(code) || offered.has(code)) continue;
+
+    const course: Course = {
+      code: elective.code,
+      title: elective.title,
+      prerequisiteCode: elective.prerequisiteCode,
+    };
+    if (checkPrerequisites(course, studiedCodes, creditHours).met) {
+      available.push(course);
+      offered.add(code);
+    }
+  }
+
+  return available;
+}
+
+/**
+ * Get the next Professional Training course a student should register.
+ *
+ * Professional Training is a fixed four-slot sequence taken one per semester
+ * from Semester 5 onward (PROFESSIONAL_TRAINING_SEQUENCE): Mobile Apps (CIT3200),
+ * then a track-specific I / II / III. How many the student has done is
+ * remaining-derived, so the next slot is index (length - remaining). We return
+ * just that next slot — the one due this semester — matching the graph view's
+ * per-semester ordering.
+ *
+ * Only advised from year 3, when the sequence starts (earned >=
+ * YEAR_UPPER_CREDIT_THRESHOLD). Returns [] before year 3 and once all four slots
+ * are done (remaining <= 0), so section D only shows when it's due and actionable.
+ */
+export function getAvailableProfessionalTraining(
+  remainingProfessionalTraining: number,
+  creditHours: number
+): Course[] {
+  if (remainingProfessionalTraining <= 0) return [];
+  if (creditHours < YEAR_UPPER_CREDIT_THRESHOLD) return [];
+
+  const nextIndex =
+    PROFESSIONAL_TRAINING_SEQUENCE.length - remainingProfessionalTraining;
+  const slot = PROFESSIONAL_TRAINING_SEQUENCE[nextIndex];
+  if (!slot) return [];
+
+  return [{ code: slot.code, title: slot.title, prerequisiteCode: "" }];
 }
 
 /**

@@ -84,11 +84,45 @@ export function formatReportAsText(report: AnalysisReport): string {
   lines.push("-".repeat(60));
   lines.push("COURSES YOU CAN REGISTER:");
   lines.push("-".repeat(60));
-  if (report.availableCourses.length === 0) {
+  if (
+    report.availableCourses.length === 0 &&
+    report.availableMajorElectives.length === 0 &&
+    report.availableProfessionalTraining.length === 0
+  ) {
     lines.push("None available");
-  } else {
-    report.availableCourses.forEach((course) => {
-      lines.push(`${course.code}: ${course.title}`);
+  } else if (report.availableCourses.length > 0) {
+    lines.push("A. Recommended This Semester:");
+    if (report.recommendedCourses.length === 0) {
+      lines.push("  None recommended for this semester");
+    } else {
+      report.recommendedCourses.forEach((course) => {
+        lines.push(`  ${course.code}: ${course.title}`);
+      });
+    }
+    if (report.otherEligibleCourses.length > 0) {
+      lines.push("");
+      lines.push("B. Other Eligible Courses:");
+      report.otherEligibleCourses.forEach((course) => {
+        lines.push(`  ${course.code}: ${course.title}`);
+      });
+    }
+  }
+  if (report.availableMajorElectives.length > 0) {
+    lines.push("");
+    lines.push(
+      `C. Major Electives (${report.remainingMajorElectives} slot(s) left):`
+    );
+    report.availableMajorElectives.forEach((course) => {
+      lines.push(`  ${course.code}: ${course.title}`);
+    });
+  }
+  if (report.availableProfessionalTraining.length > 0) {
+    lines.push("");
+    lines.push(
+      `D. Professional Training (${report.remainingProfessionalTraining} slot(s) left):`
+    );
+    report.availableProfessionalTraining.forEach((course) => {
+      lines.push(`  ${course.code ? `${course.code}: ` : ""}${course.title}`);
     });
   }
   lines.push("");
