@@ -14,6 +14,7 @@ import {
 import {
   getCompletedElectives,
   getUngradedElectives,
+  getExcessUniversityRequirements,
   getElectiveRequirements,
   getProfessionalTraining,
   getPracticalTrainingStatus,
@@ -143,6 +144,13 @@ export async function generateReportClient(
     requirements.professionalTraining - professionalTraining.length
   );
 
+  // University Requirements are capped — anything passed past the plan's slot
+  // count is wasted credit hours and gets flagged.
+  const excessUniversity = getExcessUniversityRequirements(
+    completedUniversityElectives,
+    requirements.universityRequirements
+  );
+
   // Graduation: the 132 credit-hour requirement plus every outstanding
   // requirement (electives, professional + practical training) cleared.
   const graduationCreditRequirementMet = creditHours >= GRADUATION_CREDIT_HOURS;
@@ -177,6 +185,9 @@ export async function generateReportClient(
     completedUniversityRequirements: completedUniversityElectives,
     ungradedUniversityRequirements: ungradedUniversityElectives,
     remainingUniversityRequirements,
+    requiredUniversityRequirements: requirements.universityRequirements,
+    excessUniversityRequirements: excessUniversity.courses,
+    excessUniversityCreditHours: excessUniversity.creditHours,
     completedProfessionalTraining: professionalTraining,
     remainingProfessionalTraining,
     practicalTrainingCompleted: practicalTraining.completed,

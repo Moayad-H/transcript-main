@@ -52,6 +52,14 @@ export interface AnalysisReport {
   completedUniversityRequirements: ElectiveCourse[];
   ungradedUniversityRequirements: ElectiveCourse[];
   remainingUniversityRequirements: number;
+  // Slots the study plan actually has for this category (1 in every current
+  // department plan) — the denominator, so passing 2 of 1 reads as "2/1".
+  requiredUniversityRequirements: number;
+  // Courses passed beyond requiredUniversityRequirements: credit hours spent
+  // that do not advance the degree.
+  excessUniversityRequirements: ElectiveCourse[];
+  // Credit hours those excess courses consumed.
+  excessUniversityCreditHours: number;
 
   // Professional training
   completedProfessionalTraining: string[];
