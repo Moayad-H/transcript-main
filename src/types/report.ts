@@ -34,14 +34,22 @@ export interface AnalysisReport {
   // Withdrawn or Failed courses
   withdrawnFailedCourses: StudiedCourse[];
 
-  // Available courses for registration
+  // Available courses for registration (full eligible pool)
   availableCourses: Course[];
+  // Priority list to register this semester (group A), a capped subset of availableCourses
+  recommendedCourses: Course[];
+  // Remaining eligible courses that aren't the priority this semester (group B)
+  otherEligibleCourses: Course[];
 
   // Major electives
   completedMajorElectives: ElectiveCourse[];
   // Registered but not-yet-graded (U) electives filling a category slot
   ungradedMajorElectives: ElectiveCourse[];
   remainingMajorElectives: number;
+  // Concrete major-elective courses the student can register now (prereqs met,
+  // not yet taken) — only while a major-elective slot remains open. Empty once
+  // all slots are filled. Drives section C of "Courses You Can Register".
+  availableMajorElectives: Course[];
 
   // Science electives
   completedScienceElectives: ElectiveCourse[];
@@ -56,6 +64,11 @@ export interface AnalysisReport {
   // Professional training
   completedProfessionalTraining: string[];
   remainingProfessionalTraining: number;
+  // The next Professional Training course to register (the slot due this
+  // semester in the fixed Sem 5–8 sequence) — only from year 3 while a slot
+  // remains. Empty once all four are done. Drives section D of "Courses You
+  // Can Register".
+  availableProfessionalTraining: Course[];
 
   // Practical Training (CIT4000) — pass/fail, registerable at 90+ credit hours
   practicalTrainingCompleted: boolean;

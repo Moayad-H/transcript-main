@@ -84,7 +84,7 @@ function electiveCategory(title: string): string | null {
  * each course belongs to, so the graph columns follow the real curriculum
  * sequence instead of a derived prerequisite depth.
  */
-interface PlanSemesters {
+export interface PlanSemesters {
   /** canonical course code -> semester number (real, coded courses). */
   codeToSemester: Map<string, number>;
   /** category -> semesters of its placeholder rows, in plan reading order. */
@@ -107,7 +107,7 @@ function planCodeToCanonical(rawCode: string): string {
  * Returns null if the plan can't be loaded, so the caller can fall back to the
  * prerequisite-depth layout.
  */
-async function loadPlanSemesters(
+export async function loadPlanSemesters(
   department: Department
 ): Promise<PlanSemesters | null> {
   let text: string;

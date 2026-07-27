@@ -19,8 +19,12 @@ import {
   getPracticalTrainingStatus,
   removeElectivesInCore,
   getAvailableCourses,
+  splitAvailableCourses,
+  getAvailableMajorElectives,
+  getAvailableProfessionalTraining,
   getOutOfPlanCourses,
 } from "@/lib/analysis/courseAnalyzer";
+import { loadPlanSemesters } from "@/lib/analysis/courseGraphBuilder";
 import {
   getLatestSemester,
   getRetakeRecommendations,
@@ -117,6 +121,18 @@ export async function generateReportClient(
     gpa
   );
 
+  // Split the eligible pool into a capped, priority "recommended this semester"
+  // list (group A) and the remaining eligible courses (group B). Manual-entry
+  // transcripts still resolve the plan file, so the plan ranking applies.
+  const planSemesters = await loadPlanSemesters(department);
+  const { recommended: recommendedCourses, otherEligible: otherEligibleCourses } =
+    splitAvailableCourses(
+      availableCourses,
+      planSemesters?.codeToSemester ?? null,
+      creditHours,
+      onProbation
+    );
+
   // Get out-of-plan courses
   const outOfPlanCourses = getOutOfPlanCourses(
     coursePlan,
@@ -130,6 +146,13 @@ export async function generateReportClient(
     0,
     requirements.majorElectives - completedMajorElectives.length
   );
+  // The concrete major-elective courses fillable right now (section C).
+  const availableMajorElectives = getAvailableMajorElectives(
+    majorElectives,
+    studiedCodes,
+    creditHours,
+    remainingMajorElectives
+  );
   const remainingScienceElectives = Math.max(
     0,
     requirements.scienceElectives - completedScienceElectives.length
@@ -141,6 +164,11 @@ export async function generateReportClient(
   const remainingProfessionalTraining = Math.max(
     0,
     requirements.professionalTraining - professionalTraining.length
+  );
+  // The next Professional Training slot fillable right now (section D).
+  const availableProfessionalTraining = getAvailableProfessionalTraining(
+    remainingProfessionalTraining,
+    creditHours
   );
 
   // Graduation: the 132 credit-hour requirement plus every outstanding
@@ -168,9 +196,12 @@ export async function generateReportClient(
     ungradedCourses,
     withdrawnFailedCourses,
     availableCourses,
+    recommendedCourses,
+    otherEligibleCourses,
     completedMajorElectives,
     ungradedMajorElectives,
     remainingMajorElectives,
+    availableMajorElectives,
     completedScienceElectives,
     ungradedScienceElectives,
     remainingScienceElectives,
@@ -179,6 +210,7 @@ export async function generateReportClient(
     remainingUniversityRequirements,
     completedProfessionalTraining: professionalTraining,
     remainingProfessionalTraining,
+    availableProfessionalTraining,
     practicalTrainingCompleted: practicalTraining.completed,
     practicalTrainingUngraded: practicalTraining.ungraded,
     practicalTrainingEligible: creditHours >= PRACTICAL_TRAINING_MIN_CREDIT_HOURS,

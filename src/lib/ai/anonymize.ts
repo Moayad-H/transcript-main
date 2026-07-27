@@ -50,6 +50,8 @@ export interface AdvicePayload {
   probationSemestersExceeded: boolean;
 
   availableCourses: AdviceCourse[];
+  // The rule engine's capped, plan-ordered priority list to register this term.
+  recommendedCourses: AdviceCourse[];
   ungradedCourses: AdviceGradedCourse[];
   withdrawnFailedCourses: AdviceGradedCourse[];
   retakeRecommendations: AdviceRetake[];
@@ -107,6 +109,7 @@ export function anonymizeReport(report: AnalysisReport): AdvicePayload {
     probationSemestersExceeded: report.probationSemestersExceeded,
 
     availableCourses: report.availableCourses.slice(0, MAX_AVAILABLE).map(toCourse),
+    recommendedCourses: report.recommendedCourses.slice(0, MAX_AVAILABLE).map(toCourse),
     ungradedCourses: report.ungradedCourses.slice(0, MAX_HISTORY).map(toGradedCourse),
     withdrawnFailedCourses: report.withdrawnFailedCourses
       .slice(0, MAX_HISTORY)
