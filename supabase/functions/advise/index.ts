@@ -176,8 +176,6 @@ interface AdvicePayload {
   remainingScienceElectives: number;
   remainingUniversityRequirements: number;
   remainingProfessionalTraining: number;
-  excessUniversityRequirements: number;
-  excessUniversityCreditHours: number;
   practicalTrainingCompleted: boolean;
   practicalTrainingEligible: boolean;
   practicalTrainingWarning: boolean;

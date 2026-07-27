@@ -18,27 +18,7 @@ import {
   PROBATION_GPA_THRESHOLD,
   PROFESSIONAL_TRAINING_REQUIRED,
   isProjectOneTitle,
-  isTwoCreditCourse,
 } from "@/lib/constants";
-
-/**
- * University Requirements are capped: the study plan has a fixed number of
- * slots (one in every current department plan), and a student who passes more
- * than that has spent credit hours that do not advance the degree. Everything
- * completed past the required count is surfaced as excess so the report can
- * warn instead of silently absorbing it.
- */
-export function getExcessUniversityRequirements(
-  completedUniversityRequirements: ElectiveCourse[],
-  required: number
-): { courses: ElectiveCourse[]; creditHours: number } {
-  const courses = completedUniversityRequirements.slice(Math.max(0, required));
-  const creditHours = courses.reduce(
-    (sum, course) => sum + (isTwoCreditCourse(course.code) ? 2 : 3),
-    0
-  );
-  return { courses, creditHours };
-}
 
 /**
  * Get elective courses that student has completed

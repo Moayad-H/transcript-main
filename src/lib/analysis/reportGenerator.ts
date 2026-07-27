@@ -20,7 +20,6 @@ import {
 import {
   getCompletedElectives,
   getUngradedElectives,
-  getExcessUniversityRequirements,
   getElectiveRequirements,
   getProfessionalTraining,
   getPracticalTrainingStatus,
@@ -149,13 +148,6 @@ export async function generateReport(
     requirements.professionalTraining - professionalTraining.length
   );
 
-  // University Requirements are capped — anything passed past the plan's slot
-  // count is wasted credit hours and gets flagged.
-  const excessUniversity = getExcessUniversityRequirements(
-    completedUniversityElectives,
-    requirements.universityRequirements
-  );
-
   // Graduation: the 132 credit-hour requirement plus every outstanding
   // requirement (electives, professional + practical training) cleared.
   const graduationCreditRequirementMet = creditHours >= GRADUATION_CREDIT_HOURS;
@@ -190,9 +182,6 @@ export async function generateReport(
     completedUniversityRequirements: completedUniversityElectives,
     ungradedUniversityRequirements: ungradedUniversityElectives,
     remainingUniversityRequirements,
-    requiredUniversityRequirements: requirements.universityRequirements,
-    excessUniversityRequirements: excessUniversity.courses,
-    excessUniversityCreditHours: excessUniversity.creditHours,
     completedProfessionalTraining: professionalTraining,
     remainingProfessionalTraining,
     practicalTrainingCompleted: practicalTraining.completed,
@@ -353,21 +342,8 @@ export function formatReportAsText(report: AnalysisReport): string {
 
   // University requirements
   lines.push("-".repeat(60));
-  lines.push(
-    `UNIVERSITY REQUIREMENTS: (${report.completedUniversityRequirements.length}/${report.requiredUniversityRequirements})`
-  );
+  lines.push("UNIVERSITY REQUIREMENTS:");
   lines.push("-".repeat(60));
-  if (report.excessUniversityRequirements.length > 0) {
-    lines.push(
-      `WARNING: ${report.completedUniversityRequirements.length} University Requirement ` +
-        `course(s) passed but only ${report.requiredUniversityRequirements} is allowed by the ` +
-        `study plan. ${report.excessUniversityCreditHours} credit hour(s) were spent ` +
-        `without progressing toward graduation:`
-    );
-    report.excessUniversityRequirements.forEach((course) => {
-      lines.push(`  EXTRA - ${course.code}: ${course.title}`);
-    });
-  }
   if (report.completedUniversityRequirements.length === 0) {
     lines.push("No university requirements registered yet");
   } else {

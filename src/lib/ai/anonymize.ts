@@ -58,10 +58,6 @@ export interface AdvicePayload {
   remainingScienceElectives: number;
   remainingUniversityRequirements: number;
   remainingProfessionalTraining: number;
-  // Count of University Requirement courses passed beyond the plan's allowance,
-  // and the credit hours they consumed without advancing the degree.
-  excessUniversityRequirements: number;
-  excessUniversityCreditHours: number;
 
   practicalTrainingCompleted: boolean;
   practicalTrainingEligible: boolean;
@@ -128,8 +124,6 @@ export function anonymizeReport(report: AnalysisReport): AdvicePayload {
     remainingScienceElectives: report.remainingScienceElectives,
     remainingUniversityRequirements: report.remainingUniversityRequirements,
     remainingProfessionalTraining: report.remainingProfessionalTraining,
-    excessUniversityRequirements: report.excessUniversityRequirements.length,
-    excessUniversityCreditHours: report.excessUniversityCreditHours,
 
     practicalTrainingCompleted: report.practicalTrainingCompleted,
     practicalTrainingEligible: report.practicalTrainingEligible,
