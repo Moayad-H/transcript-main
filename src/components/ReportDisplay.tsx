@@ -195,28 +195,7 @@ export function ReportDisplay({
             <div className={COLUMN}>
               <RequirementsCard report={report} className={CARD} />
 
-              <DashCard
-                title="Courses Not in Official Plan"
-                tone="slate"
-                badge={report.outOfPlanCourses.length}
-                className={stacked(report.outOfPlanCourses.length)}
-              >
-                {report.outOfPlanCourses.length === 0 ? (
-                  <CardEmpty>None</CardEmpty>
-                ) : (
-                  <ul>
-                    {report.outOfPlanCourses.map((course, idx) => (
-                      <CourseRow
-                        key={idx}
-                        code={course.code}
-                        title={course.title}
-                        meta={course.semester?.label}
-                        tone="slate"
-                      />
-                    ))}
-                  </ul>
-                )}
-              </DashCard>
+              
             </div>
 
             {/* 4 — progress toward the degree, plus the optional AI summary. */}
@@ -240,6 +219,28 @@ export function ReportDisplay({
                         tag={course.grade}
                         tagTone={course.grade === "F" ? "red" : "orange"}
                         tone="red"
+                      />
+                    ))}
+                  </ul>
+                )}
+              </DashCard>
+              <DashCard
+                title="Courses Not in Official Plan"
+                tone="slate"
+                badge={report.outOfPlanCourses.length}
+                className={stacked(report.outOfPlanCourses.length)}
+              >
+                {report.outOfPlanCourses.length === 0 ? (
+                  <CardEmpty>None</CardEmpty>
+                ) : (
+                  <ul>
+                    {report.outOfPlanCourses.map((course, idx) => (
+                      <CourseRow
+                        key={idx}
+                        code={course.code}
+                        title={course.title}
+                        meta={course.semester?.label}
+                        tone="slate"
                       />
                     ))}
                   </ul>
