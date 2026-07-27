@@ -193,30 +193,7 @@ export function ReportDisplay({
 
             {/* 3 — the problem lists. */}
             <div className={COLUMN}>
-              <DashCard
-                title="Withdrawn / Failed"
-                tone="red"
-                badge={report.withdrawnFailedCourses.length}
-                className={stacked(report.withdrawnFailedCourses.length)}
-              >
-                {report.withdrawnFailedCourses.length === 0 ? (
-                  <CardEmpty>No withdrawn or failed courses</CardEmpty>
-                ) : (
-                  <ul>
-                    {report.withdrawnFailedCourses.map((course, idx) => (
-                      <CourseRow
-                        key={idx}
-                        code={course.code}
-                        title={course.title}
-                        meta={course.semester?.label}
-                        tag={course.grade}
-                        tagTone={course.grade === "F" ? "red" : "orange"}
-                        tone="red"
-                      />
-                    ))}
-                  </ul>
-                )}
-              </DashCard>
+              <RequirementsCard report={report} className={CARD} />
 
               <DashCard
                 title="Courses Not in Official Plan"
@@ -244,7 +221,30 @@ export function ReportDisplay({
 
             {/* 4 — progress toward the degree, plus the optional AI summary. */}
             <div className={COLUMN}>
-              <RequirementsCard report={report} className={CARD} />
+              <DashCard
+                title="Withdrawn / Failed"
+                tone="red"
+                badge={report.withdrawnFailedCourses.length}
+                className={stacked(report.withdrawnFailedCourses.length)}
+              >
+                {report.withdrawnFailedCourses.length === 0 ? (
+                  <CardEmpty>No withdrawn or failed courses</CardEmpty>
+                ) : (
+                  <ul>
+                    {report.withdrawnFailedCourses.map((course, idx) => (
+                      <CourseRow
+                        key={idx}
+                        code={course.code}
+                        title={course.title}
+                        meta={course.semester?.label}
+                        tag={course.grade}
+                        tagTone={course.grade === "F" ? "red" : "orange"}
+                        tone="red"
+                      />
+                    ))}
+                  </ul>
+                )}
+              </DashCard>
               <AiNotesCard report={report} className={CARD} />
             </div>
           </div>
@@ -253,3 +253,6 @@ export function ReportDisplay({
     </div>
   );
 }
+/*
+
+               */
