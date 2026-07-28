@@ -4,7 +4,7 @@
 
 import { Department } from "@/types";
 
-export const DEPARTMENTS: Department[] = ["CS", "SE", "IS", "CY", "AI", "GM"];
+export const DEPARTMENTS: Department[] = ["CS", "SE", "IS", "CY", "AI", "GM", "PSCS"];
 
 export const DEPARTMENT_NAMES: Record<Department, string> = {
   CS: "Computer Science",
@@ -13,6 +13,7 @@ export const DEPARTMENT_NAMES: Record<Department, string> = {
   CY: "Cybersecurity",
   AI: "Artificial Intelligence",
   GM: "Multimedia",
+  PSCS: "Preparation of Science - Computer Science / Cairo",
 };
 
 export const GRADES = {

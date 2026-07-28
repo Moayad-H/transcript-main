@@ -3,15 +3,21 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  /* CCIT deep navy — the single brand colour used by the header, the student
-     bar and every "brand" accent. */
-  --brand: rgb(7, 27, 82);
+}
+
+/* CCIT deep navy — the single brand colour used by the header, the student bar
+   and every "brand" accent. Defined as a *static* theme token (not `inline`
+   pointing at a :root var): the inline-var indirection was getting dropped and
+   regenerated inconsistently on Tailwind v4's incremental HMR rebuilds, which
+   made `bg-brand`/`text-brand` "randomly disappear" after saving during dev.
+   A literal value here is emitted once and stays put. */
+@theme {
+  --color-brand: rgb(7, 27, 82);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-brand: var(--brand);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

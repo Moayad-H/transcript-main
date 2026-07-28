@@ -15,6 +15,8 @@ export type CardTone =
   | "purple"
   | "indigo"
   | "teal"
+  | "cyan"
+  | "violet"
   | "slate";
 
 const TONES: Record<CardTone, { dot: string; badge: string; chip: string }> = {
@@ -27,6 +29,8 @@ const TONES: Record<CardTone, { dot: string; badge: string; chip: string }> = {
   purple: { dot: "bg-purple-500", badge: "bg-purple-100 text-purple-800", chip: "bg-purple-50 text-purple-800" },
   indigo: { dot: "bg-indigo-500", badge: "bg-indigo-100 text-indigo-800", chip: "bg-indigo-50 text-indigo-800" },
   teal: { dot: "bg-teal-500", badge: "bg-teal-100 text-teal-800", chip: "bg-teal-50 text-teal-800" },
+  cyan: { dot: "bg-cyan-500", badge: "bg-cyan-100 text-cyan-800", chip: "bg-cyan-50 text-cyan-800" },
+  violet: { dot: "bg-violet-500", badge: "bg-violet-100 text-violet-800", chip: "bg-violet-50 text-violet-800" },
   slate: { dot: "bg-slate-400", badge: "bg-slate-200 text-slate-700", chip: "bg-slate-100 text-slate-700" },
 };
 

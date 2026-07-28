@@ -87,6 +87,8 @@ export function formatReportAsText(report: AnalysisReport): string {
   if (
     report.availableCourses.length === 0 &&
     report.availableMajorElectives.length === 0 &&
+    report.availableScienceElectives.length === 0 &&
+    report.availableUniversityRequirements.length === 0 &&
     report.availableProfessionalTraining.length === 0
   ) {
     lines.push("None available");
@@ -123,6 +125,24 @@ export function formatReportAsText(report: AnalysisReport): string {
     );
     report.availableProfessionalTraining.forEach((course) => {
       lines.push(`  ${course.code ? `${course.code}: ` : ""}${course.title}`);
+    });
+  }
+  if (report.availableScienceElectives.length > 0) {
+    lines.push("");
+    lines.push(
+      `E. Science Electives (${report.remainingScienceElectives} slot(s) left):`
+    );
+    report.availableScienceElectives.forEach((course) => {
+      lines.push(`  ${course.code}: ${course.title}`);
+    });
+  }
+  if (report.availableUniversityRequirements.length > 0) {
+    lines.push("");
+    lines.push(
+      `F. University Requirements (${report.remainingUniversityRequirements} slot(s) left):`
+    );
+    report.availableUniversityRequirements.forEach((course) => {
+      lines.push(`  ${course.code}: ${course.title}`);
     });
   }
   lines.push("");
@@ -170,6 +190,14 @@ export function formatReportAsText(report: AnalysisReport): string {
     });
   }
   lines.push(`Remaining: ${report.remainingUniversityRequirements} course(s)`);
+  if (report.extraUniversityElectiveCount > 0) {
+    lines.push(
+      `WARNING: Only one University Elective is required, but the student registered ` +
+        `${report.extraUniversityElectiveCount + 1}. The surplus adds ` +
+        `${report.extraUniversityElectiveCredits} extra credit hour(s) toward no requirement — ` +
+        `review with the student.`
+    );
+  }
   lines.push("");
 
   // Professional training

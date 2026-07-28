@@ -27,6 +27,7 @@ import {
   getAvailableCourses,
   splitAvailableCourses,
   getAvailableMajorElectives,
+  getAvailableElectives,
   getAvailableProfessionalTraining,
   getOutOfPlanCourses,
 } from "./courseAnalyzer";
@@ -37,6 +38,7 @@ import {
   GRADUATION_CREDIT_HOURS,
   PROBATION_GPA_THRESHOLD,
   PROBATION_MAX_SEMESTERS,
+  TWO_CREDIT_HOURS,
 } from "@/lib/constants";
 
 /**
@@ -123,7 +125,8 @@ export async function generateReport(
     professionalTraining.length,
     transcriptData.remedialCourses,
     creditHours,
-    gpa
+    gpa,
+    department
   );
 
   // Split the eligible pool into a capped, priority "recommended this semester"
@@ -162,10 +165,36 @@ export async function generateReport(
     0,
     requirements.scienceElectives - completedScienceElectives.length
   );
+  // The concrete science-elective courses fillable right now (section E).
+  const availableScienceElectives = getAvailableElectives(
+    cleanScienceElectives,
+    studiedCodes,
+    creditHours,
+    remainingScienceElectives
+  );
   const remainingUniversityRequirements = Math.max(
     0,
     requirements.universityRequirements - completedUniversityElectives.length
   );
+  // The concrete university-requirement courses fillable right now (section F).
+  const availableUniversityRequirements = getAvailableElectives(
+    cleanUniversityElectives,
+    studiedCodes,
+    creditHours,
+    remainingUniversityRequirements
+  );
+  // Special case: only ONE University Elective is required, but a student can
+  // mistakenly register/pass more than one. Every surplus one is a 2 Cr. UNR
+  // course that satisfies no requirement — flag it so the advisor can act.
+  const registeredUniversityElectives =
+    completedUniversityElectives.length + ungradedUniversityElectives.length;
+  const extraUniversityElectiveCount = Math.max(
+    0,
+    registeredUniversityElectives - requirements.universityRequirements
+  );
+  const extraUniversityElectiveCredits =
+    extraUniversityElectiveCount * TWO_CREDIT_HOURS;
+
   const remainingProfessionalTraining = Math.max(
     0,
     requirements.professionalTraining - professionalTraining.length
@@ -210,9 +239,13 @@ export async function generateReport(
     completedScienceElectives,
     ungradedScienceElectives,
     remainingScienceElectives,
+    availableScienceElectives,
     completedUniversityRequirements: completedUniversityElectives,
     ungradedUniversityRequirements: ungradedUniversityElectives,
     remainingUniversityRequirements,
+    availableUniversityRequirements,
+    extraUniversityElectiveCount,
+    extraUniversityElectiveCredits,
     completedProfessionalTraining: professionalTraining,
     remainingProfessionalTraining,
     availableProfessionalTraining,
@@ -336,6 +369,8 @@ export function formatReportAsText(report: AnalysisReport): string {
   if (
     report.availableCourses.length === 0 &&
     report.availableMajorElectives.length === 0 &&
+    report.availableScienceElectives.length === 0 &&
+    report.availableUniversityRequirements.length === 0 &&
     report.availableProfessionalTraining.length === 0
   ) {
     lines.push("None available");
@@ -372,6 +407,24 @@ export function formatReportAsText(report: AnalysisReport): string {
     );
     report.availableProfessionalTraining.forEach((course) => {
       lines.push(`  ${course.code ? `${course.code}: ` : ""}${course.title}`);
+    });
+  }
+  if (report.availableScienceElectives.length > 0) {
+    lines.push("");
+    lines.push(
+      `E. Science Electives (${report.remainingScienceElectives} slot(s) left):`
+    );
+    report.availableScienceElectives.forEach((course) => {
+      lines.push(`  ${course.code}: ${course.title}`);
+    });
+  }
+  if (report.availableUniversityRequirements.length > 0) {
+    lines.push("");
+    lines.push(
+      `F. University Requirements (${report.remainingUniversityRequirements} slot(s) left):`
+    );
+    report.availableUniversityRequirements.forEach((course) => {
+      lines.push(`  ${course.code}: ${course.title}`);
     });
   }
   lines.push("");
@@ -419,6 +472,14 @@ export function formatReportAsText(report: AnalysisReport): string {
     });
   }
   lines.push(`Remaining: ${report.remainingUniversityRequirements} course(s)`);
+  if (report.extraUniversityElectiveCount > 0) {
+    lines.push(
+      `WARNING: Only one University Elective is required, but the student registered ` +
+        `${report.extraUniversityElectiveCount + 1}. The surplus adds ` +
+        `${report.extraUniversityElectiveCredits} extra credit hour(s) toward no requirement — ` +
+        `review with the student.`
+    );
+  }
   lines.push("");
 
   // Professional training

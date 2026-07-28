@@ -106,6 +106,23 @@ export function buildAlerts(report: AnalysisReport): AlertItem[] {
     });
   }
 
+  if (report.extraUniversityElectiveCount > 0) {
+    alerts.push({
+      id: "extra-university-elective",
+      tone: "warn",
+      label: `${report.extraUniversityElectiveCount} extra University Elective${
+        report.extraUniversityElectiveCount === 1 ? "" : "s"
+      }`,
+      detail:
+        `Only one University Elective is required, but the student registered ` +
+        `${report.extraUniversityElectiveCount + 1}. The ${
+          report.extraUniversityElectiveCount
+        } surplus one(s) add ${report.extraUniversityElectiveCredits} extra ` +
+        `credit hour(s) that count toward no requirement. Review with the student — ` +
+        `only one University Elective should be taken.`,
+    });
+  }
+
   if (report.withdrawnFailedCourses.length > 0) {
     alerts.push({
       id: "failed",

@@ -8,6 +8,7 @@ import {
   ElectiveCourse,
   StudiedCourse,
   CourseRequirement,
+  Department,
 } from "@/types";
 import {
   ELECTIVE_KEYWORDS,
@@ -259,10 +260,15 @@ export function getAvailableCourses(
   professionalTrainingCount: number,
   remedialCourses: string[],
   creditHours: number,
-  gpa: number | null = null
+  gpa: number | null = null,
+  department: Department | null = null
 ): Course[] {
   // A student on probation (known GPA < 2.0) cannot register Project I.
   const onProbation = gpa !== null && gpa < PROBATION_GPA_THRESHOLD;
+  // In Preparation of Science, Precalculus is a mandatory first-semester course
+  // for everyone (not a conditional remedial slot), so it must never be hidden
+  // from the registerable list; Physics/Calculus I gate on it via CSV prereqs.
+  const precalcMandatory = department === "PSCS";
   const available: Course[] = [];
   // Normalize studied codes and resolve cross-department equivalences.
   const studiedSet = new Set(studiedCodes.map((c) => canonicalizeCode(c)));
@@ -311,6 +317,7 @@ export function getAvailableCourses(
 
     // Handle special cases for remedial courses
     if (
+      !precalcMandatory &&
       normalizedCode === SPECIAL_COURSES.PRECALCULUS &&
       !remedialCourses.includes("Precalculus")
     ) {
@@ -454,6 +461,51 @@ export function getAvailableMajorElectives(
   const available: Course[] = [];
 
   for (const elective of majorElectives) {
+    const code = canonicalizeCode(elective.code);
+    if (studiedSet.has(code) || offered.has(code)) continue;
+
+    const course: Course = {
+      code: elective.code,
+      title: elective.title,
+      prerequisiteCode: elective.prerequisiteCode,
+    };
+    if (checkPrerequisites(course, studiedCodes, creditHours).met) {
+      available.push(course);
+      offered.add(code);
+    }
+  }
+
+  return available;
+}
+
+/**
+ * Get the concrete elective courses that can fill an open category slot now.
+ *
+ * The generic form of getAvailableMajorElectives, for Science Electives and
+ * University Requirements. Like major electives, these are placeholder rows in
+ * the course plan (only a "Science El"/"University" slot, not the concrete
+ * options), so getAvailableCourses() skips them and the student never sees the
+ * actual menu. This surfaces it: the category's electives not already taken
+ * whose prerequisites are met.
+ *
+ * Unlike major electives there is NO year gate — science/university electives
+ * run across all four years — so they show whenever a slot remains open
+ * (remaining > 0) and there is an eligible option. Returns [] once every slot
+ * is filled.
+ */
+export function getAvailableElectives(
+  electives: ElectiveCourse[],
+  studiedCodes: string[],
+  creditHours: number,
+  remaining: number
+): Course[] {
+  if (remaining <= 0) return [];
+
+  const studiedSet = new Set(studiedCodes.map((c) => canonicalizeCode(c)));
+  const offered = new Set<string>();
+  const available: Course[] = [];
+
+  for (const elective of electives) {
     const code = canonicalizeCode(elective.code);
     if (studiedSet.has(code) || offered.has(code)) continue;
 

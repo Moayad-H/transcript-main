@@ -21,6 +21,7 @@ import {
   getAvailableCourses,
   splitAvailableCourses,
   getAvailableMajorElectives,
+  getAvailableElectives,
   getAvailableProfessionalTraining,
   getOutOfPlanCourses,
 } from "@/lib/analysis/courseAnalyzer";
@@ -34,6 +35,7 @@ import {
   GRADUATION_CREDIT_HOURS,
   PROBATION_GPA_THRESHOLD,
   PROBATION_MAX_SEMESTERS,
+  TWO_CREDIT_HOURS,
 } from "@/lib/constants";
 
 /**
@@ -118,7 +120,8 @@ export async function generateReportClient(
     professionalTraining.length,
     transcriptData.remedialCourses,
     creditHours,
-    gpa
+    gpa,
+    department
   );
 
   // Split the eligible pool into a capped, priority "recommended this semester"
@@ -157,10 +160,36 @@ export async function generateReportClient(
     0,
     requirements.scienceElectives - completedScienceElectives.length
   );
+  // The concrete science-elective courses fillable right now (section E).
+  const availableScienceElectives = getAvailableElectives(
+    cleanScienceElectives,
+    studiedCodes,
+    creditHours,
+    remainingScienceElectives
+  );
   const remainingUniversityRequirements = Math.max(
     0,
     requirements.universityRequirements - completedUniversityElectives.length
   );
+  // The concrete university-requirement courses fillable right now (section F).
+  const availableUniversityRequirements = getAvailableElectives(
+    cleanUniversityElectives,
+    studiedCodes,
+    creditHours,
+    remainingUniversityRequirements
+  );
+  // Special case: only ONE University Elective is required, but a student can
+  // mistakenly register/pass more than one. Every surplus one is a 2 Cr. UNR
+  // course that satisfies no requirement — flag it so the advisor can act.
+  const registeredUniversityElectives =
+    completedUniversityElectives.length + ungradedUniversityElectives.length;
+  const extraUniversityElectiveCount = Math.max(
+    0,
+    registeredUniversityElectives - requirements.universityRequirements
+  );
+  const extraUniversityElectiveCredits =
+    extraUniversityElectiveCount * TWO_CREDIT_HOURS;
+
   const remainingProfessionalTraining = Math.max(
     0,
     requirements.professionalTraining - professionalTraining.length
@@ -205,9 +234,13 @@ export async function generateReportClient(
     completedScienceElectives,
     ungradedScienceElectives,
     remainingScienceElectives,
+    availableScienceElectives,
     completedUniversityRequirements: completedUniversityElectives,
     ungradedUniversityRequirements: ungradedUniversityElectives,
     remainingUniversityRequirements,
+    availableUniversityRequirements,
+    extraUniversityElectiveCount,
+    extraUniversityElectiveCredits,
     completedProfessionalTraining: professionalTraining,
     remainingProfessionalTraining,
     availableProfessionalTraining,

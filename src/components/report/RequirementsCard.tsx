@@ -11,6 +11,10 @@ interface RequirementRowProps {
   ungraded: ElectiveCourse[];
   remaining: number;
   tone: CardTone;
+  // Surplus registrations beyond what the plan requires (e.g. a student who
+  // took two University Electives when only one is required). When > 0 the
+  // badge shows completed/required (e.g. "2/1") in an error style.
+  overCount?: number;
 }
 
 const BAR: Record<string, { done: string; pending: string }> = {
@@ -27,8 +31,14 @@ function RequirementRow({
   ungraded,
   remaining,
   tone,
+  overCount = 0,
 }: RequirementRowProps) {
   const total = completed.length + remaining;
+  // The plan requirement (denominator). Over-registration means the student
+  // holds more of these courses than the plan requires; back the surplus out of
+  // the registered count to show the true "/N" they needed (e.g. "2/1").
+  const isOver = overCount > 0;
+  const requiredTotal = completed.length + ungraded.length - overCount;
   const bar = BAR[tone] ?? BAR.indigo;
   const donePct = total > 0 ? (completed.length / total) * 100 : 100;
   const pendingPct =
@@ -61,12 +71,21 @@ function RequirementRow({
           </span>
         )}
         <span className="text-sm font-semibold text-slate-700">{label}</span>
+        {isOver && (
+          <span className="rounded-full border border-red-300 bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700">
+            ⚠ Extra course taken
+          </span>
+        )}
         <span
           className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold ${
-            remaining === 0 ? "bg-green-100 text-green-800" : toneChip(tone)
+            isOver
+              ? "bg-red-100 text-red-800"
+              : remaining === 0
+              ? "bg-green-100 text-green-800"
+              : toneChip(tone)
           }`}
         >
-          {completed.length}/{total}
+          {completed.length}/{isOver ? requiredTotal : total}
         </span>
       </button>
 
@@ -199,6 +218,7 @@ export function RequirementsCard({
         ungraded={report.ungradedUniversityRequirements}
         remaining={report.remainingUniversityRequirements}
         tone="indigo"
+        overCount={report.extraUniversityElectiveCount}
       />
 
       {/* Professional Training rows carry no course code — the plan lists them
