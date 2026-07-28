@@ -129,11 +129,15 @@ function extractStudentInfoFromText(text: string): {
     studentName = nameMatch[1].trim();
   }
 
-  const dept = text.match(/:\s*(Cybersecurity(?:-\s*Cairo)?|Artificial Intelligence|Engineering Software C-S|Computer Science|Information Systems(?:\s+Cairo)?)/);
+  const dept = text.match(/:\s*(Preparation of Science[^\n]*|Cybersecurity(?:-\s*Cairo)?|Artificial Intelligence|Engineering Software C-S|Computer Science|Information Systems(?:\s+Cairo)?)/);
 
   // Extract department - look for "Engineering" variants
   let department: Department = "SE";
-  if (/Engineering\s+Software|Software.*C-S/i.test(dept!= null ? dept.toString() : "")) {
+  // "Preparation of Science - Computer Science / Cairo" contains "Computer
+  // Science", so it must be matched before the CS branch below.
+  if (/Preparation\s+of\s+Science/i.test(dept!= null ? dept.toString() : "")) {
+    department = "PSCS";
+  } else if (/Engineering\s+Software|Software.*C-S/i.test(dept!= null ? dept.toString() : "")) {
     department = "SE";
   } else if (/Computer\s+Science|CS/i.test(dept!= null ? dept.toString() : "")) {
     department = "CS";

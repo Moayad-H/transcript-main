@@ -54,7 +54,7 @@ export interface CoursePlan {
   universityElectives: ElectiveCourse[];
 }
 
-export type Department = "CS" | "SE" | "IS" | "CY" | "AI" | "GM";
+export type Department = "CS" | "SE" | "IS" | "CY" | "AI" | "GM" | "PSCS";
 
 export type Grade =
   | "A+"

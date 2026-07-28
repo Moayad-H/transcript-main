@@ -113,12 +113,16 @@ export function ReportDisplay({
                 badge={
                   report.availableCourses.length +
                   report.availableMajorElectives.length +
+                  report.availableScienceElectives.length +
+                  report.availableUniversityRequirements.length +
                   report.availableProfessionalTraining.length
                 }
                 className={`${CARD} xl:min-h-0`}
               >
                 {report.availableCourses.length === 0 &&
                 report.availableMajorElectives.length === 0 &&
+                report.availableScienceElectives.length === 0 &&
+                report.availableUniversityRequirements.length === 0 &&
                 report.availableProfessionalTraining.length === 0 ? (
                   <CardEmpty>No available courses at this time</CardEmpty>
                 ) : (
@@ -229,6 +233,70 @@ export function ReportDisplay({
                                 code={course.code}
                                 title={course.title}
                                 tone="teal"
+                              />
+                            )
+                          )}
+                        </ul>
+                      </RegisterSection>
+                    )}
+
+                    {/* E — the concrete science electives that fill an open
+                        science-elective slot. */}
+                    {report.availableScienceElectives.length > 0 && (
+                      <RegisterSection
+                        label="E · Science Electives"
+                        count={report.availableScienceElectives.length}
+                        labelClassName="text-cyan-600"
+                        note={
+                          <>
+                            {" "}
+                            · {report.remainingScienceElectives} slot
+                            {report.remainingScienceElectives === 1 ? "" : "s"}{" "}
+                            left
+                          </>
+                        }
+                        divider
+                      >
+                        <ul>
+                          {report.availableScienceElectives.map((course, idx) => (
+                            <CourseRow
+                              key={idx}
+                              code={course.code}
+                              title={course.title}
+                              tone="cyan"
+                            />
+                          ))}
+                        </ul>
+                      </RegisterSection>
+                    )}
+
+                    {/* F — the concrete university requirements that fill an
+                        open university-requirement slot. */}
+                    {report.availableUniversityRequirements.length > 0 && (
+                      <RegisterSection
+                        label="F · University Requirements"
+                        count={report.availableUniversityRequirements.length}
+                        labelClassName="text-violet-600"
+                        note={
+                          <>
+                            {" "}
+                            · {report.remainingUniversityRequirements} slot
+                            {report.remainingUniversityRequirements === 1
+                              ? ""
+                              : "s"}{" "}
+                            left
+                          </>
+                        }
+                        divider
+                      >
+                        <ul>
+                          {report.availableUniversityRequirements.map(
+                            (course, idx) => (
+                              <CourseRow
+                                key={idx}
+                                code={course.code}
+                                title={course.title}
+                                tone="violet"
                               />
                             )
                           )}

@@ -55,11 +55,24 @@ export interface AnalysisReport {
   completedScienceElectives: ElectiveCourse[];
   ungradedScienceElectives: ElectiveCourse[];
   remainingScienceElectives: number;
+  // Concrete science-elective courses the student can register now (prereqs
+  // met, not yet taken) — only while a slot remains open. Drives section E of
+  // "Courses You Can Register".
+  availableScienceElectives: Course[];
 
   // University requirements
   completedUniversityRequirements: ElectiveCourse[];
   ungradedUniversityRequirements: ElectiveCourse[];
   remainingUniversityRequirements: number;
+  // Concrete university-requirement courses the student can register now
+  // (prereqs met, not yet taken) — only while a slot remains open. Drives
+  // section F of "Courses You Can Register".
+  availableUniversityRequirements: Course[];
+  // Special case: the plan requires exactly one University Elective, but the
+  // student registered/passed more than one. Each surplus one adds 2 Cr. that
+  // count toward nothing — an advising error worth flagging.
+  extraUniversityElectiveCount: number;
+  extraUniversityElectiveCredits: number;
 
   // Professional training
   completedProfessionalTraining: string[];
