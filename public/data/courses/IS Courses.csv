@@ -14,7 +14,7 @@ EBAxxxx,Science Elective,-,None
 CCS1001,Discrete Structures,CCS1101,Introduction to Computing
 CCS1302,Problem Solving and Programming,CCS1101,Introduction to Computing
 CCS2102,Digital Logic Design,CCS1101,Introduction to Computing
-CCS2103,Introduction to Computer Architecture,CCS1102,Digital Logic Design
+CCS2103,Introduction to Computer Architecture,CCS2102,Digital Logic Design
 CCS2303,Object-Oriented Programming,CCS1302,Problem Solving and Programming
 EBA2204,Linear algebra,EBA1204,Calculus II
 CCS2201,Introduction to Networks,CCS1302,Problem Solving and Programming
@@ -37,21 +37,21 @@ CIS4902,Project II,CIS4901,
 CISxxxx,Major Elective,-,
 CISxxxx,Major Elective,-,
 CITxxxx,Professional Training III,-,
-CNC3402,introduction to accounting              ,-,
-CIS3002,information systems theory & practice   ,"CIS1000,CIS2101",
-CCS3601,introduction to artificial intelligence ,"CCS1001,CCS2401",
-CCS3203,operating systems                       ,"CCS2103,CCS2401",
-CIS3001,systems analysis & design               ,"CIS1000,CCS2303",
-CAI3101,introduction to artificial intelligence ,"CCS1001,CCS2401",
-CNC3404,global business                         ,-,
-CNC3403,principles of marketing                 ,-,
-CIS3102,advanced database systems               ,CIS2101,
-CSE3402,project management                      ,CSE2001,
-CIS3301,e-business fundamentals                 ,"CIS1000,CCS2305",
-CNC4405,business process management             ,-,
-CIS4103,big data analytics                      ,"EBA2203,CAI3101",
-CIS4303,decision support systems                ,CAI3101,
-CIS4201,is security                             ,"CCS3203,CCY2001",
+CNC3402,Introduction to Accounting,-,
+CIS3002,Information Systems Theory & Practice,"CIS1000,CIS2101",
+CCS3601,Introduction to Artificial Intelligence,"CCS1001,CCS2401",
+CCS3203,Operating Systems,"CCS2103,CCS2401",
+CIS3001,Systems Analysis & Design,"CIS1000,CCS2303",
+CAI3101,Introduction to Artificial Intelligence,"CCS1001,CCS2401",
+CNC3404,Global Business,-,
+CNC3403,Principles of Marketing,-,
+CIS3102,Advanced Database Systems,CIS2101,
+CSE3402,Project Management,CSE2001,
+CIS3301,E-Business Fundamentals,"CIS1000,CCS2305",
+CNC4405,Business Process Management,-,
+CIS4103,Big Data Analytics,"EBA2203,CAI3101",
+CIS4303,Decision Support Systems,CAI3101,
+CIS4201,IS Security,"CCS3203,CCY2001",
 CIT4000,Practical Training,90 CR. or more,
 CIT3200,Professional Training in Mobile Apps Programming,-,
 CIT3101,Professional Training in Software Testing I,-,
