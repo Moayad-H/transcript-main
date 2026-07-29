@@ -78,8 +78,13 @@ export async function generateReportClient(
   const ungradedCreditHours = calculateUngradedCreditHours(transcriptData.courses);
 
   // Academic probation: known cumulative GPA below the 2.0 threshold.
+  // Exception: GPA of exactly 0 with earned credit hours means a transfer
+  // student (all courses graded Tr, which carry no grade points) — not a
+  // failing student, so never half-load them.
   const gpa = transcriptData.gpa ?? null;
-  const onProbation = gpa !== null && gpa < PROBATION_GPA_THRESHOLD;
+  const isLikelyTransfer = gpa === 0 && creditHours > 0;
+  const onProbation =
+    gpa !== null && gpa < PROBATION_GPA_THRESHOLD && !isLikelyTransfer;
   const probationSemesters = transcriptData.probationSemesters ?? 0;
 
   // Get completed electives
@@ -209,7 +214,8 @@ export async function generateReportClient(
   );
   // A student cannot graduate while on probation (GPA below 2.0). Unknown GPA
   // doesn't block (e.g. manual entry with no GPA figure).
-  const gpaMeetsGraduation = gpa === null || gpa >= PROBATION_GPA_THRESHOLD;
+  const gpaMeetsGraduation =
+    gpa === null || gpa >= PROBATION_GPA_THRESHOLD || isLikelyTransfer;
   const graduationEligible =
     graduationCreditRequirementMet &&
     remainingMajorElectives === 0 &&
