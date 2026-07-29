@@ -14,7 +14,7 @@ EBAxxxx,Science Elective,-,None
 CCS1001,Discrete Structures,CCS1101,Introduction to Computing
 CCS1302,Problem Solving and Programming,CCS1101,Introduction to Computing
 CCS2102,Digital Logic Design,CCS1101,Introduction to Computing
-CCS2103,Introduction to Computer Architecture,CCS1102,Digital Logic Design
+CCS2103,Introduction to Computer Architecture,CCS2102,Digital Logic Design
 CCS2303,Object-Oriented Programming,CCS1302,Problem Solving and Programming
 EBA2204,Linear algebra,EBA1204,Calculus II
 CCS2201,Introduction to Networks,CCS1302,Problem Solving and Programming
