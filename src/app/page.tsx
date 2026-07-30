@@ -69,6 +69,7 @@ export default function Home() {
 
       // Automatically generate report with extracted data
       const generatedReport = await generateReport(
+        data.studentId,
         data.studentName,
         data.department,
         data

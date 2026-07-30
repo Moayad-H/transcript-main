@@ -45,6 +45,7 @@ import {
  * Generate complete analysis report for a student
  */
 export async function generateReport(
+  studentID: string,
   studentName: string,
   department: Department,
   transcriptData: TranscriptData
@@ -231,6 +232,7 @@ export async function generateReport(
     gpaMeetsGraduation;
 
   return {
+    studentID,
     studentName,
     department,
     ungradedCourses,
