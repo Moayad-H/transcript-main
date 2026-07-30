@@ -42,6 +42,7 @@ import {
  * Generate report on the client side
  */
 export async function generateReportClient(
+  studentID: string,
   studentName: string,
   department: Department,
   transcriptData: TranscriptData
@@ -226,6 +227,7 @@ export async function generateReportClient(
     gpaMeetsGraduation;
 
   return {
+    studentID,
     studentName,
     department,
     ungradedCourses,
