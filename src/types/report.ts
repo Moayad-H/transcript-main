@@ -25,6 +25,7 @@ export interface RetakeRecommendation {
 }
 
 export interface AnalysisReport {
+  studentID: string;
   studentName: string;
   department: string;
 

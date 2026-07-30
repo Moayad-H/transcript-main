@@ -292,7 +292,7 @@ export default function CourseGraphView({
         return;
       }
       setDeptLoading(true);
-      generateReport(initialReport.studentName, dept, transcriptData)
+      generateReport(initialReport.studentID,initialReport.studentName, dept, transcriptData)
         .then((r) => {
           if (deptRequestRef.current !== token) return; // superseded
           setReport(r);

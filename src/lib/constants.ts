@@ -93,6 +93,12 @@ export const YEAR_UPPER_CREDIT_THRESHOLD = 69;
 // (132 * 6/8 = 99) puts the student entering Semester 7.
 export const YEAR_FOUR_CREDIT_THRESHOLD = 99;
 
+// Every year-4 semester (7 and 8) in every department plan is 3 core courses +
+// 2 major electives. The major electives are advised separately (section B of
+// "Courses You Can Register"), so the "Recommended This Semester" list for a
+// year-4 student is capped at this many core courses rather than by credit load.
+export const YEAR_FOUR_CORE_COURSES_PER_SEMESTER = 3;
+
 // Professional Training is a fixed four-course sequence, taken one per semester
 // starting in Semester 5 (year 3), identical across every department plan:
 //   Sem 5: CIT3200  Professional Training in Mobile Apps Programming

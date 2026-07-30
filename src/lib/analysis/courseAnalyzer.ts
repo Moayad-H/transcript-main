@@ -28,6 +28,7 @@ import {
   NORMAL_LOAD_UPPER_YEARS,
   YEAR_UPPER_CREDIT_THRESHOLD,
   YEAR_FOUR_CREDIT_THRESHOLD,
+  YEAR_FOUR_CORE_COURSES_PER_SEMESTER,
 } from "@/lib/constants";
 
 /**
@@ -375,6 +376,12 @@ export function getAvailableCourses(
  *   - on probation  -> PROBATION_HALF_LOAD_CREDITS (12) regardless of year
  *   - years 3–4 (earned >= YEAR_UPPER_CREDIT_THRESHOLD) -> NORMAL_LOAD_UPPER_YEARS (15)
  *   - years 1–2     -> NORMAL_LOAD_LOWER_YEARS (18)
+ *
+ * Year 4 (earned >= YEAR_FOUR_CREDIT_THRESHOLD) has an extra, tighter rule: the
+ * plan's Semesters 7 and 8 are each 3 core courses + 2 major electives, and the
+ * major electives are advised in their own section, so group A stops after
+ * YEAR_FOUR_CORE_COURSES_PER_SEMESTER (3) core courses even if the credit cap
+ * would still allow more.
  */
 export function splitAvailableCourses(
   availableCourses: Course[],
@@ -411,18 +418,27 @@ export function splitAvailableCourses(
     })
     .map((entry) => entry.course);
 
+  const isYearFour = completedCreditHours >= YEAR_FOUR_CREDIT_THRESHOLD;
+
   const recommended: Course[] = [];
   const otherEligible: Course[] = [];
   let running = 0;
+  let coreCount = 0;
   let capReached = false;
 
   for (const course of ranked) {
     const value = isTwoCreditCourse(canonicalizeCode(course.code))
       ? TWO_CREDIT_HOURS
       : CREDIT_HOURS_PER_COURSE;
-    if (!capReached && running + value <= cap) {
+    const isCore = !isElectiveTitle(course.title);
+    const coreCapReached =
+      isYearFour &&
+      isCore &&
+      coreCount >= YEAR_FOUR_CORE_COURSES_PER_SEMESTER;
+    if (!capReached && !coreCapReached && running + value <= cap) {
       recommended.push(course);
       running += value;
+      if (isCore) coreCount += 1;
     } else {
       capReached = true;
       otherEligible.push(course);

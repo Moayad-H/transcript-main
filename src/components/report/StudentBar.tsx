@@ -41,11 +41,12 @@ export function StudentBar({
     <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl bg-brand px-4 py-3 text-white print:rounded-none">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <h1 className="truncate text-lg font-bold">{report.studentName}</h1>
+          <h1 className="truncate text-md font-bold">{report.studentName}</h1>
           <span className="rounded bg-white/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide">
             {report.department}
           </span>
         </div>
+        <h3 className="truncate text-sm font-bold">Student ID: {report.studentID}</h3>
         <p className="text-[11px] text-blue-200">
           Academic Advising Report · CCIT
           {report.latestSemester ? ` · ${report.latestSemester.label}` : ""}
