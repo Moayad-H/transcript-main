@@ -594,10 +594,12 @@ export default function CourseGraphView({
           ? 3
           : creditValueForCode(d.code);
       // Professional Training slots and Practical Training are pass/fail: they
-      // occupy the semester load but add nothing toward earned credits or GPA.
+      // add nothing toward earned credits or GPA. Professional Training is a
+      // 0-Cr requirement, so it doesn't consume the semester load either;
+      // Practical Training (CIT4000) is a real 3-Cr course that still does.
+      const isProfessional = category === "PROFESSIONAL";
       const isTraining =
-        category === "PROFESSIONAL" ||
-        canonicalizeCode(d.code) === PRACTICAL_TRAINING_CANON;
+        isProfessional || canonicalizeCode(d.code) === PRACTICAL_TRAINING_CANON;
       const gateMatch = d.creditReq?.match(/(\d+)/);
       const creditGate = gateMatch ? parseInt(gateMatch[1], 10) : null;
 
@@ -605,7 +607,7 @@ export default function CourseGraphView({
         id: n.id,
         code: d.code || "Elective",
         title: d.title,
-        loadCredit: cv,
+        loadCredit: isProfessional ? 0 : cv,
         earnedCredit: isTraining ? 0 : cv,
         gpaCredit: isTraining ? 0 : cv,
         prereqs: prereqsByTarget.get(n.id) ?? [],
@@ -1236,11 +1238,12 @@ export default function CourseGraphView({
             courses the student will register, with a projected grade for each —
             only courses whose prerequisites and credit-hour gates are met by that
             point are offered. Caps: Years 1–2 18 Cr · Years 3–4 15 Cr (up to 18) ·
-            overload 21 Cr when the running GPA is above{" "}
-            {PLANNER_OVERLOAD_GPA_THRESHOLD.toFixed(1)} · half-load 12 Cr while it
-            is under {PROBATION_GPA_THRESHOLD.toFixed(1)}. Professional/Practical
-            Training are pass/fail and don&apos;t count toward the{" "}
-            {GRADUATION_CREDIT_HOURS} Cr total.
+            overload to 21 Cr is allowed only when the running GPA is above{" "}
+            {PLANNER_OVERLOAD_GPA_THRESHOLD.toFixed(1)} and the advisor loads past
+            18 Cr · half-load 12 Cr while it is under{" "}
+            {PROBATION_GPA_THRESHOLD.toFixed(1)}. Professional Training is 0 Cr;
+            Professional/Practical Training are pass/fail and don&apos;t count
+            toward the {GRADUATION_CREDIT_HOURS} Cr total.
           </p>
 
           <div className="flex gap-3 overflow-x-auto pb-2 items-stretch">

@@ -21,7 +21,9 @@
  *   - Years 1–2 (< PLANNER_YEAR_UPPER_CREDIT_THRESHOLD earned): normal load 18 Cr.
  *   - Years 3–4 (>= threshold): normal load 15 Cr, may be pushed to 18 Cr.
  *   - Overload: a running projected GPA above PLANNER_OVERLOAD_GPA_THRESHOLD
- *     raises the ceiling to 21 Cr (either year band).
+ *     *permits* raising the ceiling to 21 Cr (either year band). A term is only
+ *     flagged as "in overload" once its placed load actually exceeds the standard
+ *     18-Cr hard cap — a high GPA alone doesn't put a light semester in overload.
  *   - Probation: a running projected GPA below PROBATION_GPA_THRESHOLD forces the
  *     PROBATION_HALF_LOAD_CREDITS (12 Cr) half-load and blocks Project I.
  * The year band and GPA are recomputed at the *start* of every semester as the
@@ -146,21 +148,36 @@ export function yearBandFor(earnedCredits: number): YearBand {
 }
 
 /**
- * The credit cap for a semester, given its year band and the running projected
- * GPA. A `null` GPA (no graded credits yet, e.g. a transfer with no basis) is
- * treated as neither probation nor overload — the plain normal load applies.
+ * The credit rules for a semester, given its year band and the running projected
+ * GPA. Returns the normal-load target (`cap`), the hard `ceiling` the advisor may
+ * push the load to, whether the term is a probation half-load, and whether a
+ * GPA-based overload above the standard hard cap is *allowed*. A `null` GPA (no
+ * graded credits yet, e.g. a transfer with no basis) is treated as neither
+ * probation nor overload — the plain normal load applies.
+ *
+ * Note this only reports what's *permitted*: a term isn't "in overload" until the
+ * advisor actually places more than the standard hard cap of credits into it — see
+ * `evaluateManualPlan`, which sets the per-term `overload` flag from the real load.
  */
 export function capFor(
   band: YearBand,
   gpa: number | null
-): { cap: number; probation: boolean; overload: boolean } {
+): { cap: number; ceiling: number; probation: boolean; overloadAllowed: boolean } {
   if (gpa !== null && gpa < PROBATION_GPA_THRESHOLD) {
-    return { cap: PROBATION_HALF_LOAD_CREDITS, probation: true, overload: false };
+    return {
+      cap: PROBATION_HALF_LOAD_CREDITS,
+      ceiling: PROBATION_HALF_LOAD_CREDITS,
+      probation: true,
+      overloadAllowed: false,
+    };
   }
-  if (gpa !== null && gpa > PLANNER_OVERLOAD_GPA_THRESHOLD) {
-    return { cap: PLANNER_OVERLOAD_CREDITS, probation: false, overload: true };
-  }
-  return { cap: normalLoadFor(band), probation: false, overload: false };
+  const overloadAllowed = gpa !== null && gpa > PLANNER_OVERLOAD_GPA_THRESHOLD;
+  return {
+    cap: normalLoadFor(band),
+    ceiling: overloadAllowed ? PLANNER_OVERLOAD_CREDITS : hardCapFor(band),
+    probation: false,
+    overloadAllowed,
+  };
 }
 
 /**
@@ -197,8 +214,7 @@ export function evaluateManualPlan(
     const earnedAtStart = earned;
     const gpaAtStart = gpaOf();
     const band = yearBandFor(earnedAtStart);
-    const { cap, probation, overload } = capFor(band, gpaAtStart);
-    const ceiling = probation || overload ? cap : hardCapFor(band);
+    const { cap, ceiling, probation, overloadAllowed } = capFor(band, gpaAtStart);
     // Snapshot of what's finished before this semester — courses placed in the
     // same semester can't satisfy each other's prerequisites.
     const completedAtStart = new Set(completed);
@@ -241,6 +257,10 @@ export function evaluateManualPlan(
         gpaCredits += c.gpaCredit;
       }
     }
+
+    // A term is "in overload" only once the advisor has actually placed more than
+    // the standard hard cap into it — which is only permitted when the GPA earns it.
+    const overload = overloadAllowed && load > hardCapFor(band);
 
     evaluatedTerms.push({
       index: i + 1,
