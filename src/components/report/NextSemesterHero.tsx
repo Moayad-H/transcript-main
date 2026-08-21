@@ -1,0 +1,855 @@
+"use client";
+
+import { useState, useMemo, useEffect } from "react";
+import { AnalysisReport } from "@/types";
+import {
+  PROBATION_HALF_LOAD_CREDITS,
+  NORMAL_LOAD_UPPER_YEARS,
+  NORMAL_LOAD_LOWER_YEARS,
+  YEAR_UPPER_CREDIT_THRESHOLD,
+  getCourseCredits,
+  canonicalizeCode,
+} from "@/lib/constants";
+import { DashCard, CardEmpty } from "./DashCard";
+import { CourseRow } from "./CourseRow";
+import { RegisterSection } from "./RegisterSection";
+
+interface NextSemesterHeroProps {
+  report: AnalysisReport;
+  className?: string;
+}
+
+export function NextSemesterHero({ report, className = "" }: NextSemesterHeroProps) {
+  // Determine standard cap and academic standing
+  const cap = report.onProbation
+    ? PROBATION_HALF_LOAD_CREDITS
+    : report.totalCreditHours >= YEAR_UPPER_CREDIT_THRESHOLD
+    ? NORMAL_LOAD_UPPER_YEARS
+    : NORMAL_LOAD_LOWER_YEARS;
+
+  const yearLevel = useMemo(() => {
+    if (report.totalCreditHours < 33) return "Year 1 (Freshman)";
+    if (report.totalCreditHours < 69) return "Year 2 (Sophomore)";
+    if (report.totalCreditHours < 99) return "Year 3 (Junior)";
+    return "Year 4 (Senior)";
+  }, [report.totalCreditHours]);
+
+  // Determine how many Major Elective slots to recommend in the main schedule
+  const numMajorElectiveSlots = useMemo(() => {
+    if (report.remainingMajorElectives <= 0 || report.availableMajorElectives.length === 0) {
+      return 0;
+    }
+    // Year 4 students have 2 major electives per semester in standard curriculum
+    if (report.totalCreditHours >= 99) {
+      return Math.min(2, report.remainingMajorElectives);
+    }
+    // Year 3 or if remaining
+    if (report.totalCreditHours >= 66 || report.recommendedCourses.length < 5) {
+      return Math.min(1, report.remainingMajorElectives);
+    }
+    return 0;
+  }, [report]);
+
+  // Determine if Professional Training is recommended this semester
+  const showTrainingSlot = useMemo(() => {
+    return (
+      report.remainingProfessionalTraining > 0 &&
+      report.availableProfessionalTraining.length > 0 &&
+      (report.totalCreditHours >= 60 || report.recommendedCourses.length < 5)
+    );
+  }, [report]);
+
+  // Initial chosen major electives per slot: unselected by default so advisor chooses
+  const initialMajorElectives = useMemo(() => {
+    return Array(numMajorElectiveSlots).fill("");
+  }, [numMajorElectiveSlots]);
+
+  // Initial chosen professional training
+  const initialTraining = useMemo(() => {
+    if (!showTrainingSlot || report.availableProfessionalTraining.length === 0) return "";
+    const first = report.availableProfessionalTraining[0];
+    return first.code || first.title;
+  }, [showTrainingSlot, report.availableProfessionalTraining]);
+
+  // State for chosen elective in each slot
+  const [slotElectives, setSlotElectives] = useState<string[]>(initialMajorElectives);
+  // State for chosen training
+  const [slotTraining, setSlotTraining] = useState<string>(initialTraining);
+
+  // Sync state when report / department changes
+  useEffect(() => {
+    setSlotElectives(initialMajorElectives);
+    setSlotTraining(initialTraining);
+  }, [initialMajorElectives, initialTraining]);
+
+  // Default selected codes: Core + Initial Major Electives + Initial Training
+  const defaultSelectedCodes = useMemo(() => {
+    const set = new Set<string>();
+    report.recommendedCourses.forEach((c) => set.add(canonicalizeCode(c.code)));
+    initialMajorElectives.forEach((code) => {
+      if (code) set.add(canonicalizeCode(code));
+    });
+    if (initialTraining) {
+      set.add(canonicalizeCode(initialTraining));
+    }
+    return set;
+  }, [report.recommendedCourses, initialMajorElectives, initialTraining]);
+
+  const [selectedCodes, setSelectedCodes] = useState<Set<string>>(defaultSelectedCodes);
+  const [showGuide, setShowGuide] = useState<boolean>(false);
+
+  // Sync selectedCodes when defaultSelectedCodes changes (e.g. department switch)
+  useEffect(() => {
+    setSelectedCodes(new Set(defaultSelectedCodes));
+  }, [defaultSelectedCodes]);
+
+  // Handle changing an elective in a specific slot
+  const handleSlotElectiveChange = (slotIndex: number, newCode: string) => {
+    const oldCode = slotElectives[slotIndex];
+    const nextSlots = [...slotElectives];
+    nextSlots[slotIndex] = newCode;
+    setSlotElectives(nextSlots);
+
+    setSelectedCodes((prev) => {
+      const next = new Set(prev);
+      if (oldCode) next.delete(canonicalizeCode(oldCode));
+      if (newCode) next.add(canonicalizeCode(newCode));
+      return next;
+    });
+  };
+
+  // Handle changing professional training slot
+  const handleSlotTrainingChange = (newKey: string) => {
+    const oldKey = slotTraining;
+    setSlotTraining(newKey);
+
+    setSelectedCodes((prev) => {
+      const next = new Set(prev);
+      if (oldKey) next.delete(canonicalizeCode(oldKey));
+      if (newKey) next.add(canonicalizeCode(newKey));
+      return next;
+    });
+  };
+
+  // Toggle selection of any course
+  const toggleCourse = (code: string) => {
+    const canonical = canonicalizeCode(code);
+    setSelectedCodes((prev) => {
+      const next = new Set(prev);
+      if (next.has(canonical)) {
+        next.delete(canonical);
+      } else {
+        next.add(canonical);
+      }
+      return next;
+    });
+  };
+
+  const handleResetToDefault = () => {
+    setSlotElectives(initialMajorElectives);
+    setSlotTraining(initialTraining);
+    setSelectedCodes(new Set(defaultSelectedCodes));
+  };
+
+  // Map of all selectable courses across pools for lookup
+  const allCandidateCourses = useMemo(() => {
+    const map = new Map<string, { code: string; title: string; credits: number; source: string }>();
+
+    report.recommendedCourses.forEach((c) => {
+      map.set(canonicalizeCode(c.code), {
+        code: c.code,
+        title: c.title,
+        credits: getCourseCredits(c.code),
+        source: "Recommended Core",
+      });
+    });
+
+    report.otherEligibleCourses.forEach((c) => {
+      if (!map.has(canonicalizeCode(c.code))) {
+        map.set(canonicalizeCode(c.code), {
+          code: c.code,
+          title: c.title,
+          credits: getCourseCredits(c.code),
+          source: "Eligible Core",
+        });
+      }
+    });
+
+    report.availableMajorElectives.forEach((c) => {
+      if (!map.has(canonicalizeCode(c.code))) {
+        map.set(canonicalizeCode(c.code), {
+          code: c.code,
+          title: c.title,
+          credits: getCourseCredits(c.code),
+          source: "Major Elective",
+        });
+      }
+    });
+
+    report.availableProfessionalTraining.forEach((c) => {
+      const codeKey = c.code ? canonicalizeCode(c.code) : c.title;
+      if (!map.has(codeKey)) {
+        map.set(codeKey, {
+          code: c.code,
+          title: c.title,
+          credits: getCourseCredits(c.code),
+          source: "Professional Training",
+        });
+      }
+    });
+
+    report.availableScienceElectives.forEach((c) => {
+      if (!map.has(canonicalizeCode(c.code))) {
+        map.set(canonicalizeCode(c.code), {
+          code: c.code,
+          title: c.title,
+          credits: getCourseCredits(c.code),
+          source: "Science Elective",
+        });
+      }
+    });
+
+    report.availableUniversityRequirements.forEach((c) => {
+      if (!map.has(canonicalizeCode(c.code))) {
+        map.set(canonicalizeCode(c.code), {
+          code: c.code,
+          title: c.title,
+          credits: getCourseCredits(c.code),
+          source: "University Req",
+        });
+      }
+    });
+
+    report.retakeRecommendations.forEach((r) => {
+      if (!map.has(canonicalizeCode(r.code))) {
+        map.set(canonicalizeCode(r.code), {
+          code: r.code,
+          title: r.title,
+          credits: getCourseCredits(r.code),
+          source: `Retake (${r.grade})`,
+        });
+      }
+    });
+
+    return map;
+  }, [report]);
+
+  // Calculate live selected credit total
+  const selectedSummary = useMemo(() => {
+    let totalCredits = 0;
+    let count = 0;
+    selectedCodes.forEach((code) => {
+      const item = allCandidateCourses.get(code);
+      if (item) {
+        totalCredits += item.credits;
+        count++;
+      }
+    });
+    return { totalCredits, count };
+  }, [selectedCodes, allCandidateCourses]);
+
+  const isOverCap = selectedSummary.totalCredits > cap;
+  const isAtCap = selectedSummary.totalCredits === cap;
+  const progressPercent = Math.min(100, Math.round((selectedSummary.totalCredits / cap) * 100));
+
+  const totalAvailableAcrossAllPools =
+    report.availableCourses.length +
+    report.availableMajorElectives.length +
+    report.availableScienceElectives.length +
+    report.availableUniversityRequirements.length +
+    report.availableProfessionalTraining.length;
+
+  const totalRecommendedItems =
+    report.recommendedCourses.length + numMajorElectiveSlots + (showTrainingSlot ? 1 : 0);
+
+  return (
+    <DashCard
+      title="Next Semester Registration Hub"
+      tone="blue"
+      badge={`${selectedSummary.totalCredits} / ${cap} Credits`}
+      className={className}
+      actions={
+        <div className="flex items-center gap-2 print:hidden">
+          <button
+            type="button"
+            onClick={() => setShowGuide(!showGuide)}
+            className="rounded border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+          >
+            {showGuide ? "Hide Guide" : "💡 Advising Guide"}
+          </button>
+          <button
+            type="button"
+            onClick={handleResetToDefault}
+            title="Reset selection to default recommended schedule"
+            className="rounded border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            Reset
+          </button>
+        </div>
+      }
+    >
+      {/* 1. Advising Standing & Registration Blueprint Banner */}
+      <div
+        className={`mb-3 rounded-xl border p-3 transition-colors ${
+          report.onProbation
+            ? "border-red-300 bg-red-50 text-red-900"
+            : "border-slate-200 bg-slate-50/70 text-slate-900"
+        }`}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {report.onProbation && (
+              <span className="rounded-full bg-red-200 px-2 py-0.5 text-xs font-bold text-red-900">
+                ⚠️ Academic Probation
+              </span>
+            )}
+            {report.gpa !== null && report.gpa >= 3.0 && !report.onProbation && (
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800">
+                🌟 Overload Eligible (Up to 21 Cr)
+              </span>
+            )}
+            <span className="text-xs font-semibold text-slate-700">
+              {yearLevel} · {report.department} Plan
+            </span>
+          </div>
+
+          <div className="text-xs font-bold text-slate-700">
+            Max Load: <span className="font-mono text-sm font-bold text-slate-900">{cap} Cr.</span>
+          </div>
+        </div>
+
+        {/* Live Credit Progress Bar */}
+        <div className="mt-2.5">
+          <div className="flex items-center justify-between text-xs font-semibold">
+            <span>
+              Live Registration Basket:{" "}
+              <span className="font-mono font-bold text-sm">
+                {selectedSummary.totalCredits}
+              </span>{" "}
+              / {cap} Cr. ({selectedSummary.count} course
+              {selectedSummary.count === 1 ? "" : "s"} selected)
+            </span>
+            <span
+              className={`text-[11px] font-bold ${
+                isOverCap
+                  ? "text-red-700 font-bold"
+                  : isAtCap
+                  ? "text-emerald-700 font-bold"
+                  : "text-slate-600"
+              }`}
+            >
+              {isOverCap
+                ? `⚠ Exceeds cap by ${selectedSummary.totalCredits - cap} Cr.`
+                : isAtCap
+                ? "Full standard load reached"
+                : `${cap - selectedSummary.totalCredits} Cr. remaining`}
+            </span>
+          </div>
+          <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-200">
+            <div
+              className={`h-full transition-all duration-300 ${
+                isOverCap
+                  ? "bg-red-500"
+                  : isAtCap
+                  ? "bg-emerald-500"
+                  : "bg-blue-600"
+              }`}
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+
+        {report.onProbation && (
+          <p className="mt-2 text-[11px] leading-tight text-red-800 font-medium">
+            Strict half-load enforced: max 12 credit hours. Project I is blocked
+            until cumulative G.P.A reaches 2.0.
+          </p>
+        )}
+      </div>
+
+      {/* 2. In-Progress Courses (Prominent view of currently ongoing courses) */}
+      {report.ungradedCourses.length > 0 && (
+        <div className="mb-3 rounded-xl border border-amber-300 bg-amber-50/70 p-3 shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-1 border-b border-amber-200/80 pb-1.5 mb-2">
+            <div className="flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[11px] text-white font-bold">
+                ⏳
+              </span>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-amber-950">
+                Currently Enrolled & In Progress ({report.ungradedCourses.length} Course{report.ungradedCourses.length === 1 ? "" : "s"})
+              </h4>
+            </div>
+            <span className="rounded-full bg-amber-200 px-2 py-0.5 font-mono text-[11px] font-bold text-amber-900">
+              +{report.expectedCreditHours - report.totalCreditHours} Cr. Pending
+            </span>
+          </div>
+
+          <p className="mb-2 text-[11px] leading-snug text-amber-900 font-medium">
+            Student is actively taking these subjects this semester. Grades have not posted yet (Grade: <strong>U</strong>). Upcoming recommendations assume these will be passed:
+          </p>
+
+          <ul className="space-y-1">
+            {report.ungradedCourses.map((course, idx) => (
+              <CourseRow
+                key={`hero-ungraded-${idx}`}
+                code={course.code}
+                title={course.title}
+                credits={getCourseCredits(course.code)}
+                meta={course.semester?.label ? `Enrolled in ${course.semester.label}` : "Current Term"}
+                tag="U · In Progress"
+                tagTone="amber"
+                tone="amber"
+              />
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Guided 4-Step Checklist for Advisors */}
+      {showGuide && (
+        <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50/40 p-3 text-xs text-slate-700">
+          <h4 className="font-bold text-blue-900 mb-1.5 flex items-center gap-1">
+            <span>📋</span> Advisor Next-Semester Checklist
+          </h4>
+          <ol className="list-decimal list-inside space-y-1 text-[11px] leading-snug text-slate-600">
+            <li>
+              <strong className="text-slate-800">Check Max Load:</strong> Ensure total credits do not exceed {cap} Cr. (Half-load if on probation).
+            </li>
+            <li>
+              <strong className="text-slate-800">Review Core Schedule:</strong> Core courses due for this semester are pre-selected in Section A.
+            </li>
+            <li>
+              <strong className="text-slate-800">Select Major Electives & Training:</strong> Use the slot dropdowns in Section A to pick the student's chosen major electives and professional training.
+            </li>
+            <li>
+              <strong className="text-slate-800">Address Retakes or Other Pools:</strong> If GPA is weak, check recommended retakes or explore secondary pools below.
+            </li>
+          </ol>
+        </div>
+      )}
+
+      {totalAvailableAcrossAllPools === 0 ? (
+        <CardEmpty>No available courses to register at this time.</CardEmpty>
+      ) : (
+        <div className="space-y-2">
+          {/* SECTION A: Primary Recommended Schedule (Core + Major Elective Slots + Professional Training) */}
+          <div className="rounded-lg border border-blue-200 bg-blue-50/20 p-2.5">
+            <div className="mb-2 flex items-center justify-between">
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900 flex items-center gap-1.5">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white font-bold">
+                    A
+                  </span>
+                  Recommended Semester Schedule
+                </h4>
+                <p className="text-[11px] text-slate-500">
+                  Packaged schedule for next semester: Core requirements, Major Elective slots, and Professional Training.
+                </p>
+              </div>
+              <span className="rounded-full bg-blue-100 px-2 py-0.5 font-mono text-[11px] font-bold text-blue-800">
+                {totalRecommendedItems} course{totalRecommendedItems === 1 ? "" : "s"}
+              </span>
+            </div>
+
+            {totalRecommendedItems === 0 ? (
+              <p className="py-1 text-xs italic text-slate-400">
+                No courses recommended for this semester (check electives or retakes below).
+              </p>
+            ) : (
+              <div className="space-y-1.5">
+                {/* 1. Core Courses */}
+                {report.recommendedCourses.map((course, idx) => {
+                  const codeKey = canonicalizeCode(course.code);
+                  const isSelected = selectedCodes.has(codeKey);
+                  const credits = getCourseCredits(course.code);
+
+                  return (
+                    <CourseRow
+                      key={`rec-core-${idx}`}
+                      code={course.code}
+                      title={course.title}
+                      credits={credits}
+                      badge="Priority Core"
+                      badgeTone="blue"
+                      tone="blue"
+                      selectable
+                      selected={isSelected}
+                      onToggle={() => toggleCourse(course.code)}
+                    />
+                  );
+                })}
+
+                {/* 2. Major Elective Slots (interactive dropdown selector) */}
+                {Array.from({ length: numMajorElectiveSlots }).map((_, slotIdx) => {
+                  const chosenCode = slotElectives[slotIdx] || "";
+                  const canonicalChosen = canonicalizeCode(chosenCode);
+                  const isSelected = chosenCode !== "" && selectedCodes.has(canonicalChosen);
+                  const chosenCourseObj = report.availableMajorElectives.find(
+                    (e) => canonicalizeCode(e.code) === canonicalChosen
+                  );
+
+                  // Other slots' selected codes to prevent picking duplicates
+                  const otherChosen = slotElectives
+                    .filter((_, idx) => idx !== slotIdx)
+                    .map((c) => canonicalizeCode(c));
+
+                  return (
+                    <div
+                      key={`slot-major-${slotIdx}`}
+                      className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-2 transition-colors"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {
+                            if (chosenCode) {
+                              toggleCourse(chosenCode);
+                            }
+                          }}
+                          disabled={!chosenCode}
+                          aria-label={`Toggle Major Elective Slot ${slotIdx + 1}`}
+                          className="h-3.5 w-3.5 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-40"
+                        />
+
+                        <span className="flex-shrink-0 rounded bg-indigo-600 px-1.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wide">
+                          Major Elective {numMajorElectiveSlots > 1 ? `Slot ${slotIdx + 1}` : "Slot"}
+                        </span>
+
+                        <div className="min-w-[180px] flex-1">
+                          <select
+                            value={chosenCode}
+                            onChange={(e) => handleSlotElectiveChange(slotIdx, e.target.value)}
+                            className="w-full rounded border border-indigo-300 bg-white px-2 py-1 text-xs font-semibold text-slate-800 shadow-sm focus:border-indigo-500 focus:outline-none"
+                          >
+                            <option value="">-- Select Major Elective --</option>
+                            {report.availableMajorElectives.map((elective) => (
+                              <option
+                                key={elective.code}
+                                value={elective.code}
+                                disabled={otherChosen.includes(canonicalizeCode(elective.code))}
+                              >
+                                {elective.code} · {elective.title}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <span className="flex-shrink-0 rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-800">
+                          3 Cr
+                        </span>
+                      </div>
+
+                      {chosenCourseObj ? (
+                        <p className="mt-1 ml-6 text-[10px] font-medium text-indigo-700">
+                          Selected: <strong className="font-semibold">{chosenCourseObj.code} · {chosenCourseObj.title}</strong>
+                        </p>
+                      ) : (
+                        <p className="mt-1 ml-6 text-[10px] text-indigo-600 font-medium">
+                          ✦ Choose 1 of {report.availableMajorElectives.length} available major electives above to include in the plan.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* 3. Professional Training Slot (interactive dropdown selector) */}
+                {showTrainingSlot && (
+                  <div className="rounded-lg border border-teal-200 bg-teal-50/40 p-2 transition-colors">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={slotTraining !== "" && selectedCodes.has(canonicalizeCode(slotTraining))}
+                        onChange={() => {
+                          if (slotTraining) {
+                            toggleCourse(slotTraining);
+                          }
+                        }}
+                        disabled={!slotTraining}
+                        aria-label="Toggle Professional Training Slot"
+                        className="h-3.5 w-3.5 rounded border-teal-300 text-teal-600 focus:ring-teal-500 disabled:opacity-40"
+                      />
+
+                      <span className="flex-shrink-0 rounded bg-teal-600 px-1.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wide">
+                        Professional Training Slot
+                      </span>
+
+                      <div className="min-w-[180px] flex-1">
+                        <select
+                          value={slotTraining}
+                          onChange={(e) => handleSlotTrainingChange(e.target.value)}
+                          className="w-full rounded border border-teal-300 bg-white px-2 py-1 text-xs font-semibold text-slate-800 shadow-sm focus:border-teal-500 focus:outline-none"
+                        >
+                          <option value="">-- Select Professional Training --</option>
+                          {report.availableProfessionalTraining.map((t, idx) => {
+                            const val = t.code || t.title;
+                            return (
+                              <option key={idx} value={val}>
+                                {t.code ? `${t.code} · ` : ""}{t.title}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </div>
+
+                      <span className="flex-shrink-0 rounded bg-teal-100 px-1.5 py-0.5 text-[10px] font-bold text-teal-800">
+                        Training
+                      </span>
+                    </div>
+
+                    {slotTraining && (
+                      <p className="mt-1 ml-6 text-[10px] font-medium text-teal-800">
+                        Selected: <strong className="font-semibold">{slotTraining}</strong>
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Quick-Add: Recommended Retakes (If applicable) */}
+          {report.retakeRecommendations.length > 0 && (
+            <div className="rounded-lg border border-orange-200 bg-orange-50/30 p-2.5">
+              <div className="mb-2 flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-orange-900 flex items-center gap-1.5">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] text-white font-bold">
+                      ↺
+                    </span>
+                    Recommended Retakes (GPA Boost)
+                  </h4>
+                  <p className="text-[11px] text-slate-500">
+                    Passed with D+ or lower in the last year. Repeating raises GPA.
+                  </p>
+                </div>
+                <span className="rounded-full bg-orange-100 px-2 py-0.5 font-mono text-[11px] font-bold text-orange-800">
+                  {report.retakeRecommendations.length}
+                </span>
+              </div>
+              <ul className="space-y-1">
+                {report.retakeRecommendations.map((course, idx) => {
+                  const codeKey = canonicalizeCode(course.code);
+                  const isSelected = selectedCodes.has(codeKey);
+                  const credits = getCourseCredits(course.code);
+
+                  return (
+                    <CourseRow
+                      key={idx}
+                      code={course.code}
+                      title={course.title}
+                      credits={credits}
+                      meta={course.semester.label}
+                      tag={course.grade}
+                      tagTone="orange"
+                      badge="Retake Option"
+                      badgeTone="orange"
+                      tone="orange"
+                      selectable
+                      selected={isSelected}
+                      onToggle={() => toggleCourse(course.code)}
+                    />
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          {/* SECTION B: Other Eligible Core Courses */}
+          {report.otherEligibleCourses.length > 0 && (
+            <RegisterSection
+              label="B · Other Eligible Core Courses"
+              count={report.otherEligibleCourses.length}
+              labelClassName="text-slate-600"
+              divider
+            >
+              <p className="mb-1 text-[11px] text-slate-400">
+                Prerequisites met, but not primary priority this term. Check box to add to schedule:
+              </p>
+              <ul className="space-y-0.5">
+                {report.otherEligibleCourses.map((course, idx) => {
+                  const codeKey = canonicalizeCode(course.code);
+                  const isSelected = selectedCodes.has(codeKey);
+                  const credits = getCourseCredits(course.code);
+
+                  return (
+                    <CourseRow
+                      key={idx}
+                      code={course.code}
+                      title={course.title}
+                      credits={credits}
+                      tone="slate"
+                      selectable
+                      selected={isSelected}
+                      onToggle={() => toggleCourse(course.code)}
+                    />
+                  );
+                })}
+              </ul>
+            </RegisterSection>
+          )}
+
+          {/* SECTION C: Major Electives Pool */}
+          {report.availableMajorElectives.length > 0 && (
+            <RegisterSection
+              label={`C · Full Major Electives Pool (${report.department})`}
+              count={report.availableMajorElectives.length}
+              labelClassName="text-indigo-600"
+              note={
+                <>
+                  {" "}
+                  · <span className="font-semibold">{report.remainingMajorElectives} slot{report.remainingMajorElectives === 1 ? "" : "s"} needed</span>
+                </>
+              }
+              divider
+              defaultExpanded={false}
+            >
+              <p className="mb-1 text-[11px] text-slate-500">
+                All eligible major electives for {report.department}:
+              </p>
+              <ul className="space-y-0.5">
+                {report.availableMajorElectives.map((course, idx) => {
+                  const codeKey = canonicalizeCode(course.code);
+                  const isSelected = selectedCodes.has(codeKey);
+                  const credits = getCourseCredits(course.code);
+
+                  return (
+                    <CourseRow
+                      key={idx}
+                      code={course.code}
+                      title={course.title}
+                      credits={credits}
+                      tone="indigo"
+                      badge="Major Elective"
+                      badgeTone="indigo"
+                      selectable
+                      selected={isSelected}
+                      onToggle={() => toggleCourse(course.code)}
+                    />
+                  );
+                })}
+              </ul>
+            </RegisterSection>
+          )}
+
+          {/* SECTION D: Professional Training Pool */}
+          {report.availableProfessionalTraining.length > 0 && (
+            <RegisterSection
+              label="D · Full Professional Training Pool"
+              count={report.availableProfessionalTraining.length}
+              labelClassName="text-teal-600"
+              note={
+                <>
+                  {" "}
+                  · <span className="font-semibold">{report.remainingProfessionalTraining} slot{report.remainingProfessionalTraining === 1 ? "" : "s"} left</span>
+                </>
+              }
+              divider
+              defaultExpanded={false}
+            >
+              <p className="mb-1 text-[11px] text-slate-500">
+                All available professional training options:
+              </p>
+              <ul className="space-y-0.5">
+                {report.availableProfessionalTraining.map((course, idx) => {
+                  const codeKey = course.code ? canonicalizeCode(course.code) : course.title;
+                  const isSelected = selectedCodes.has(codeKey);
+                  const credits = getCourseCredits(course.code);
+
+                  return (
+                    <CourseRow
+                      key={idx}
+                      code={course.code || undefined}
+                      title={course.title}
+                      credits={credits}
+                      tone="teal"
+                      badge="Training"
+                      badgeTone="teal"
+                      selectable
+                      selected={isSelected}
+                      onToggle={() => toggleCourse(course.code || course.title)}
+                    />
+                  );
+                })}
+              </ul>
+            </RegisterSection>
+          )}
+
+          {/* SECTION E: Science Electives */}
+          {report.availableScienceElectives.length > 0 && (
+            <RegisterSection
+              label="E · Science Electives"
+              count={report.availableScienceElectives.length}
+              labelClassName="text-cyan-600"
+              note={
+                <>
+                  {" "}
+                  · <span className="font-semibold">{report.remainingScienceElectives} slot{report.remainingScienceElectives === 1 ? "" : "s"} left</span>
+                </>
+              }
+              divider
+            >
+              <ul className="space-y-0.5">
+                {report.availableScienceElectives.map((course, idx) => {
+                  const codeKey = canonicalizeCode(course.code);
+                  const isSelected = selectedCodes.has(codeKey);
+                  const credits = getCourseCredits(course.code);
+
+                  return (
+                    <CourseRow
+                      key={idx}
+                      code={course.code}
+                      title={course.title}
+                      credits={credits}
+                      tone="cyan"
+                      selectable
+                      selected={isSelected}
+                      onToggle={() => toggleCourse(course.code)}
+                    />
+                  );
+                })}
+              </ul>
+            </RegisterSection>
+          )}
+
+          {/* SECTION F: University Requirements */}
+          {report.availableUniversityRequirements.length > 0 && (
+            <RegisterSection
+              label="F · University Requirements"
+              count={report.availableUniversityRequirements.length}
+              labelClassName="text-violet-600"
+              note={
+                <>
+                  {" "}
+                  · <span className="font-semibold">{report.remainingUniversityRequirements} slot{report.remainingUniversityRequirements === 1 ? "" : "s"} left</span>
+                </>
+              }
+              divider
+            >
+              <ul className="space-y-0.5">
+                {report.availableUniversityRequirements.map((course, idx) => {
+                  const codeKey = canonicalizeCode(course.code);
+                  const isSelected = selectedCodes.has(codeKey);
+                  const credits = getCourseCredits(course.code);
+
+                  return (
+                    <CourseRow
+                      key={idx}
+                      code={course.code}
+                      title={course.title}
+                      credits={credits}
+                      tone="violet"
+                      selectable
+                      selected={isSelected}
+                      onToggle={() => toggleCourse(course.code)}
+                    />
+                  );
+                })}
+              </ul>
+            </RegisterSection>
+          )}
+        </div>
+      )}
+    </DashCard>
+  );
+}

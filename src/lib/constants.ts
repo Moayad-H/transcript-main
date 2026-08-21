@@ -201,5 +201,24 @@ export function isTwoCreditCourse(code: string): boolean {
   return code.startsWith(COURSE_PREFIXES.UNIVERSITY) || TWO_CREDIT_COURSE_CODES.has(code);
 }
 
+/**
+ * Returns credit hours for a given course code.
+ * Special/Remedial courses (Precalculus, Remedial English) and Practical Training earn 0 credits.
+ * UNR and CNC1401 earn 2 credits.
+ * Standard courses earn 3 credits.
+ */
+export function getCourseCredits(code: string): number {
+  if (!code) return 0;
+  const canonical = canonicalizeCode(code);
+  if (
+    canonical === canonicalizeCode(SPECIAL_COURSES.REMEDIAL_ENGLISH) ||
+    canonical === canonicalizeCode(SPECIAL_COURSES.PRECALCULUS) ||
+    canonical === canonicalizeCode(PRACTICAL_TRAINING_CODE)
+  ) {
+    return 0;
+  }
+  return isTwoCreditCourse(canonical) ? TWO_CREDIT_HOURS : CREDIT_HOURS_PER_COURSE;
+}
+
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 export const ALLOWED_FILE_TYPES = ["application/pdf"];

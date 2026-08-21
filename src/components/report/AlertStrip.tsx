@@ -133,6 +133,17 @@ export function buildAlerts(report: AnalysisReport): AlertItem[] {
     });
   }
 
+  if (report.ungradedCourses.length > 0) {
+    const pendingCredits = report.expectedCreditHours - report.totalCreditHours;
+    alerts.push({
+      id: "ungraded",
+      tone: "warn",
+      label: `${report.ungradedCourses.length} in progress (${pendingCredits > 0 ? `+${pendingCredits} Cr.` : "ungraded"})`,
+      detail:
+        `Student is currently enrolled in ${report.ungradedCourses.length} in-progress course(s) with pending (U) grades (${pendingCredits} Cr). These courses are factored into progression and degree requirements.`,
+    });
+  }
+
   if (report.retakeRecommendations.length > 0) {
     alerts.push({
       id: "retakes",
