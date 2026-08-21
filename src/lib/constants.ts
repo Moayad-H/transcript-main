@@ -101,6 +101,8 @@ export const YEAR_UPPER_CREDIT_THRESHOLD = 69;
 export const PLANNER_LOAD_YEARS_1_2 = 18; // normal load, years 1–2
 export const PLANNER_LOAD_YEARS_3_4 = 15; // normal load, years 3–4
 export const PLANNER_MAX_LOAD_YEARS_3_4 = 18; // manual ceiling for years 3–4
+export const PLANNER_SUMMER_NORMAL_LOAD = 6; // normal load for summer semester
+export const PLANNER_SUMMER_MAX_LOAD = 9; // maximum allowed load for summer semester
 export const PLANNER_OVERLOAD_CREDITS = 21; // GPA-based overload ceiling
 export const PLANNER_OVERLOAD_GPA_THRESHOLD = 3.0;
 export const PLANNER_YEAR_UPPER_CREDIT_THRESHOLD = 66; // >= this earned => years 3–4

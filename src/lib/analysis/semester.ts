@@ -87,6 +87,19 @@ export function nextPlanningSemester(sem: Semester): Semester {
 }
 
 /**
+ * Returns the optional Summer semester for the same academic year as `sem`.
+ */
+export function getSummerSemester(sem: Semester): Semester {
+  const summer: Semester = {
+    term: "Summer",
+    startYear: sem.startYear,
+    endYear: sem.endYear,
+    label: "",
+  };
+  return { ...summer, label: formatSemester(summer) };
+}
+
+/**
  * Position of a semester on a single chronological axis, counted in terms since
  * year 0. Differences between two indices are a count of terms, so one academic
  * year apart is exactly TERMS_PER_ACADEMIC_YEAR.

@@ -34,12 +34,15 @@ import {
   PLANNER_LOAD_YEARS_1_2,
   PLANNER_LOAD_YEARS_3_4,
   PLANNER_MAX_LOAD_YEARS_3_4,
+  PLANNER_SUMMER_NORMAL_LOAD,
+  PLANNER_SUMMER_MAX_LOAD,
   PLANNER_OVERLOAD_CREDITS,
   PLANNER_OVERLOAD_GPA_THRESHOLD,
   PLANNER_YEAR_UPPER_CREDIT_THRESHOLD,
   PROBATION_GPA_THRESHOLD,
   PROBATION_HALF_LOAD_CREDITS,
 } from "@/lib/constants";
+import { Semester } from "@/types";
 
 /** A single remaining requirement the advisor can place into a semester. */
 export interface PlannerCourse {
@@ -71,6 +74,13 @@ export interface PlannedEntry {
   grade: string;
 }
 
+/** Descriptor for a planned term, with optional metadata (Summer, Semester label). */
+export interface PlannedTermInput {
+  entries: PlannedEntry[];
+  isSummer?: boolean;
+  semester?: Semester;
+}
+
 /** A placed course after evaluation, with a validity check against its term. */
 export interface EvaluatedEntry {
   id: string;
@@ -86,6 +96,8 @@ export interface EvaluatedTerm {
   /** 1-based future-semester index. */
   index: number;
   yearBand: YearBand;
+  isSummer: boolean;
+  semester?: Semester;
   /** Soft target load (normal / probation / overload) for the year + GPA. */
   cap: number;
   /** Hard ceiling the semester may be pushed to (before overload it's the cap). */
@@ -113,8 +125,8 @@ export interface ManualPlannerInput {
   /** Current GPA numerator (grade points) and denominator (GPA credit hours). */
   startGpaPoints: number;
   startGpaCredits: number;
-  /** The advisor's future semesters, each a list of placed courses + grades. */
-  terms: PlannedEntry[][];
+  /** The advisor's future semesters, each a list of placed courses or a PlannedTermInput. */
+  terms: (PlannedEntry[] | PlannedTermInput)[];
   /** Letter grade -> grade points, for projecting GPA. */
   gradePoints: Record<string, number>;
 }
@@ -148,21 +160,25 @@ export function yearBandFor(earnedCredits: number): YearBand {
 }
 
 /**
- * The credit rules for a semester, given its year band and the running projected
- * GPA. Returns the normal-load target (`cap`), the hard `ceiling` the advisor may
- * push the load to, whether the term is a probation half-load, and whether a
- * GPA-based overload above the standard hard cap is *allowed*. A `null` GPA (no
- * graded credits yet, e.g. a transfer with no basis) is treated as neither
- * probation nor overload — the plain normal load applies.
- *
- * Note this only reports what's *permitted*: a term isn't "in overload" until the
- * advisor actually places more than the standard hard cap of credits into it — see
- * `evaluateManualPlan`, which sets the per-term `overload` flag from the real load.
+ * The credit rules for a semester, given its year band, running projected
+ * GPA, and whether it is a Summer semester. Returns the normal-load target (`cap`),
+ * the hard `ceiling` the advisor may push the load to, whether the term is a
+ * probation half-load, and whether a GPA-based overload above the standard hard cap is *allowed*.
  */
 export function capFor(
   band: YearBand,
-  gpa: number | null
+  gpa: number | null,
+  isSummer: boolean = false
 ): { cap: number; ceiling: number; probation: boolean; overloadAllowed: boolean } {
+  if (isSummer) {
+    const probation = gpa !== null && gpa < PROBATION_GPA_THRESHOLD;
+    return {
+      cap: PLANNER_SUMMER_NORMAL_LOAD,
+      ceiling: probation ? PLANNER_SUMMER_NORMAL_LOAD : PLANNER_SUMMER_MAX_LOAD,
+      probation,
+      overloadAllowed: false,
+    };
+  }
   if (gpa !== null && gpa < PROBATION_GPA_THRESHOLD) {
     return {
       cap: PROBATION_HALF_LOAD_CREDITS,
@@ -210,11 +226,21 @@ export function evaluateManualPlan(
   const placedIds = new Set<string>();
   const evaluatedTerms: EvaluatedTerm[] = [];
 
-  terms.forEach((entries, i) => {
+  terms.forEach((rawTerm, i) => {
+    const entries = Array.isArray(rawTerm) ? rawTerm : rawTerm.entries;
+    const isSummer =
+      !Array.isArray(rawTerm) &&
+      (rawTerm.isSummer === true || rawTerm.semester?.term === "Summer");
+    const semester = !Array.isArray(rawTerm) ? rawTerm.semester : undefined;
+
     const earnedAtStart = earned;
     const gpaAtStart = gpaOf();
     const band = yearBandFor(earnedAtStart);
-    const { cap, ceiling, probation, overloadAllowed } = capFor(band, gpaAtStart);
+    const { cap, ceiling, probation, overloadAllowed } = capFor(
+      band,
+      gpaAtStart,
+      isSummer
+    );
     // Snapshot of what's finished before this semester — courses placed in the
     // same semester can't satisfy each other's prerequisites.
     const completedAtStart = new Set(completed);
@@ -265,6 +291,8 @@ export function evaluateManualPlan(
     evaluatedTerms.push({
       index: i + 1,
       yearBand: band,
+      isSummer,
+      semester,
       cap,
       ceiling,
       load,
