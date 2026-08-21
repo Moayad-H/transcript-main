@@ -87,6 +87,25 @@ export const NORMAL_LOAD_LOWER_YEARS = 18; // years 1–2 (< YEAR_UPPER_CREDIT_T
 export const NORMAL_LOAD_UPPER_YEARS = 15; // years 3–4
 export const YEAR_UPPER_CREDIT_THRESHOLD = 69;
 
+// Semester planner (course graph "Semester planner" mode). Projects the remaining
+// requirements over future semesters to estimate time-to-graduate and attainable
+// GPA. Per-semester registration caps by academic year, where the year is inferred
+// from projected *earned* credit hours at the start of each planned semester:
+//   Years 1–2 (< PLANNER_YEAR_UPPER_CREDIT_THRESHOLD earned): normal load 18 Cr.
+//   Years 3–4 (>= threshold): normal load 15 Cr, may be pushed to 18 Cr manually.
+//   Overload: a running projected GPA above PLANNER_OVERLOAD_GPA_THRESHOLD raises
+//     the ceiling to 21 Cr in that semester (either year band).
+//   Probation: a running projected GPA below PROBATION_GPA_THRESHOLD forces the
+//     PROBATION_HALF_LOAD_CREDITS (12 Cr) half-load and blocks Project I, exactly
+//     as the report's probation rules do — recomputed per semester as the GPA moves.
+export const PLANNER_LOAD_YEARS_1_2 = 18; // normal load, years 1–2
+export const PLANNER_LOAD_YEARS_3_4 = 15; // normal load, years 3–4
+export const PLANNER_MAX_LOAD_YEARS_3_4 = 18; // manual ceiling for years 3–4
+export const PLANNER_OVERLOAD_CREDITS = 21; // GPA-based overload ceiling
+export const PLANNER_OVERLOAD_GPA_THRESHOLD = 3.0;
+export const PLANNER_YEAR_UPPER_CREDIT_THRESHOLD = 66; // >= this earned => years 3–4
+export const PLANNER_MAX_SEMESTERS = 24; // safety guard against an unschedulable plan
+
 // Major electives are Semester 7–8 (year-4) courses in every department plan, so
 // they're only advised once the student has reached year 4. Approximated by
 // earned credit hours: three of eight semesters' worth of a 132 Cr. plan

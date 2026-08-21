@@ -14,21 +14,40 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { AnalysisReport, TranscriptData, Department } from "@/types";
+import { AnalysisReport, TranscriptData, Department, Semester } from "@/types";
 import {
   canonicalizeCode,
   isTwoCreditCourse,
   DEPARTMENTS,
   DEPARTMENT_NAMES,
   PROBATION_HALF_LOAD_CREDITS,
+  PRACTICAL_TRAINING_CODE,
+  GRADUATION_CREDIT_HOURS,
   isProjectOneTitle,
+  GRADES,
+  PROBATION_GPA_THRESHOLD,
+  PLANNER_OVERLOAD_GPA_THRESHOLD,
 } from "@/lib/constants";
 import {
   buildCourseGraph,
   CourseStatus,
   GraphCourseNode,
 } from "@/lib/analysis/courseGraphBuilder";
+import {
+  evaluateManualPlan,
+  eligibleForTerm,
+  PlannerCourse,
+  PlannedEntry,
+} from "@/lib/analysis/semesterPlanner";
+import {
+  compareSemesters,
+  semesterIndex,
+  nextPlanningSemester,
+} from "@/lib/analysis/semester";
 import { generateReport } from "@/lib/analysis/reportGenerator";
+
+// Canonical practical-training code, precomputed for the planner's pass/fail check.
+const PRACTICAL_TRAINING_CANON = canonicalizeCode(PRACTICAL_TRAINING_CODE);
 
 // GPA grade points (per the CCIT scale). U/W/I/F carry 0 points.
 const GRADE_POINTS: Record<string, number> = {
@@ -71,6 +90,15 @@ const PROJECTABLE_GRADES = [
 // Transcript grades that count toward the *current* GPA. Excludes W/U/I (not a
 // completed grade) and P/Tr (pass/transfer — no grade points).
 const GPA_COUNTED_GRADES = new Set(PROJECTABLE_GRADES);
+
+// Grades that earn credit hours (used to total a past semester's earned Cr).
+const PASSING_GRADES = new Set<string>([...GRADES.PASSING]);
+
+// Registered / not-yet-graded grade(s) — mark a semester as still in progress.
+const UNGRADED_GRADES = new Set<string>([...GRADES.UNGRADED]);
+
+// Grade a newly-placed course starts on in the semester planner.
+const DEFAULT_PLAN_GRADE = "B";
 
 /** Credit-hour value of a course code (2 for UNR/CNC1401, else 3). */
 function creditValueForCode(code: string): number {
@@ -260,6 +288,11 @@ export default function CourseGraphView({
   // GPA calculator: assign hypothetical grades to registered courses.
   const [gpaMode, setGpaMode] = useState(false);
   const [projGrades, setProjGrades] = useState<Map<string, string>>(new Map());
+  // Semester planner: the advisor builds future semesters by hand, one at a
+  // time, on top of the completed transcript. Each future semester is a list of
+  // placed courses with a projected grade; the planner scores them (caps, GPA).
+  const [plannerMode, setPlannerMode] = useState(false);
+  const [plannerTerms, setPlannerTerms] = useState<PlannedEntry[][]>([]);
   // Transient message shown when a manual action is blocked by the probation
   // half-load cap.
   const [capWarning, setCapWarning] = useState<string | null>(null);
@@ -347,10 +380,11 @@ export default function CourseGraphView({
         setGraph({ nodes, edges });
         setTermNodes(headers);
         setSelectedId(null);
-        // A fresh transcript invalidates any manual planning overrides and
-        // projected grades.
+        // A fresh transcript invalidates any manual planning overrides,
+        // projected grades, and semester-plan pins.
         setOverrides(new Map());
         setProjGrades(new Map());
+        setPlannerTerms([]);
       })
       .catch((err) => {
         if (!cancelled) {
@@ -529,6 +563,242 @@ export default function CourseGraphView({
     }
     return { gpa: ch > 0 ? points / ch : 0, ch, count };
   }, [currentGpa, graph, projGrades, effectiveStatus]);
+
+  // Semester planner: the remaining requirements (everything not completed and
+  // not currently in progress), shaped for the term-by-term scheduler. Each
+  // course carries its load credits, its earned/GPA credits (0 for pass/fail
+  // training), any credit-hour gate, and its plan-column order for priority.
+  const { plannerCourses, plannerCompletedIds } = useMemo(() => {
+    const plannerCourses: PlannerCourse[] = [];
+    const plannerCompletedIds = new Set<string>();
+    if (!graph) return { plannerCourses, plannerCompletedIds };
+
+    for (const n of graph.nodes) {
+      const d = n.data as CourseNodeData;
+      const status = effectiveStatus.get(n.id) ?? d.status;
+      // Completed and in-progress courses pre-satisfy prerequisites; everything
+      // else (available/blocked/failed/empty elective slot) needs scheduling.
+      if (status === "completed" || status === "ungraded") {
+        plannerCompletedIds.add(n.id);
+        continue;
+      }
+
+      // Elective slots carry their category in the node id (elective-CATEGORY-i).
+      const category = n.id.startsWith("elective-")
+        ? n.id.split("-")[1]
+        : null;
+      const cv =
+        category === "UNIVERSITY"
+          ? 2
+          : d.isElectiveSlot
+          ? 3
+          : creditValueForCode(d.code);
+      // Professional Training slots and Practical Training are pass/fail: they
+      // occupy the semester load but add nothing toward earned credits or GPA.
+      const isTraining =
+        category === "PROFESSIONAL" ||
+        canonicalizeCode(d.code) === PRACTICAL_TRAINING_CANON;
+      const gateMatch = d.creditReq?.match(/(\d+)/);
+      const creditGate = gateMatch ? parseInt(gateMatch[1], 10) : null;
+
+      plannerCourses.push({
+        id: n.id,
+        code: d.code || "Elective",
+        title: d.title,
+        loadCredit: cv,
+        earnedCredit: isTraining ? 0 : cv,
+        gpaCredit: isTraining ? 0 : cv,
+        prereqs: prereqsByTarget.get(n.id) ?? [],
+        creditGate,
+        isProjectOne: isProjectOneTitle(d.title),
+        order: n.position.x,
+      });
+    }
+    return { plannerCourses, plannerCompletedIds };
+  }, [graph, effectiveStatus, prereqsByTarget]);
+
+  const plannerCourseById = useMemo(
+    () => new Map(plannerCourses.map((c) => [c.id, c])),
+    [plannerCourses]
+  );
+
+  // The transcript's semesters grouped by the term they were taken in. A term
+  // that still holds any registered (ungraded, "U") course is **in progress**,
+  // not completed — the advisor grades those to finish it and advance the plan.
+  // Courses with no parsed semester (e.g. manual entry) can't be grouped here.
+  const { completedSemesters, inProgressSemesters, latestSemester } = useMemo(() => {
+    const groups = new Map<
+      number,
+      { semester: Semester; courses: { code: string; title: string; grade: string }[] }
+    >();
+    for (const c of transcriptData.courses) {
+      if (!c.semester) continue;
+      const key = semesterIndex(c.semester);
+      let g = groups.get(key);
+      if (!g) {
+        g = { semester: c.semester, courses: [] };
+        groups.set(key, g);
+      }
+      g.courses.push({ code: c.code, title: c.title, grade: c.grade });
+    }
+    const all = [...groups.values()].sort((a, b) =>
+      compareSemesters(a.semester, b.semester)
+    );
+    return {
+      completedSemesters: all.filter(
+        (g) => !g.courses.some((c) => UNGRADED_GRADES.has(c.grade))
+      ),
+      inProgressSemesters: all.filter((g) =>
+        g.courses.some((c) => UNGRADED_GRADES.has(c.grade))
+      ),
+      latestSemester: all.length > 0 ? all[all.length - 1].semester : null,
+    };
+  }, [transcriptData]);
+
+  // Canonical course code -> the graph node currently registered (ungraded) for
+  // it, so the in-progress semester card can wire each registered course's grade
+  // dropdown to the shared projected-grade map.
+  const ungradedNodeByCode = useMemo(() => {
+    const m = new Map<string, string>();
+    if (!graph) return m;
+    for (const n of graph.nodes) {
+      if (effectiveStatus.get(n.id) === "ungraded") {
+        m.set(canonicalizeCode((n.data as CourseNodeData).code), n.id);
+      }
+    }
+    return m;
+  }, [graph, effectiveStatus]);
+
+  // The projection's starting point: the earned credits and GPA the student
+  // *will* have once the current (in-progress) semester is graded. Baseline is
+  // the parsed earned total / GPA (which exclude ungraded courses); each
+  // registered course the advisor assigns a grade to then adds its credits and
+  // grade points. Pass/fail training is left out of both totals.
+  const planStart = useMemo(() => {
+    let earned = achievedCreditHours;
+    let gpaPoints = currentGpa.points;
+    let gpaCredits = currentGpa.ch;
+    if (graph) {
+      const byId = new Map(graph.nodes.map((n) => [n.id, n]));
+      for (const [id, grade] of projGrades) {
+        const n = byId.get(id);
+        if (!n || effectiveStatus.get(id) !== "ungraded") continue;
+        if (!(grade in GRADE_POINTS)) continue;
+        const code = (n.data as CourseNodeData).code;
+        const isTraining =
+          id.startsWith("elective-PROFESSIONAL") ||
+          canonicalizeCode(code) === PRACTICAL_TRAINING_CANON;
+        if (isTraining) continue; // pass/fail: no earned/GPA contribution
+        const cv = creditValueForCode(code);
+        earned += grade === "F" ? 0 : cv;
+        gpaPoints += GRADE_POINTS[grade] * cv;
+        gpaCredits += cv;
+      }
+    }
+    return { earned, gpaPoints, gpaCredits };
+  }, [achievedCreditHours, currentGpa, graph, projGrades, effectiveStatus]);
+
+  // Score the advisor's hand-built plan. Earned credits and GPA start from the
+  // projection base (achieved totals plus any graded current-semester courses)
+  // and advance semester by semester using each placed course's projected grade.
+  const plan = useMemo(
+    () =>
+      evaluateManualPlan({
+        courses: plannerCourses,
+        completedIds: plannerCompletedIds,
+        startEarnedCredits: planStart.earned,
+        startGpaPoints: planStart.gpaPoints,
+        startGpaCredits: planStart.gpaCredits,
+        terms: plannerTerms,
+        gradePoints: GRADE_POINTS,
+      }),
+    [plannerCourses, plannerCompletedIds, planStart, plannerTerms]
+  );
+
+  // Which remaining courses may be added to each future semester (prereqs met by
+  // that term's start, credit gate satisfied, Project I gated on probation).
+  const eligibleByTerm = useMemo(
+    () => plan.terms.map((t) => eligibleForTerm(t, plan.unplaced)),
+    [plan]
+  );
+
+  // Calendar-style label for each future semester, continuing the transcript's
+  // "First/Second Semester / YEAR" naming from the latest completed term (Summer
+  // skipped). Falls back to a plain "Planned Semester N" when the transcript has
+  // no dated semesters to anchor on (e.g. manual entry).
+  const planTermLabels = useMemo(() => {
+    const labels: string[] = [];
+    let cursor = latestSemester;
+    for (let i = 0; i < plan.terms.length; i++) {
+      if (!cursor) {
+        labels.push(`Planned Semester ${i + 1}`);
+        continue;
+      }
+      cursor = nextPlanningSemester(cursor);
+      labels.push(cursor.label);
+    }
+    return labels;
+  }, [latestSemester, plan.terms]);
+
+  // Set (or clear, with "") the projected grade of a registered course so the
+  // current semester's contribution to the projection updates. Shared with the
+  // GPA calculator's projected-grade map.
+  const setRegisteredGrade = useCallback((nodeId: string, grade: string) => {
+    setProjGrades((prev) => {
+      const next = new Map(prev);
+      if (grade === "") next.delete(nodeId);
+      else next.set(nodeId, grade);
+      return next;
+    });
+  }, []);
+
+  // --- Planner edit handlers ---------------------------------------------
+  const addSemester = useCallback(() => {
+    setPlannerTerms((prev) => [...prev, []]);
+  }, []);
+
+  const removeSemester = useCallback((termIndex: number) => {
+    setPlannerTerms((prev) => prev.filter((_, i) => i !== termIndex));
+  }, []);
+
+  const addCourseToTerm = useCallback(
+    (termIndex: number, courseId: string) => {
+      if (!courseId) return;
+      const c = plannerCourseById.get(courseId);
+      // Pass/fail courses (training) carry no letter grade.
+      const grade = c && c.gpaCredit === 0 ? "P" : DEFAULT_PLAN_GRADE;
+      setPlannerTerms((prev) =>
+        prev.map((term, i) =>
+          i === termIndex ? [...term, { id: courseId, grade }] : term
+        )
+      );
+    },
+    [plannerCourseById]
+  );
+
+  const removeCourseFromTerm = useCallback(
+    (termIndex: number, courseId: string) => {
+      setPlannerTerms((prev) =>
+        prev.map((term, i) =>
+          i === termIndex ? term.filter((e) => e.id !== courseId) : term
+        )
+      );
+    },
+    []
+  );
+
+  const setEntryGrade = useCallback(
+    (termIndex: number, courseId: string, grade: string) => {
+      setPlannerTerms((prev) =>
+        prev.map((term, i) =>
+          i === termIndex
+            ? term.map((e) => (e.id === courseId ? { ...e, grade } : e))
+            : term
+        )
+      );
+    },
+    []
+  );
 
   // Two chains from the selected node:
   //  - prereqSet: all its transitive prerequisites (what must come before it).
@@ -725,6 +995,17 @@ export default function CourseGraphView({
         >
           {gpaMode ? "GPA calculator: ON" : "GPA calculator: OFF"}
         </button>
+        <button
+          type="button"
+          onClick={() => setPlannerMode((m) => !m)}
+          className={`text-sm font-medium px-3 py-1.5 rounded-md border transition-colors ${
+            plannerMode
+              ? "bg-sky-600 border-sky-600 text-white"
+              : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+          }`}
+        >
+          {plannerMode ? "Semester planner: ON" : "Semester planner: OFF"}
+        </button>
 
         {/* Achieved credit-hour tally (updates live with manual overrides). */}
         <span className="text-sm font-medium px-3 py-1.5 rounded-md bg-gray-100 border border-gray-200 text-gray-700">
@@ -885,6 +1166,401 @@ export default function CourseGraphView({
                   </div>
                 );
               })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Semester planner panel */}
+      {plannerMode && (
+        <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50/50 p-4">
+          {/* Summary + controls */}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mb-3">
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">
+                Planned semesters
+              </div>
+              <div className="text-2xl font-bold text-sky-700">
+                {plannerTerms.length}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">
+                Left to place
+              </div>
+              <div
+                className={`text-2xl font-bold ${
+                  plan.unplaced.length > 0 ? "text-amber-600" : "text-green-600"
+                }`}
+              >
+                {plan.unplaced.length}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">
+                Projected GPA
+                {plan.unplaced.length > 0 ? " (so far)" : " at graduation"}
+              </div>
+              <div className="text-2xl font-bold text-gray-900">
+                {plan.finalGpa === null ? "—" : plan.finalGpa.toFixed(3)}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">
+                Projected credit hours
+              </div>
+              <div className="text-2xl font-bold text-gray-900">
+                {plan.finalEarnedCredits}
+                <span className="text-sm font-medium text-gray-400">
+                  {" "}
+                  / {GRADUATION_CREDIT_HOURS}
+                </span>
+              </div>
+            </div>
+
+            {plannerTerms.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setPlannerTerms([])}
+                className="text-xs font-medium px-2 py-1 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 ml-auto"
+              >
+                Clear plan
+              </button>
+            )}
+          </div>
+
+          <p className="text-xs text-gray-500 mb-3">
+            Completed semesters come from the transcript; a term with registered
+            courses shows as <span className="text-amber-700 font-medium">In
+            progress</span> — grade those to finish it. Then add a semester and the
+            courses the student will register, with a projected grade for each —
+            only courses whose prerequisites and credit-hour gates are met by that
+            point are offered. Caps: Years 1–2 18 Cr · Years 3–4 15 Cr (up to 18) ·
+            overload 21 Cr when the running GPA is above{" "}
+            {PLANNER_OVERLOAD_GPA_THRESHOLD.toFixed(1)} · half-load 12 Cr while it
+            is under {PROBATION_GPA_THRESHOLD.toFixed(1)}. Professional/Practical
+            Training are pass/fail and don&apos;t count toward the{" "}
+            {GRADUATION_CREDIT_HOURS} Cr total.
+          </p>
+
+          <div className="flex gap-3 overflow-x-auto pb-2 items-stretch">
+            {/* Completed semesters (read-only, from the transcript). */}
+            {completedSemesters.map((s) => {
+              const earned = s.courses.reduce(
+                (sum, c) =>
+                  PASSING_GRADES.has(c.grade)
+                    ? sum + creditValueForCode(c.code)
+                    : sum,
+                0
+              );
+              return (
+                <div
+                  key={s.semester.label}
+                  className="flex-shrink-0 w-56 rounded-lg border border-green-200 bg-green-50/60 shadow-sm"
+                >
+                  <div className="px-3 py-2 border-b border-green-100">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[11px] font-bold text-green-800 leading-tight">
+                        {s.semester.label}
+                      </span>
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-green-100 text-green-700 whitespace-nowrap">
+                        {earned} Cr
+                      </span>
+                    </div>
+                    <span className="text-[10px] uppercase tracking-wide text-green-600">
+                      Completed
+                    </span>
+                  </div>
+                  <div className="p-2 space-y-1.5">
+                    {s.courses.map((c, ci) => {
+                      const bad = c.grade === "F" || c.grade === "W";
+                      return (
+                        <div
+                          key={`${c.code}-${ci}`}
+                          className="rounded border border-green-200 bg-white px-2 py-1"
+                        >
+                          <div className="flex items-center gap-1">
+                            <span className="font-mono text-[10px] font-semibold bg-green-50 px-1 rounded">
+                              {c.code}
+                            </span>
+                            <span
+                              className={`text-[10px] font-semibold ml-auto px-1 rounded ${
+                                bad
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-gray-100 text-gray-600"
+                              }`}
+                            >
+                              {c.grade}
+                            </span>
+                          </div>
+                          <p className="text-[11px] leading-snug text-gray-600 line-clamp-2 mt-0.5">
+                            {c.title}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* In-progress semester(s): registered courses awaiting a grade.
+                Assigning a grade advances the projection (earned Cr + GPA). */}
+            {inProgressSemesters.map((s) => {
+              const graded = s.courses.filter(
+                (c) => !UNGRADED_GRADES.has(c.grade)
+              ).length;
+              return (
+                <div
+                  key={`inprogress-${s.semester.label}`}
+                  className="flex-shrink-0 w-60 rounded-lg border border-amber-300 bg-amber-50/60 shadow-sm"
+                >
+                  <div className="px-3 py-2 border-b border-amber-100">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[11px] font-bold text-amber-800 leading-tight">
+                        {s.semester.label}
+                      </span>
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 whitespace-nowrap">
+                        {graded}/{s.courses.length} graded
+                      </span>
+                    </div>
+                    <span className="text-[10px] uppercase tracking-wide text-amber-600">
+                      In progress
+                    </span>
+                  </div>
+                  <div className="p-2 space-y-1.5">
+                    {s.courses.map((c, ci) => {
+                      const registered = UNGRADED_GRADES.has(c.grade);
+                      const nodeId = registered
+                        ? ungradedNodeByCode.get(canonicalizeCode(c.code))
+                        : undefined;
+                      const projected = nodeId ? projGrades.get(nodeId) : undefined;
+                      return (
+                        <div
+                          key={`${c.code}-${ci}`}
+                          className={`rounded border px-2 py-1 ${
+                            registered
+                              ? "border-amber-200 bg-white"
+                              : "border-gray-200 bg-white"
+                          }`}
+                        >
+                          <div className="flex items-center gap-1">
+                            <span className="font-mono text-[10px] font-semibold bg-amber-50 px-1 rounded">
+                              {c.code}
+                            </span>
+                            {registered && nodeId ? (
+                              <select
+                                value={projected ?? ""}
+                                onChange={(ev) =>
+                                  setRegisteredGrade(nodeId, ev.target.value)
+                                }
+                                className="text-[11px] border border-amber-300 rounded px-1 py-0.5 bg-white ml-auto"
+                                title="Assign a grade to complete this course"
+                              >
+                                <option value="">In progress</option>
+                                {PROJECTABLE_GRADES.map((g) => (
+                                  <option key={g} value={g}>
+                                    {g}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <span className="text-[10px] font-semibold ml-auto px-1 rounded bg-gray-100 text-gray-600">
+                                {c.grade}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] leading-snug text-gray-600 line-clamp-2 mt-0.5">
+                            {c.title}
+                          </p>
+                          {registered && !nodeId && (
+                            <p className="text-[10px] text-amber-600 mt-0.5">
+                              Not in this plan — can&apos;t project
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Future semesters (advisor-built, editable). */}
+            {plan.terms.map((t, ti) => {
+              const yearLabel = t.yearBand === "1-2" ? "Years 1–2" : "Years 3–4";
+              const overCeiling = t.load > t.ceiling;
+              const overNormal = t.load > t.cap && !overCeiling;
+              const candidates = eligibleByTerm[ti] ?? [];
+              return (
+                <div
+                  key={`plan-${t.index}`}
+                  className="flex-shrink-0 w-60 rounded-lg border border-sky-300 bg-white shadow-sm flex flex-col"
+                >
+                  <div className="px-3 py-2 border-b border-gray-100">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[11px] font-bold text-sky-800 leading-tight">
+                        {planTermLabels[ti]}
+                      </span>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <span
+                          className={`text-xs font-bold px-1.5 py-0.5 rounded ${
+                            overCeiling
+                              ? "bg-red-100 text-red-700"
+                              : overNormal
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                          title={`Load ${t.load} Cr · normal ${t.cap} · max ${t.ceiling}`}
+                        >
+                          {t.load}/{t.ceiling} Cr
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeSemester(ti)}
+                          title="Remove this semester"
+                          className="text-[13px] leading-none px-1 rounded text-gray-400 hover:bg-red-50 hover:text-red-600"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      <span className="text-[11px] text-gray-500">{yearLabel}</span>
+                      {t.overload && (
+                        <span className="text-[10px] font-semibold uppercase bg-amber-100 text-amber-700 px-1 rounded">
+                          Overload
+                        </span>
+                      )}
+                      {t.probation && (
+                        <span className="text-[10px] font-semibold uppercase bg-red-100 text-red-700 px-1 rounded">
+                          Half-load
+                        </span>
+                      )}
+                      {t.gpaAtStart !== null && (
+                        <span className="text-[11px] text-gray-400 ml-auto">
+                          GPA {t.gpaAtStart.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-2 space-y-1.5 flex-1">
+                    {t.entries.length === 0 && (
+                      <p className="text-[11px] text-gray-400 italic px-1 py-2">
+                        No courses yet — add one below.
+                      </p>
+                    )}
+                    {t.entries.map((e) => {
+                      const c = plannerCourseById.get(e.id);
+                      if (!c) return null;
+                      const isElective = e.id.startsWith("elective-");
+                      const isPassFail = c.gpaCredit === 0;
+                      const tone = !e.valid
+                        ? "border-red-300 bg-red-50"
+                        : isElective
+                        ? "border-purple-300 bg-purple-50"
+                        : "border-sky-200 bg-sky-50";
+                      return (
+                        <div
+                          key={e.id}
+                          className={`rounded border px-2 py-1 ${tone}`}
+                        >
+                          <div className="flex items-center gap-1">
+                            <span className="font-mono text-[10px] font-semibold bg-white/70 px-1 rounded">
+                              {c.code}
+                            </span>
+                            <span className="text-[10px] text-gray-400">
+                              {c.loadCredit} cr
+                            </span>
+                            {isPassFail ? (
+                              <span className="text-[10px] font-medium text-gray-500 ml-auto">
+                                Pass/Fail
+                              </span>
+                            ) : (
+                              <select
+                                value={e.grade}
+                                onChange={(ev) =>
+                                  setEntryGrade(ti, e.id, ev.target.value)
+                                }
+                                className="text-[11px] border border-gray-300 rounded px-1 py-0.5 bg-white ml-auto"
+                                title="Projected grade"
+                              >
+                                {PROJECTABLE_GRADES.map((g) => (
+                                  <option key={g} value={g}>
+                                    {g}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => removeCourseFromTerm(ti, e.id)}
+                              title="Remove course"
+                              className="text-[12px] leading-none px-1 rounded text-gray-400 hover:bg-white hover:text-red-600"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                          <p className="text-[11px] leading-snug text-gray-700 line-clamp-2 mt-0.5">
+                            {c.title}
+                          </p>
+                          {!e.valid && e.reason && (
+                            <p className="text-[10px] text-red-600 mt-0.5">
+                              ⚠ {e.reason}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="p-2 border-t border-gray-100">
+                    <select
+                      value=""
+                      onChange={(ev) => addCourseToTerm(ti, ev.target.value)}
+                      disabled={candidates.length === 0}
+                      className="w-full text-[11px] border border-sky-300 rounded px-1.5 py-1 bg-sky-50 text-sky-800 disabled:opacity-50 disabled:bg-gray-50 disabled:text-gray-400"
+                    >
+                      <option value="">
+                        {candidates.length === 0
+                          ? "No eligible courses"
+                          : `＋ Add course (${candidates.length})`}
+                      </option>
+                      {candidates.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.code} — {c.title} ({c.loadCredit} cr)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Add-a-semester control (unless everything is already placed). */}
+            {plannerCourses.length === 0 && plannerTerms.length === 0 ? (
+              <div className="flex-shrink-0 w-60 rounded-lg border border-dashed border-green-300 bg-green-50/40 flex items-center justify-center p-4 text-center text-sm text-green-700">
+                All requirements are complete — nothing left to plan. 🎉
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={addSemester}
+                className="flex-shrink-0 w-40 rounded-lg border border-dashed border-sky-400 bg-white/60 hover:bg-sky-50 text-sky-700 font-medium text-sm flex items-center justify-center"
+              >
+                ＋ Add semester
+              </button>
+            )}
+          </div>
+
+          {plan.unplaced.length > 0 && plannerTerms.length > 0 && (
+            <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              <span className="font-semibold">
+                {plan.unplaced.length} requirement
+                {plan.unplaced.length === 1 ? "" : "s"} not yet placed
+              </span>{" "}
+              — add more semesters and courses to finish the plan.
             </div>
           )}
         </div>
