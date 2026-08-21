@@ -74,6 +74,32 @@ export function formatSemester(semester: Semester): string {
 }
 
 /**
+ * The next semester to plan for after `sem`. Advising plans only the two main
+ * terms, so Summer is skipped: First → Second of the same academic year, and
+ * Second (or Summer) → First of the next academic year.
+ */
+export function nextPlanningSemester(sem: Semester): Semester {
+  const next: Semester =
+    sem.term === "First"
+      ? { term: "Second", startYear: sem.startYear, endYear: sem.endYear, label: "" }
+      : { term: "First", startYear: sem.startYear + 1, endYear: sem.endYear + 1, label: "" };
+  return { ...next, label: formatSemester(next) };
+}
+
+/**
+ * Returns the optional Summer semester for the same academic year as `sem`.
+ */
+export function getSummerSemester(sem: Semester): Semester {
+  const summer: Semester = {
+    term: "Summer",
+    startYear: sem.startYear,
+    endYear: sem.endYear,
+    label: "",
+  };
+  return { ...summer, label: formatSemester(summer) };
+}
+
+/**
  * Position of a semester on a single chronological axis, counted in terms since
  * year 0. Differences between two indices are a count of terms, so one academic
  * year apart is exactly TERMS_PER_ACADEMIC_YEAR.

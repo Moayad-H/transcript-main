@@ -34,9 +34,14 @@ export function Header({ advisorName, onLogout, compact = false }: HeaderProps =
           className="rounded bg-white p-1"
         />
         <div className="flex flex-col">
-          <h1 className={compact ? "text-xl font-bold leading-tight" : "text-3xl font-bold"}>
-            ERSHAD
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className={compact ? "text-xl font-bold leading-tight" : "text-3xl font-bold"}>
+              ERSHAD
+            </h1>
+            <span className="rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-bold text-blue-100">
+              v0.6.0
+            </span>
+          </div>
           {compact ? (
             <p className="text-[11px] text-blue-200">
               Registration Advising Program · CCIT · Work in Progress

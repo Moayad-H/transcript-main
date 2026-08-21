@@ -1,4 +1,5 @@
-import { AnalysisReport } from "@/types";
+import { AnalysisReport, Department } from "@/types";
+import { DEPARTMENTS, DEPARTMENT_NAMES } from "@/lib/constants";
 
 interface StudentBarProps {
   report: AnalysisReport;
@@ -7,15 +8,22 @@ interface StudentBarProps {
   onBack: () => void;
   onPrint: () => void;
   onDownload: () => void;
+  onDepartmentChange?: (department: Department) => void;
 }
 
-function Stat({ label, value, tone }: { label: string; value: string; tone?: "warn" | "ok" }) {
+function Stat({ label, value, tone }: { label: string; value: string; tone?: "warn" | "ok" | "amber" }) {
   return (
     <div className="flex flex-col leading-tight">
       <span className="text-[10px] uppercase tracking-wider text-blue-200">{label}</span>
       <span
         className={`text-sm font-bold ${
-          tone === "warn" ? "text-red-300" : tone === "ok" ? "text-green-300" : "text-white"
+          tone === "warn"
+            ? "text-red-300"
+            : tone === "ok"
+            ? "text-green-300"
+            : tone === "amber"
+            ? "text-amber-300"
+            : "text-white"
         }`}
       >
         {value}
@@ -36,15 +44,30 @@ export function StudentBar({
   onBack,
   onPrint,
   onDownload,
+  onDepartmentChange,
 }: StudentBarProps) {
   return (
     <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl bg-brand px-4 py-3 text-white print:rounded-none">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <h1 className="truncate text-md font-bold">{report.studentName}</h1>
-          <span className="rounded bg-white/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide">
-            {report.department}
-          </span>
+          <div className="flex items-center gap-1">
+            <select
+              value={report.department}
+              onChange={(e) => onDepartmentChange?.(e.target.value as Department)}
+              className="rounded bg-white/20 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white border border-white/30 cursor-pointer hover:bg-white/30 focus:outline-none focus:ring-1 focus:ring-white transition-colors print:hidden"
+              title="Change student department plan"
+            >
+              {DEPARTMENTS.map((d) => (
+                <option key={d} value={d} className="text-slate-900 font-medium">
+                  {d} · {DEPARTMENT_NAMES[d]}
+                </option>
+              ))}
+            </select>
+            <span className="hidden print:inline-block rounded bg-white/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide">
+              {report.department}
+            </span>
+          </div>
         </div>
         <h3 className="truncate text-sm font-bold">Student ID: {report.studentID}</h3>
         <p className="text-[11px] text-blue-200">
@@ -62,6 +85,13 @@ export function StudentBar({
           />
         )}
         <Stat label="Credit Hours" value={`${report.totalCreditHours} / 132`} />
+        {report.ungradedCourses.length > 0 && (
+          <Stat
+            label="In Progress"
+            value={`${report.ungradedCourses.length} (${report.expectedCreditHours - report.totalCreditHours} Cr)`}
+            tone="amber"
+          />
+        )}
         <Stat label="Expected" value={`${report.expectedCreditHours} Cr.`} />
         <Stat
           label="To Graduate"

@@ -91,6 +91,36 @@ export default function Home() {
     setError(null);
   };
 
+  const handleDepartmentChange = async (newDepartment: Department) => {
+    if (!transcriptData) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const updatedTranscriptData: TranscriptData = {
+        ...transcriptData,
+        department: newDepartment,
+      };
+      setTranscriptData(updatedTranscriptData);
+
+      const generatedReport = await generateReport(
+        updatedTranscriptData.studentId,
+        updatedTranscriptData.studentName,
+        newDepartment,
+        updatedTranscriptData
+      );
+
+      setReport(generatedReport);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to recalculate report for new department"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!sessionChecked) {
     return <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50" />;
   }
@@ -134,6 +164,7 @@ export default function Home() {
             report={report}
             transcriptData={transcriptData}
             onReset={handleReset}
+            onDepartmentChange={handleDepartmentChange}
           />
         )}
       </main>

@@ -107,8 +107,12 @@ export function getUngradedCourses(courses: StudiedCourse[]): StudiedCourse[] {
  */
 function getCourseCreditValue(course: StudiedCourse): number {
   const canonical = canonicalizeCode(course.code);
-  // Ignore Remedial English and Precalculus for credit hours (0 Cr)
-  if (canonical === canonicalizeCode(SPECIAL_COURSES.REMEDIAL_ENGLISH) || canonical === canonicalizeCode(SPECIAL_COURSES.PRECALCULUS)) {
+  // Ignore Remedial English, Precalculus, and Practical Training (0 Cr)
+  if (
+    canonical === canonicalizeCode(SPECIAL_COURSES.REMEDIAL_ENGLISH) ||
+    canonical === canonicalizeCode(SPECIAL_COURSES.PRECALCULUS) ||
+    canonical === canonicalizeCode(PRACTICAL_TRAINING_CODE)
+  ) {
     return 0;
   }
   return isTwoCreditCourse(course.code) ? TWO_CREDIT_HOURS : CREDIT_HOURS_PER_COURSE;

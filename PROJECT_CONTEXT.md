@@ -164,6 +164,7 @@ Infra: `Dockerfile` (multi-stage), `nginx.conf`, `docker-compose.yml`, `next.con
 
 ## 9. Recent work & history (most recent first)
 
+- **v0.6.0: Revamped Advising Report Hub & 2-Zone Cockpit** — redesigned report to prioritize Next-Semester Registration Hub (`NextSemesterHero.tsx`) with live credit tallying, packaged Core + interactive unselected Major Elective slots + Professional Training slots, prominent in-progress course view, interactive department switcher in `StudentBar`, and tabbed `AcademicAuditCard.tsx`.
 - **fix prof. training categorization** (`7ee20e1`)
 - **graph view matches department plans** — semester-based layout from `department_plans/*.md` (`398f918`)
 - **GPA calculator + future credit achieved** in graph view (`308a80f`)
