@@ -41,7 +41,7 @@ Both files independently implement near-identical logic — `getStudiedCourseCod
    - Loads department CSVs via `csvLoader.ts` (`public/data/courses/{DEPT} Courses.csv`, `public/data/majors/Major {DEPT}.csv`, `public/data/electives/science.csv`, `public/data/electives/university.csv`).
    - Delegates eligibility/requirement logic to `courseAnalyzer.ts` (prerequisite checks, elective matching, out-of-plan detection, professional training).
    - Assembles the flat `AnalysisReport` (`src/types/report.ts`).
-3. `ReportDisplay.tsx` renders the `AnalysisReport` as the cockpit dashboard (see below) and holds the `"report" | "graph"` view toggle — the "Course Graph" tab lazy-loads `CourseGraphView.tsx` (via `next/dynamic`), passing both `report` and the raw `transcriptData`.
+3. `ReportDisplay.tsx` renders the `AnalysisReport` as the cockpit dashboard (see below) and holds the `"report" | "graph"` view toggle — the "Course Graph" tab lazy-loads `CourseGraphView.tsx` (via `next/dynamic`), passing both `report` and the raw `transcriptData`. Changing department via `StudentBar` triggers `handleDepartmentChange` in `page.tsx` which re-runs `generateReport` and updates the whole report and graph dynamically.
 
 There is no backend/API route (`src/app` has no subfolders) — everything runs in the browser. `/api/download-report` is referenced in `ReportDisplay.tsx` but falls back to a pure client-side text download (`reportFormatter.ts` + `helpers.ts`) if the fetch fails, since no such route currently exists in the repo.
 
@@ -50,26 +50,36 @@ There is no backend/API route (`src/app` has no subfolders) — everything runs 
 - `PASSING`: letter grades A+ through D-, plus `P` and `Tr` (transferred) — these count toward `totalCreditHours`.
 - `FAILING`: `F`. `WITHDRAWN`: `W`. Both excluded from credit hours; tracked for remedial-course logic (see `logic.md`).
 - `UNGRADED`: `U` — course taken, grade not yet posted. **Does not count toward `totalCreditHours`**, but its credit value is surfaced separately via `expectedCreditHours` (`totalCreditHours` + pending `U` credits) so students can see what they'll have once grades post.
-- Credit value per course is 3, except codes prefixed `UNR` or `CNC` which are 2. Professional Training courses are excluded from the hour count entirely (subtracted back out via `professionalTrainingCount * 3`), as is Practical Training (`CIT4000`, subtracted by direct code lookup) — see below.
+- Credit value per course is 3, except codes prefixed `UNR` or `CNC1401` which are 2 (computed via `getCourseCredits(code)` / `isTwoCreditCourse(code)` in `constants.ts`). Remedial courses (Precalculus, Remedial English), Professional Training, and Practical Training (`CIT4000`) earn 0 degree credits.
 
 `logic.md` is the source of truth for course-eligibility/display rules (what counts as "available to register," remedial course precedence, elective counting, out-of-plan detection) — read it before touching `courseAnalyzer.ts`.
 
 ### The report UI: the cockpit board
 
-The report is a **fixed-height dashboard, not a scrolling document** — the advising complaint it answers is "something important was below the fold". On screens ≥ 1280px the document itself does not scroll: `ReportDisplay.tsx` adds `body.cockpit-lock` (`globals.css` — `height: 100dvh; overflow: hidden`, released on unmount and disabled in `@media print`) and the board fills exactly one viewport. **Long lists scroll inside their own card**, never the page. Below 1280px the grid collapses to two columns and then one, and the page scrolls normally; the lock class does nothing there.
+The report is a **fixed-height dashboard, not a scrolling document** — the advising complaint it answers is "something important was below the fold". On screens ≥ 1280px the document itself does not scroll: `ReportDisplay.tsx` adds `body.cockpit-lock` (`globals.css` — `height: 100dvh; overflow: hidden`, released on unmount and disabled in `@media print`) and the board fills exactly one viewport. **Long lists scroll inside their own card**, never the page. Below 1280px the grid collapses to one column and the page scrolls normally; the lock class does nothing there.
 
-Layout is a chain of flex parents with no magic pixel offsets — `layout.tsx` body (`flex min-h-screen flex-col`) → `page.tsx` root and `<main>` (`flex-1 min-h-0`, full-bleed and slim-padded when `inReport`) → `ReportDisplay` → the 4-column grid (`flex-1 min-h-0`). `Header` takes a `compact` prop for this screen; `page.tsx` passes `inReport` and hides its own footer.
+The report uses an **asymmetric 2-Zone Layout** on desktop (≥ 1280px):
+- **Primary Action Zone (~60% left stage)**: Dedicated to the **Next-Semester Registration Hub** (`NextSemesterHero.tsx`), providing an immediate, actionable answer to what courses the student should take next semester.
+- **Degree Audit & Diagnostics Zone (~40% right stage)**: Houses **Degree Requirements** (`RequirementsCard.tsx`) and **Academic Health & Audit** (`AcademicAuditCard.tsx`).
 
 Pieces live in `src/components/report/`:
 
+- `NextSemesterHero.tsx` — the centerpiece Next-Semester Registration Hub:
+  - **Standing & Load Verdict Banner**: Displays student level (`Year 1–4`), department plan, max allowed credit cap (12 Cr probation half-load, 15 Cr upper-years normal, 18 Cr lower-years normal, or 21 Cr overload for GPA $\ge 3.0$), and active probation alerts (without redundant "Good standing" noise).
+  - **In-Progress Courses (Current Term)**: Prominently highlights all active, ungraded (`U`) courses currently enrolled with credit weights, term labels, and total pending credits (`+N Cr. Pending`).
+  - **Live Registration Basket & Progress Meter**: Real-time progress bar tracking selected credits against the semester cap with over-capacity warnings and a 1-click Reset button.
+  - **Packaged Recommended Schedule (Section A)**: Combines pre-selected Priority Core courses, interactive **Major Elective Slots** (unselected by default for advisor choice with duplicate prevention), and an interactive **Professional Training Slot** (Semesters 5–8) into one unified schedule.
+  - **Collapsible Reference Pools (Sections B–F)**: Other Eligible Core, Full Major Electives Pool, Full Professional Training Pool, Science Electives, and University Requirements for exploration.
+  - **Guided Advisor Checklist**: Collapsible 4-step workflow guide.
 - `DashCard.tsx` — the card primitive (header with tone dot + count badge + optional `actions` slot; body scrolls). `CardTone` is the shared semantic palette: red = wrong, amber = attention, green = done. `CardEmpty` is the empty state.
-- `CourseRow.tsx` — one dense course line (code chip · truncated title · grade tag, semester demoted to a second line).
-- `StudentBar.tsx` — the always-visible navy identity/stat row, plus the view toggle and Print/Download/New Analysis (`handleDownload` still tries `/api/download-report` and falls back to the client-side text export).
-- `AlertStrip.tsx` — every status that used to be a full-width banner (probation, graduation, `practicalTrainingWarning`, withdrawn/failed, retakes, out-of-plan), compressed to a row of chips under the student bar; clicking a chip expands the full banner text. `buildAlerts()` is the pure mapping from `AnalysisReport` to chips. Print renders **all** details expanded, since paper has no clicks.
+- `CourseRow.tsx` — dense course row with explicit credit pills (`3 Cr`, `2 Cr`, `0 Cr`), context badges (`Priority Core`, `Major Elective`, `Training`, `Retake Option`, `U · In Progress`), interactive checkboxes with live basket sync, and subtext notes.
+- `StudentBar.tsx` — the always-visible navy identity/stat row with student details, live stats (GPA, Credit Hours, In Progress, Expected, To Graduate, Completed), Print/Download/New Analysis, view toggle (Report vs Course Graph), and an **interactive Department Selector** allowing advisors to switch the student's department plan on the fly and trigger dynamic report recalculation.
+- `AcademicAuditCard.tsx` — tabbed diagnostics container combining *Retakes & Failed* (weak D/D+ grades and W/F records), *In-Progress & Other* (Ungraded `U` subjects and out-of-plan courses), and *AI Advisor Notes*.
+- `AlertStrip.tsx` — status chips under the student bar (probation, graduation, CIT4000 warning, extra electives, withdrawn/failed, in-progress, retakes, out-of-plan); clicking a chip expands full banner text. Print renders all details expanded.
 - `RequirementsCard.tsx` — the three elective categories (solid bar = passed, lighter = ungraded/registered) plus Professional and Practical Training on one card.
 - `AiNotesCard.tsx` — the AI advisor notes, with the Generate button and quota counter in the card header so the action is never below the card's own fold.
 
-Card heights: `CARD` gives each card an equal share of its column; `stacked(count)` collapses an **empty** card to its header so its sibling gets the height. Everything carries `print:` overrides (grid → block, bodies → `overflow-visible`) so printing still produces a linear document.
+Card heights: `CARD` gives each card an equal share of its column; `stacked(count)` collapses an **empty** card to its header so its sibling gets the height. Everything carries `print:` overrides (grid → block, bodies → `overflow-visible`) so printing produces a clean, linear document.
 
 ### Department/curriculum model
 
