@@ -8,6 +8,7 @@ import { LoginScreen } from "@/components/LoginScreen";
 import { TranscriptData, AnalysisReport, Department } from "@/types";
 import { parseTranscriptPDF } from "@/lib/analysis/transcriptParser";
 import { generateReport } from "@/lib/analysis/reportGenerator";
+import { Analytics } from "@vercel/analytics/next"
 import {
   AdvisorSession,
   clearSession,
@@ -170,15 +171,15 @@ export default function Home() {
       </main>
 
       <footer
-        className={`mt-16 py-6 text-center text-sm text-white-600 print:hidden ${
-          inReport ? "hidden" : ""
-        }`}
+        className={`mt-16 py-6 text-center text-sm text-white-600 print:hidden ${inReport ? "hidden" : ""
+          }`}
       >
         <p>Copyright 2026 Dr. Moheeb and Eng. Hagar</p>
         <p className="mt-1">
           CCIT - College of Computing and Information Technology - Cairo
         </p>
       </footer>
+      <Analytics />
     </div>
   );
 }
