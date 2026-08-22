@@ -3,6 +3,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  color-scheme: light;
 }
 
 /* CCIT deep navy — the single brand colour used by the header, the student bar
@@ -22,18 +23,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 /* App reads best at ~110% — scale the rem base so all Tailwind
    spacing/typography grows with it (avoids CSS `zoom`, which breaks
    React Flow's pointer coordinates in the course graph). */
 html {
   font-size: 110%;
+  color-scheme: light;
 }
 
 body {

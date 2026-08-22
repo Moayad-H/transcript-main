@@ -520,14 +520,15 @@ export function NextSemesterHero({ report, className = "" }: NextSemesterHeroPro
                           <select
                             value={chosenCode}
                             onChange={(e) => handleSlotElectiveChange(slotIdx, e.target.value)}
-                            className="w-full rounded border border-indigo-300 bg-white px-2 py-1 text-xs font-semibold text-slate-800 shadow-sm focus:border-indigo-500 focus:outline-none"
+                            className="w-full rounded border border-indigo-300 bg-white px-2 py-1 text-xs font-semibold text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none"
                           >
-                            <option value="">-- Select Major Elective --</option>
+                            <option value="" className="text-slate-900 bg-white">-- Select Major Elective --</option>
                             {report.availableMajorElectives.map((elective) => (
                               <option
                                 key={elective.code}
                                 value={elective.code}
                                 disabled={otherChosen.includes(canonicalizeCode(elective.code))}
+                                className="text-slate-900 bg-white"
                               >
                                 {elective.code} · {elective.title}
                               </option>
@@ -578,13 +579,13 @@ export function NextSemesterHero({ report, className = "" }: NextSemesterHeroPro
                         <select
                           value={slotTraining}
                           onChange={(e) => handleSlotTrainingChange(e.target.value)}
-                          className="w-full rounded border border-teal-300 bg-white px-2 py-1 text-xs font-semibold text-slate-800 shadow-sm focus:border-teal-500 focus:outline-none"
+                          className="w-full rounded border border-teal-300 bg-white px-2 py-1 text-xs font-semibold text-slate-900 shadow-sm focus:border-teal-500 focus:outline-none"
                         >
-                          <option value="">-- Select Professional Training --</option>
+                          <option value="" className="text-slate-900 bg-white">-- Select Professional Training --</option>
                           {report.availableProfessionalTraining.map((t, idx) => {
                             const val = t.code || t.title;
                             return (
-                              <option key={idx} value={val}>
+                              <option key={idx} value={val} className="text-slate-900 bg-white">
                                 {t.code ? `${t.code} · ` : ""}{t.title}
                               </option>
                             );

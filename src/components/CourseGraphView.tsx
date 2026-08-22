@@ -1138,10 +1138,10 @@ export default function CourseGraphView({
           <select
             value={activeDept}
             onChange={(e) => handleDeptChange(e.target.value as Department)}
-            className="text-sm border border-gray-300 rounded-md px-2 py-1.5 bg-white"
+            className="text-sm border border-gray-300 rounded-md px-2 py-1.5 bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           >
             {DEPARTMENTS.map((d) => (
-              <option key={d} value={d}>
+              <option key={d} value={d} className="text-gray-900 bg-white">
                 {DEPARTMENT_NAMES[d]} ({d})
                 {d === initialReport.department ? " — detected" : ""}
               </option>
@@ -1357,11 +1357,11 @@ export default function CourseGraphView({
                           return next;
                         })
                       }
-                      className="text-sm border border-gray-300 rounded px-1.5 py-1 bg-white"
+                      className="text-sm border border-gray-300 rounded px-1.5 py-1 bg-white text-gray-900 font-medium focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     >
-                      <option value="">—</option>
+                      <option value="" className="text-gray-900 bg-white">—</option>
                       {PROJECTABLE_GRADES.map((g) => (
-                        <option key={g} value={g}>
+                        <option key={g} value={g} className="text-gray-900 bg-white">
                           {g} ({GRADE_POINTS[g].toFixed(2)})
                         </option>
                       ))}
@@ -1685,12 +1685,12 @@ export default function CourseGraphView({
                                       onChange={(ev) =>
                                         setRegisteredGrade(nodeId, ev.target.value)
                                       }
-                                      className="text-[11px] border border-amber-300 rounded px-1 py-0.5 bg-amber-50/50 ml-auto font-medium"
+                                      className="text-[11px] border border-amber-300 rounded px-1 py-0.5 bg-white text-amber-950 ml-auto font-medium focus:outline-none focus:ring-1 focus:ring-amber-500"
                                       title="Assign projected grade"
                                     >
-                                      <option value="">In progress (U)</option>
+                                      <option value="" className="text-gray-900 bg-white">In progress (U)</option>
                                       {PROJECTABLE_GRADES.map((g) => (
-                                        <option key={g} value={g}>
+                                        <option key={g} value={g} className="text-gray-900 bg-white">
                                           {g}
                                         </option>
                                       ))}
@@ -1926,11 +1926,11 @@ export default function CourseGraphView({
                                       onChange={(ev) =>
                                         setEntryGrade(ti, e.id, ev.target.value)
                                       }
-                                      className="text-[11px] border border-gray-300 rounded px-1 py-0.5 bg-white ml-auto font-medium"
+                                      className="text-[11px] border border-gray-300 rounded px-1 py-0.5 bg-white text-gray-900 ml-auto font-medium focus:outline-none focus:ring-1 focus:ring-sky-500"
                                       title="Projected grade"
                                     >
                                       {PROJECTABLE_GRADES.map((g) => (
-                                        <option key={g} value={g}>
+                                        <option key={g} value={g} className="text-gray-900 bg-white">
                                           {g}
                                         </option>
                                       ))}
@@ -1970,13 +1970,13 @@ export default function CourseGraphView({
                                 : "border-sky-300 text-sky-900"
                             }`}
                           >
-                            <option value="">
+                            <option value="" className="text-gray-900 bg-white">
                               {candidates.length === 0
                                 ? "No eligible courses for this term"
                                 : `＋ Add course (${candidates.length} eligible)`}
                             </option>
                             {candidates.map((c) => (
-                              <option key={c.id} value={c.id}>
+                              <option key={c.id} value={c.id} className="text-gray-900 bg-white">
                                 {c.code} — {c.title} ({c.loadCredit} cr)
                               </option>
                             ))}

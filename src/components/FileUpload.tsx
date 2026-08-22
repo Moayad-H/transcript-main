@@ -150,11 +150,11 @@ export function FileUpload({ onFileUpload, loading }: FileUploadProps) {
             value={department}
             onChange={(e) => setDepartment(e.target.value as Department | "")}
             disabled={loading}
-            className="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-full border border-gray-300 rounded-lg py-2.5 px-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
           >
-            <option value="">Auto-detect from transcript</option>
+            <option value="" className="text-gray-900 bg-white">Auto-detect from transcript</option>
             {DEPARTMENTS.map((dept) => (
-              <option key={dept} value={dept}>
+              <option key={dept} value={dept} className="text-gray-900 bg-white">
                 {DEPARTMENT_NAMES[dept]} ({dept})
               </option>
             ))}

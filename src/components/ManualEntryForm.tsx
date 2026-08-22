@@ -68,7 +68,7 @@ export function ManualEntryForm({ onSubmit, onBack }: ManualEntryFormProps) {
         <textarea
           value={courseInput}
           onChange={(e) => setCourseInput(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm h-40 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm h-40 bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
           placeholder="CCS1101|Introduction to Computing|A"
         />
 

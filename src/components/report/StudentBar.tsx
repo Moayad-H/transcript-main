@@ -59,7 +59,7 @@ export function StudentBar({
               title="Change student department plan"
             >
               {DEPARTMENTS.map((d) => (
-                <option key={d} value={d} className="text-slate-900 font-medium">
+                <option key={d} value={d} className="text-slate-900 bg-white font-medium">
                   {d} · {DEPARTMENT_NAMES[d]}
                 </option>
               ))}
