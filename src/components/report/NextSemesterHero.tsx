@@ -98,6 +98,7 @@ export function NextSemesterHero({ report, className = "" }: NextSemesterHeroPro
   const [selectedCodes, setSelectedCodes] = useState<Set<string>>(defaultSelectedCodes);
   const [showGuide, setShowGuide] = useState<boolean>(false);
   const [retakesExpanded, setRetakesExpanded] = useState<boolean>(false);
+  const [expandedSlotReasons, setExpandedSlotReasons] = useState<Record<string, boolean>>({});
 
   const selectedRetakesCount = useMemo(() => {
     return report.retakeRecommendations.filter((c) =>
@@ -482,6 +483,7 @@ export function NextSemesterHero({ report, className = "" }: NextSemesterHeroPro
                       selectable
                       selected={isSelected}
                       onToggle={() => toggleCourse(course.code)}
+                      recommendationReason={course.recommendationReason}
                     />
                   );
                 })}
@@ -499,6 +501,8 @@ export function NextSemesterHero({ report, className = "" }: NextSemesterHeroPro
                   const otherChosen = slotElectives
                     .filter((_, idx) => idx !== slotIdx)
                     .map((c) => canonicalizeCode(c));
+
+                  const isSlotReasonExpanded = Boolean(expandedSlotReasons[`major-${slotIdx}`]);
 
                   return (
                     <div
@@ -546,6 +550,32 @@ export function NextSemesterHero({ report, className = "" }: NextSemesterHeroPro
                         <span className="flex-shrink-0 rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-800">
                           3 Cr
                         </span>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedSlotReasons((prev) => ({
+                              ...prev,
+                              [`major-${slotIdx}`]: !prev[`major-${slotIdx}`],
+                            }))
+                          }
+                          className={`flex-shrink-0 flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold transition-colors cursor-pointer ${
+                            isSlotReasonExpanded
+                              ? "bg-indigo-200 text-indigo-900 font-bold"
+                              : "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+                          }`}
+                          title="Why is this elective slot recommended?"
+                          aria-expanded={isSlotReasonExpanded}
+                        >
+                          <span>💡 Why?</span>
+                          <span
+                            className={`inline-block text-[8px] transition-transform duration-200 ${
+                              isSlotReasonExpanded ? "rotate-180" : ""
+                            }`}
+                          >
+                            ▼
+                          </span>
+                        </button>
                       </div>
 
                       {chosenCourseObj ? (
@@ -556,6 +586,36 @@ export function NextSemesterHero({ report, className = "" }: NextSemesterHeroPro
                         <p className="mt-1 ml-6 text-[10px] text-indigo-600 font-medium">
                           ✦ Choose 1 of {report.availableMajorElectives.length} available major electives above to include in the plan.
                         </p>
+                      )}
+
+                      {isSlotReasonExpanded && (
+                        <div className="mt-2 rounded-lg border border-indigo-200 bg-white/95 p-2.5 text-xs text-slate-700 shadow-xs">
+                          <div className="flex items-start gap-2">
+                            <span className="text-sm select-none" aria-hidden>
+                              💡
+                            </span>
+                            <div className="flex-1 space-y-1">
+                              <p className="font-semibold text-indigo-950">
+                                {report.totalCreditHours >= 99
+                                  ? "Year 4 Standard Curriculum Allocation"
+                                  : "Degree Elective Progress Requirement"}
+                              </p>
+                              <p className="text-[11px] leading-snug text-slate-600">
+                                {report.totalCreditHours >= 99
+                                  ? `In Year 4 (Semesters 7 & 8), the department plan allocates 2 major electives per semester alongside core classes. You currently have ${report.remainingMajorElectives} remaining major elective requirement(s) to graduate.`
+                                  : `You have ${report.remainingMajorElectives} remaining major elective requirement(s) for your degree. Taking an elective slot this term balances your credit load alongside core coursework.`}
+                              </p>
+                              <div className="flex flex-wrap gap-1.5 pt-1 text-[10px]">
+                                <span className="rounded bg-indigo-100 px-1.5 py-0.5 font-medium text-indigo-800">
+                                  {report.remainingMajorElectives} Elective{report.remainingMajorElectives === 1 ? "" : "s"} Needed
+                                </span>
+                                <span className="rounded bg-slate-100 px-1.5 py-0.5 font-medium text-slate-600">
+                                  {report.availableMajorElectives.length} Options Available
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       )}
                     </div>
                   );
@@ -603,12 +663,64 @@ export function NextSemesterHero({ report, className = "" }: NextSemesterHeroPro
                       <span className="flex-shrink-0 rounded bg-teal-100 px-1.5 py-0.5 text-[10px] font-bold text-teal-800">
                         Training
                       </span>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedSlotReasons((prev) => ({
+                            ...prev,
+                            training: !prev["training"],
+                          }))
+                        }
+                        className={`flex-shrink-0 flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold transition-colors cursor-pointer ${
+                          Boolean(expandedSlotReasons["training"])
+                            ? "bg-teal-200 text-teal-900 font-bold"
+                            : "bg-teal-100 text-teal-700 hover:bg-teal-200"
+                        }`}
+                        title="Why is professional training recommended?"
+                        aria-expanded={Boolean(expandedSlotReasons["training"])}
+                      >
+                        <span>💡 Why?</span>
+                        <span
+                          className={`inline-block text-[8px] transition-transform duration-200 ${
+                            expandedSlotReasons["training"] ? "rotate-180" : ""
+                          }`}
+                        >
+                          ▼
+                        </span>
+                      </button>
                     </div>
 
                     {slotTraining && (
                       <p className="mt-1 ml-6 text-[10px] font-medium text-teal-800">
                         Selected: <strong className="font-semibold">{slotTraining}</strong>
                       </p>
+                    )}
+
+                    {Boolean(expandedSlotReasons["training"]) && (
+                      <div className="mt-2 rounded-lg border border-teal-200 bg-white/95 p-2.5 text-xs text-slate-700 shadow-xs">
+                        <div className="flex items-start gap-2">
+                          <span className="text-sm select-none" aria-hidden>
+                            💡
+                          </span>
+                          <div className="flex-1 space-y-1">
+                            <p className="font-semibold text-teal-950">
+                              Fixed Professional Training Sequence (Semesters 5–8)
+                            </p>
+                            <p className="text-[11px] leading-snug text-slate-600">
+                              Professional Training courses are sequenced sequentially across the upper years once a student completes 60+ credit hours. You currently have {report.remainingProfessionalTraining} of 4 professional training course(s) left to complete before graduation.
+                            </p>
+                            <div className="flex flex-wrap gap-1.5 pt-1 text-[10px]">
+                              <span className="rounded bg-teal-100 px-1.5 py-0.5 font-medium text-teal-800">
+                                {report.remainingProfessionalTraining} of 4 Left
+                              </span>
+                              <span className="rounded bg-slate-100 px-1.5 py-0.5 font-medium text-slate-600">
+                                Upper Year Sequence
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}

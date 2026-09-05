@@ -195,11 +195,18 @@ Examples:
 - **When Empty:** "No ungraded courses"
 - **Purpose:** Remind student to check grades or complete exams
 
-### Section 2: Courses You Can Register
+### Section 2: Courses You Can Register (Next-Semester Registration Hub)
 
 - **When Empty:** "No available courses at this time"
-- **Purpose:** Show what to register for next semester
-- **Most Important:** This guides next semester registration
+- **Purpose:** Guides next semester registration, split into:
+  - **Section A (Recommended Semester Schedule)**: Capped priority package matching student standing cap (12 Cr probation, 15 Cr upper-years, 18 Cr lower-years).
+  - **Section B (Other Eligible Core Courses)**: Eligible courses that student can take later or add manually.
+- **Prioritization / Ranking Tiers (`splitAvailableCourses`):**
+  1. **Tier 1**: 3-credit courses that unlock downstream courses (prerequisite chain).
+  2. **Tier 2**: 3-credit core / science courses without downstream dependents.
+  3. **Tier 3**: 2-credit courses that unlock downstream courses (e.g. `UNR1403`).
+  4. **Tier 4**: 2-credit terminal courses with 0 dependents (e.g. `CNC1401` Entrepreneurship Skills, `UNR1302`, `UNR2101`, `UNR1407`, `UNR4201`).
+- **Rule on 2-Credit Terminal Courses:** Standalone 2 CR courses that unlock no downstream courses (like `CNC1401`) do NOT displace eligible 3 CR courses from Section A. Even though they may be listed in Semester 2 of the study plan, the student can register them later without blocking degree progression. They fill Section A only when free capacity remains or no other 3 CR courses are available.
 
 ### Section 3: Major Electives
 
