@@ -97,6 +97,13 @@ export function NextSemesterHero({ report, className = "" }: NextSemesterHeroPro
 
   const [selectedCodes, setSelectedCodes] = useState<Set<string>>(defaultSelectedCodes);
   const [showGuide, setShowGuide] = useState<boolean>(false);
+  const [retakesExpanded, setRetakesExpanded] = useState<boolean>(false);
+
+  const selectedRetakesCount = useMemo(() => {
+    return report.retakeRecommendations.filter((c) =>
+      selectedCodes.has(canonicalizeCode(c.code))
+    ).length;
+  }, [report.retakeRecommendations, selectedCodes]);
 
   // Sync selectedCodes when defaultSelectedCodes changes (e.g. department switch)
   useEffect(() => {
@@ -419,7 +426,7 @@ export function NextSemesterHero({ report, className = "" }: NextSemesterHeroPro
               <strong className="text-slate-800">Review Core Schedule:</strong> Core courses due for this semester are pre-selected in Section A.
             </li>
             <li>
-              <strong className="text-slate-800">Select Major Electives & Training:</strong> Use the slot dropdowns in Section A to pick the student's chosen major electives and professional training.
+              <strong className="text-slate-800">Select Major Electives & Training:</strong> Use the slot dropdowns in Section A to pick the student&apos;s chosen major electives and professional training.
             </li>
             <li>
               <strong className="text-slate-800">Address Retakes or Other Pools:</strong> If GPA is weak, check recommended retakes or explore secondary pools below.
@@ -610,51 +617,7 @@ export function NextSemesterHero({ report, className = "" }: NextSemesterHeroPro
           </div>
 
           {/* Quick-Add: Recommended Retakes (If applicable) */}
-          {report.retakeRecommendations.length > 0 && (
-            <div className="rounded-lg border border-orange-200 bg-orange-50/30 p-2.5">
-              <div className="mb-2 flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-orange-900 flex items-center gap-1.5">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] text-white font-bold">
-                      ↺
-                    </span>
-                    Recommended Retakes (GPA Boost)
-                  </h4>
-                  <p className="text-[11px] text-slate-500">
-                    Passed with D+ or lower in the last year. Repeating raises GPA.
-                  </p>
-                </div>
-                <span className="rounded-full bg-orange-100 px-2 py-0.5 font-mono text-[11px] font-bold text-orange-800">
-                  {report.retakeRecommendations.length}
-                </span>
-              </div>
-              <ul className="space-y-1">
-                {report.retakeRecommendations.map((course, idx) => {
-                  const codeKey = canonicalizeCode(course.code);
-                  const isSelected = selectedCodes.has(codeKey);
-                  const credits = getCourseCredits(course.code);
-
-                  return (
-                    <CourseRow
-                      key={idx}
-                      code={course.code}
-                      title={course.title}
-                      credits={credits}
-                      meta={course.semester.label}
-                      tag={course.grade}
-                      tagTone="orange"
-                      badge="Retake Option"
-                      badgeTone="orange"
-                      tone="orange"
-                      selectable
-                      selected={isSelected}
-                      onToggle={() => toggleCourse(course.code)}
-                    />
-                  );
-                })}
-              </ul>
-            </div>
-          )}
+        
 
           {/* SECTION B: Other Eligible Core Courses */}
           {report.otherEligibleCourses.length > 0 && (
@@ -688,6 +651,75 @@ export function NextSemesterHero({ report, className = "" }: NextSemesterHeroPro
                 })}
               </ul>
             </RegisterSection>
+          )}
+          {report.retakeRecommendations.length > 0 && (
+            <div className="rounded-lg border border-orange-200 bg-orange-50/30 p-2.5">
+              <button
+                type="button"
+                onClick={() => setRetakesExpanded((v) => !v)}
+                aria-expanded={retakesExpanded}
+                className="flex w-full cursor-pointer items-center justify-between text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`shrink-0 text-[10px] text-orange-600 transition-transform ${
+                      retakesExpanded ? "rotate-90" : ""
+                    }`}
+                    aria-hidden
+                  >
+                    ▶
+                  </span>
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-orange-900 flex items-center gap-1.5">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] text-white font-bold">
+                        ↺
+                      </span>
+                      Recommended Retakes (GPA Boost)
+                    </h4>
+                    <p className="text-[11px] text-slate-500">
+                      Passed with D+ or lower in the last year. Repeating raises GPA.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {selectedRetakesCount > 0 && (
+                    <span className="rounded-full bg-orange-200 px-2 py-0.5 font-mono text-[10px] font-bold text-orange-900">
+                      {selectedRetakesCount} selected
+                    </span>
+                  )}
+                  <span className="rounded-full bg-orange-100 px-2 py-0.5 font-mono text-[11px] font-bold text-orange-800">
+                    {report.retakeRecommendations.length}
+                  </span>
+                </div>
+              </button>
+              <div className={`${retakesExpanded ? "mt-2" : "hidden"} print:block`}>
+                <ul className="space-y-1">
+                  {report.retakeRecommendations.map((course, idx) => {
+                    const codeKey = canonicalizeCode(course.code);
+                    const isSelected = selectedCodes.has(codeKey);
+                    const credits = getCourseCredits(course.code);
+
+                    return (
+                      <CourseRow
+                        key={idx}
+                        code={course.code}
+                        title={course.title}
+                        credits={credits}
+                        meta={course.semester.label}
+                        tag={course.grade}
+                        tagTone="orange"
+                        badge="Retake Option"
+                        badgeTone="orange"
+                        tone="orange"
+                        selectable
+                        selected={isSelected}
+                        onToggle={() => toggleCourse(course.code)}
+                      />
+                    );
+                  })}
+                </ul>
+              </div>
+            </div>
           )}
 
           {/* SECTION C: Major Electives Pool */}

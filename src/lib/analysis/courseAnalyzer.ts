@@ -360,15 +360,53 @@ export function getAvailableCourses(
 }
 
 /**
+ * Count how many courses in the course plan list a given course code as a prerequisite.
+ * This identifies critical-path courses that unlock downstream curriculum requirements.
+ */
+export function countDownstreamDependents(
+  coursePlan: Course[]
+): Map<string, number> {
+  const counts = new Map<string, number>();
+
+  for (const course of coursePlan) {
+    const raw = (course.prerequisiteCode || "").trim();
+    if (!raw || raw === "-" || raw.includes("CR")) continue;
+
+    // Prerequisite codes can be comma-separated, e.g. "CCS2303,CIS1000"
+    const prereqs = raw.split(",").map((p) => canonicalizeCode(p.trim()));
+    for (const prereq of prereqs) {
+      if (prereq) {
+        counts.set(prereq, (counts.get(prereq) ?? 0) + 1);
+      }
+    }
+  }
+
+  return counts;
+}
+
+/**
  * Split the eligible-course pool from getAvailableCourses() into:
  *   - recommended: the priority list for the current semester (group A), and
  *   - otherEligible: courses the student may register but shouldn't prioritize (group B).
  *
  * This changes no eligibility — it only ranks and caps an already-eligible pool.
  *
- * Ranking: by department-plan semester (earliest first), then core-before-elective
- * within a semester, then original plan order. Courses absent from the plan map sort
- * last. Group A is the highest-priority prefix whose cumulative credit value fits a
+ * Ranking:
+ * Priority tiers:
+ *   - Tier 1: 3-credit courses that unlock downstream courses (prerequisite chain).
+ *   - Tier 2: 3-credit core / science courses without downstream dependents.
+ *   - Tier 3: 2-credit courses that unlock downstream courses (e.g. UNR1403).
+ *   - Tier 4: 2-credit terminal courses with 0 downstream dependents (e.g. CNC1401,
+ *             UNR1302, UNR2101, UNR1407, UNR4201). These can be registered later
+ *             without blocking degree progression.
+ *
+ * Within the same tier:
+ *   - department-plan semester (earliest first),
+ *   - number of downstream unlockable courses (higher first),
+ *   - core-before-elective,
+ *   - original plan order.
+ *
+ * Group A is the highest-priority prefix whose cumulative credit value fits a
  * normal-load cap; the first course that would overflow, and everything after it,
  * falls to group B (so A stays a contiguous, coherent semester).
  *
@@ -387,13 +425,18 @@ export function splitAvailableCourses(
   availableCourses: Course[],
   codeToSemester: Map<string, number> | null,
   completedCreditHours: number,
-  onProbation: boolean
+  onProbation: boolean,
+  coursePlan?: Course[] | null
 ): { recommended: Course[]; otherEligible: Course[] } {
   const cap = onProbation
     ? PROBATION_HALF_LOAD_CREDITS
     : completedCreditHours >= YEAR_UPPER_CREDIT_THRESHOLD
       ? NORMAL_LOAD_UPPER_YEARS
       : NORMAL_LOAD_LOWER_YEARS;
+
+  const downstreamCounts = coursePlan
+    ? countDownstreamDependents(coursePlan)
+    : new Map<string, number>();
 
   // An available concrete course reads as an elective if its title carries an
   // elective keyword (same set getAvailableCourses uses to skip placeholder rows);
@@ -404,16 +447,37 @@ export function splitAvailableCourses(
   const semesterOf = (course: Course): number =>
     codeToSemester?.get(canonicalizeCode(course.code)) ?? Infinity;
 
+  const getPriorityTier = (course: Course): number => {
+    const code = canonicalizeCode(course.code);
+    const isTwoCredit = isTwoCreditCourse(code);
+    const unlockCount = downstreamCounts.get(code) ?? 0;
+
+    if (!isTwoCredit && unlockCount > 0) return 1; // 3 CR prerequisite
+    if (!isTwoCredit && unlockCount === 0) return 2; // 3 CR non-prerequisite
+    if (isTwoCredit && unlockCount > 0) return 3; // 2 CR prerequisite
+    return 4; // 2 CR terminal non-prerequisite (CNC1401, UNR1302, etc.)
+  };
+
   // Stable sort: preserve original plan order as the final tiebreak.
   const ranked = availableCourses
     .map((course, index) => ({ course, index }))
     .sort((a, b) => {
+      const tierA = getPriorityTier(a.course);
+      const tierB = getPriorityTier(b.course);
+      if (tierA !== tierB) return tierA - tierB;
+
       const semDiff = semesterOf(a.course) - semesterOf(b.course);
       if (semDiff !== 0) return semDiff;
+
+      const unlockA = downstreamCounts.get(canonicalizeCode(a.course.code)) ?? 0;
+      const unlockB = downstreamCounts.get(canonicalizeCode(b.course.code)) ?? 0;
+      if (unlockA !== unlockB) return unlockB - unlockA;
+
       const electiveDiff =
         Number(isElectiveTitle(a.course.title)) -
         Number(isElectiveTitle(b.course.title));
       if (electiveDiff !== 0) return electiveDiff;
+
       return a.index - b.index;
     })
     .map((entry) => entry.course);
