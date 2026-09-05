@@ -9,6 +9,7 @@ import {
   StudiedCourse,
   CourseRequirement,
   Department,
+  CourseRecommendationReason,
 } from "@/types";
 import {
   ELECTIVE_KEYWORDS,
@@ -363,6 +364,31 @@ export function getAvailableCourses(
  * Count how many courses in the course plan list a given course code as a prerequisite.
  * This identifies critical-path courses that unlock downstream curriculum requirements.
  */
+export function getDownstreamDependentsMap(
+  coursePlan: Course[]
+): Map<string, { code: string; title: string }[]> {
+  const dependentsMap = new Map<string, { code: string; title: string }[]>();
+
+  for (const course of coursePlan) {
+    const raw = (course.prerequisiteCode || "").trim();
+    if (!raw || raw === "-" || raw.includes("CR")) continue;
+
+    // Prerequisite codes can be comma-separated, e.g. "CCS2303,CIS1000"
+    const prereqs = raw.split(",").map((p) => canonicalizeCode(p.trim()));
+    for (const prereq of prereqs) {
+      if (prereq) {
+        const list = dependentsMap.get(prereq) ?? [];
+        if (!list.some((item) => canonicalizeCode(item.code) === canonicalizeCode(course.code))) {
+          list.push({ code: course.code, title: course.title });
+        }
+        dependentsMap.set(prereq, list);
+      }
+    }
+  }
+
+  return dependentsMap;
+}
+
 export function countDownstreamDependents(
   coursePlan: Course[]
 ): Map<string, number> {
@@ -438,6 +464,10 @@ export function splitAvailableCourses(
     ? countDownstreamDependents(coursePlan)
     : new Map<string, number>();
 
+  const downstreamMap = coursePlan
+    ? getDownstreamDependentsMap(coursePlan)
+    : new Map<string, { code: string; title: string }[]>();
+
   // An available concrete course reads as an elective if its title carries an
   // elective keyword (same set getAvailableCourses uses to skip placeholder rows);
   // core courses are prioritized ahead of electives within the same semester.
@@ -500,7 +530,54 @@ export function splitAvailableCourses(
       isCore &&
       coreCount >= YEAR_FOUR_CORE_COURSES_PER_SEMESTER;
     if (!capReached && !coreCapReached && running + value <= cap) {
-      recommended.push(course);
+      const codeKey = canonicalizeCode(course.code);
+      const tier = getPriorityTier(course);
+      const sem = semesterOf(course);
+      const hasPlanSem = Number.isFinite(sem);
+      const unlocked = downstreamMap.get(codeKey) ?? [];
+      const unlocksCount = unlocked.length;
+
+      const isOverdue =
+        hasPlanSem &&
+        ((sem <= 2 && completedCreditHours >= 33) ||
+          (sem <= 4 && completedCreditHours >= 69) ||
+          (sem <= 6 && completedCreditHours >= 99));
+
+      let summary = "";
+      if (unlocksCount > 0) {
+        if (isOverdue) {
+          summary = `Overdue prerequisite from Sem ${sem}: unlocks ${unlocksCount} downstream course${unlocksCount === 1 ? "" : "s"}.`;
+        } else if (hasPlanSem) {
+          summary = `High-priority prerequisite (Sem ${sem}): unlocks ${unlocksCount} downstream course${unlocksCount === 1 ? "" : "s"}.`;
+        } else {
+          summary = `Core prerequisite: unlocks ${unlocksCount} downstream course${unlocksCount === 1 ? "" : "s"}.`;
+        }
+      } else {
+        if (isOverdue) {
+          summary = `Overdue core requirement from Sem ${sem} plan.`;
+        } else if (hasPlanSem) {
+          summary = `Standard core requirement scheduled for Sem ${sem} plan.`;
+        } else {
+          summary = `Core degree requirement.`;
+        }
+      }
+
+      const recommendationReason: CourseRecommendationReason = {
+        summary,
+        planSemester: hasPlanSem ? sem : undefined,
+        unlocksCount,
+        unlockedCourses: unlocked.length > 0 ? unlocked : undefined,
+        priorityTier: tier,
+        isOverdue,
+        loadConstraint: onProbation
+          ? "Academic probation: prioritized within strict 12 Cr half-load cap"
+          : `Fits within standard ${cap} Cr semester load`,
+      };
+
+      recommended.push({
+        ...course,
+        recommendationReason,
+      });
       running += value;
       if (isCore) coreCount += 1;
     } else {

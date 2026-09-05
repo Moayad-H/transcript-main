@@ -2,11 +2,22 @@
  * Core course types for the ERSHAD2 application
  */
 
+export interface CourseRecommendationReason {
+  summary: string;
+  planSemester?: number;
+  unlocksCount?: number;
+  unlockedCourses?: { code: string; title: string }[];
+  priorityTier?: number;
+  isOverdue?: boolean;
+  loadConstraint?: string;
+}
+
 export interface Course {
   code: string;
   title: string;
   prerequisiteCode: string;
   prerequisiteTitle?: string;
+  recommendationReason?: CourseRecommendationReason;
 }
 
 export interface CourseWithGrade extends Course {
