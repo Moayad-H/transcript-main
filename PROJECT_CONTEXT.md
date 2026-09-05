@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT — ERSHAD2
 
-> Comprehensive context for future sessions. Companion to `CLAUDE.md` (agent instructions) and `logic.md` (course-eligibility rules, the source of truth for `courseAnalyzer.ts`). Last updated 2026-07-16.
+> Comprehensive context for future sessions. Companion to `CLAUDE.md` (agent instructions) and `logic.md` (course-eligibility rules, the source of truth for `courseAnalyzer.ts`). Last updated 2026-09-05.
 
 ---
 
@@ -101,6 +101,34 @@ Defined in `src/lib/constants.ts` (`GRADES`). **`logic.md` is the source of trut
 
 Handled in `courseAnalyzer.ts` remedial logic; documented in `logic.md`.
 
+### Course recommendation priority (`splitAvailableCourses`)
+
+Available courses are split into **Section A (Recommended Semester Schedule)** and **Section B (Other Eligible Core Courses)** using a 4-tier prerequisite- and credit-aware ranking:
+1. **Tier 1**: 3-credit courses that unlock downstream courses (prerequisite chain).
+2. **Tier 2**: 3-credit core / science courses without downstream dependents.
+3. **Tier 3**: 2-credit courses that unlock downstream courses (e.g. `UNR1403`).
+4. **Tier 4**: 2-credit terminal courses with 0 downstream dependents (e.g. `CNC1401` Entrepreneurship Skills, `UNR1302`, `UNR2101`, `UNR1407`, `UNR4201`).
+
+Within each tier, courses sort by:
+- Study plan semester (`semesterOf`, earliest first),
+- Downstream unlock count (`countDownstreamDependents`),
+- Core before elective,
+- Plan reading order.
+
+**Rationale**: Courses like `CNC1401` (Entrepreneurship Skills) appear in Semester 2 of the plan, have 0 downstream dependents, and earn 2 credits. Deprioritizing them to Tier 4 ensures they never displace vital 3 CR core/prerequisite courses from Section A or leave awkward load remainders (e.g. 14 of 15 Cr). They remain available in Section B or are recommended when free capacity allows.
+
+### Recommendation reasoning (`CourseRecommendationReason`)
+
+Each recommended course is enriched with a `recommendationReason` object generated in `splitAvailableCourses`:
+- `summary`: Plain-language explanation for why the course is recommended.
+- `planSemester`: Curricular plan semester.
+- `unlocksCount` & `unlockedCourses`: Specific downstream courses unlocked by passing this course (`{ code, title }[]`).
+- `priorityTier`: Priority tier (1–4).
+- `isOverdue`: Flagged when an earlier semester's course is still outstanding.
+- `loadConstraint`: Academic standing cap note (e.g. "Fits within upper-years 15 Cr load cap").
+
+In the UI, `CourseRow.tsx` provides an interactive **"💡 Why?"** badge that expands to display the detailed breakdown and list of unlocked courses.
+
 ---
 
 ## 6. Course prerequisite graph view
@@ -119,7 +147,8 @@ Outside manual mode, clicking a node highlights its full transitive prerequisite
 
 ## 7. Key types (`src/types/`)
 
-- **`Course`** `{ code, title, prerequisiteCode, prerequisiteTitle? }`
+- **`Course`** `{ code, title, prerequisiteCode, prerequisiteTitle?, recommendationReason? }`
+- **`CourseRecommendationReason`** `{ summary, planSemester?, unlocksCount?, unlockedCourses?, priorityTier?, isOverdue?, loadConstraint? }`
 - **`StudiedCourse`** `{ code, title, grade }`
 - **`ElectiveCourse`** `{ code, title, prerequisiteCode }`
 - **`CoursePlan`** `{ courses, majorElectives, scienceElectives, universityElectives }`
@@ -143,6 +172,8 @@ src/components/
   ReportSection.tsx (48)      reusable category list
   CourseGraphView.tsx (697)   React Flow graph + manual + GPA modes
   Header.tsx (12)
+  RemoteBanner.tsx (222)      Edge Config broadcast announcement banner
+  report/                     NextSemesterHero, CourseRow, StudentBar, AcademicAuditCard, etc.
 
 src/lib/analysis/
   transcriptParser.ts (350)   *** ACTIVE PDF parser (pdfjs-dist) ***
@@ -164,6 +195,11 @@ Infra: `Dockerfile` (multi-stage), `nginx.conf`, `docker-compose.yml`, `next.con
 
 ## 9. Recent work & history (most recent first)
 
+- **v0.6.2: Recommendation Reasoning, 4-Tier Scheduling Algorithm & Remote Banner**
+  - **Course Recommendation Reasoning (`CourseRecommendationReason`)**: Enhanced `splitAvailableCourses` and `CourseRow.tsx` with contextual recommendation explanations (`summary`, `priorityTier`, `planSemester`, `isOverdue`, `loadConstraint`, and `unlockedCourses` downstream chain). Surfaced via interactive expandable "💡 Why?" pills in `CourseRow.tsx` and summary badge in `NextSemesterHero.tsx`.
+  - **4-Tier Priority & 2-Credit Terminal Deprioritization**: Refined recommendation algorithm with `countDownstreamDependents` and 4 tiers (Tier 1: 3 CR prereq chain; Tier 2: 3 CR standalone core/science; Tier 3: 2 CR prereq chain e.g. `UNR1403`; Tier 4: 2 CR terminal with 0 dependents e.g. `CNC1401` Entrepreneurship Skills and standalone UNR requirements). Prevents low-credit terminal courses from prematurely filling semester capacity or displacing critical 3 CR prerequisites.
+  - **Remote Announcement Banner (`RemoteBanner.tsx`)**: Broadcast banner integration powered by Vercel Edge Config (`NEXT_PUBLIC_EDGE_CONFIG_BANNER_URL`) with local storage dismissal tracking and severity styling (info, warning, danger, success).
+  - **Analytics & Color Polish**: Integrated `@vercel/analytics/next` and polished status indicator colors across graph and report views.
 - **v0.6.0: Revamped Advising Report Hub & 2-Zone Cockpit** — redesigned report to prioritize Next-Semester Registration Hub (`NextSemesterHero.tsx`) with live credit tallying, packaged Core + interactive unselected Major Elective slots + Professional Training slots, prominent in-progress course view, interactive department switcher in `StudentBar`, and tabbed `AcademicAuditCard.tsx`.
 - **fix prof. training categorization** (`7ee20e1`)
 - **graph view matches department plans** — semester-based layout from `department_plans/*.md` (`398f918`)
@@ -175,14 +211,11 @@ Infra: `Dockerfile` (multi-stage), `nginx.conf`, `docker-compose.yml`, `next.con
 - **Containerize** (Docker + nginx) to escape host npm/Tailwind dependency conflict (`264520b`)
 - UNR/CNC 2-credit handling; `Tr` transferred + show failed/withdrawn courses.
 
-### Uncommitted at last update (working tree)
-Cosmetic footer/copyright edits only: "Copyright 2024 Eng. Moheeb" → "2026 Dr. Moheeb", add "- Cairo", in `page.tsx`, `reportGenerator.ts`, `reportFormatter.ts`.
-
 ---
 
 ## 10. Gotchas / when-you-touch-X-also-touch-Y
 
-- **Two parsers + two report generators + two `formatReportAsText`** drift — fix bugs on both sides (upload path AND manual-entry path).
+- **Two parsers + two report generators + two `formatReportAsText`** drift — fix bugs on both sides (upload path AND manual-entry path). When calling `splitAvailableCourses()`, pass `coursePlan` in both `reportGenerator.ts` and `clientReportGenerator.ts`.
 - **Code comparison** → always `canonicalizeCode()`; add aliases only to `COURSE_CODE_EQUIVALENCE`.
 - **2-credit courses** → `isTwoCreditCourse()`, don't hardcode.
 - **Graph must agree with report** → `courseGraphBuilder.ts` reuses report sets + canonicalization; don't fork prereq logic.
