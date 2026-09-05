@@ -144,7 +144,8 @@ export async function generateReport(
       availableCourses,
       planSemesters?.codeToSemester ?? null,
       creditHours,
-      onProbation
+      onProbation,
+      coursePlan
     );
 
   // Get out-of-plan courses
