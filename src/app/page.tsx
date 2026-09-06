@@ -15,6 +15,7 @@ import {
   loadSession,
   saveSession,
 } from "@/lib/auth/session";
+import { logAdvisorAction } from "@/lib/logging/auditLogger";
 
 import {
   BatchStudentResult,
@@ -23,6 +24,7 @@ import {
   processBatchTranscripts,
 } from "@/lib/utils/batchTranscriptProcessor";
 import { BatchGraphView } from "@/components/batch/BatchGraphView";
+import { AdvisorGuideModal } from "@/components/AdvisorGuideModal";
 
 type Step = "upload" | "report" | "batch";
 
@@ -42,15 +44,35 @@ export default function Home() {
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   useEffect(() => {
-    setAdvisor(loadSession());
+    const session = loadSession();
+    setAdvisor(session);
     setSessionChecked(true);
+
+    if (session && typeof window !== "undefined") {
+      const guideKey = `ershad_guide_seen_${session.staff_id}`;
+      if (!window.localStorage.getItem(guideKey)) {
+        setIsGuideOpen(true);
+      }
+    }
   }, []);
 
   const handleLogin = (session: AdvisorSession) => {
     saveSession(session);
     setAdvisor(session);
+    logAdvisorAction({
+      action: "LOGIN",
+      staffId: session.staff_id,
+      advisorName: session.name,
+    });
+    if (typeof window !== "undefined") {
+      const guideKey = `ershad_guide_seen_${session.staff_id}`;
+      if (!window.localStorage.getItem(guideKey)) {
+        setIsGuideOpen(true);
+      }
+    }
   };
 
   const handleLogout = () => {
@@ -63,6 +85,14 @@ export default function Home() {
     setBatchErrors([]);
     setBatchProgress(null);
     setError(null);
+    setIsGuideOpen(false);
+  };
+
+  const handleCloseGuide = () => {
+    setIsGuideOpen(false);
+    if (advisor && typeof window !== "undefined") {
+      window.localStorage.setItem(`ershad_guide_seen_${advisor.staff_id}`, "true");
+    }
   };
 
   const handleFileUpload = async (file: File, department?: Department) => {
@@ -94,6 +124,19 @@ export default function Home() {
 
       setReport(generatedReport);
       setStep("report");
+
+      logAdvisorAction({
+        action: "TRANSCRIPT_PARSED",
+        studentId: data.studentId,
+        studentName: data.studentName,
+        department: data.department,
+        metadata: {
+          gpa: data.gpa,
+          totalCreditHours: generatedReport.totalCreditHours,
+          expectedCreditHours: generatedReport.expectedCreditHours,
+          fileName: file.name,
+        },
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -116,8 +159,8 @@ export default function Home() {
         throw new Error(
           result.errors.length > 0
             ? `Failed to process transcripts: ${result.errors
-                .map((e) => `${e.fileName}: ${e.error}`)
-                .join("; ")}`
+              .map((e) => `${e.fileName}: ${e.error}`)
+              .join("; ")}`
             : "No valid PDF transcripts found in the selected folder or archive."
         );
       }
@@ -125,6 +168,17 @@ export default function Home() {
       setBatchStudents(result.students);
       setBatchErrors(result.errors);
       setStep("batch");
+
+      logAdvisorAction({
+        action: "BATCH_PROCESSED",
+        department: department,
+        metadata: {
+          totalFiles: files.length,
+          successfulStudents: result.students.length,
+          failedCount: result.errors.length,
+          studentIds: result.students.map((s) => s.transcriptData.studentId),
+        },
+      });
     } catch (err) {
       setError(
         err instanceof Error
@@ -172,6 +226,17 @@ export default function Home() {
       );
 
       setReport(generatedReport);
+
+      logAdvisorAction({
+        action: "DEPARTMENT_CHANGED",
+        studentId: updatedTranscriptData.studentId,
+        studentName: updatedTranscriptData.studentName,
+        department: newDepartment,
+        metadata: {
+          previousDepartment: transcriptData.department,
+          newDepartment,
+        },
+      });
     } catch (err) {
       setError(
         err instanceof Error
@@ -201,6 +266,7 @@ export default function Home() {
       <Header
         advisorName={advisor.name}
         onLogout={handleLogout}
+        onOpenGuide={() => setIsGuideOpen(true)}
         compact={inReport || inBatch}
       />
 
@@ -209,8 +275,8 @@ export default function Home() {
           inReport
             ? "flex min-h-0 flex-1 flex-col px-3 py-3 print:block print:p-0"
             : inBatch
-            ? "container mx-auto px-4 py-6 max-w-7xl print:block print:p-0 print:max-w-none"
-            : "container mx-auto px-4 py-8 max-w-6xl"
+              ? "container mx-auto px-4 py-6 max-w-7xl print:block print:p-0 print:max-w-none"
+              : "container mx-auto px-4 py-8 max-w-6xl"
         }
       >
         {error && (
@@ -221,12 +287,30 @@ export default function Home() {
         )}
 
         {step === "upload" && (
-          <FileUpload
-            onFileUpload={handleFileUpload}
-            onBatchUpload={handleBatchUpload}
-            batchProgress={batchProgress}
-            loading={loading}
-          />
+          <div className="space-y-4">
+            <FileUpload
+              onFileUpload={handleFileUpload}
+              onBatchUpload={handleBatchUpload}
+              batchProgress={batchProgress}
+              loading={loading}
+            />
+
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-blue-50/90 border border-blue-200 px-4 py-3 text-xs text-blue-900 shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <span className="text-base shrink-0">💡</span>
+                <span>
+                  <strong>New to ERSHAD?</strong> Check out our quick interactive guide on transcript parsing, course recommendations, degree audits, and prerequisite graph simulation.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsGuideOpen(true)}
+                className="font-bold text-blue-700 hover:text-blue-950 underline shrink-0 cursor-pointer"
+              >
+                Open Advisor Guide →
+              </button>
+            </div>
+          </div>
         )}
 
         {step === "batch" && inBatch && (
@@ -265,15 +349,26 @@ export default function Home() {
       </main>
 
       <footer
-        className={`mt-16 py-6 text-center text-sm text-white-600 print:hidden ${
-          inReport || inBatch ? "hidden" : ""
-        }`}
+        className={`mt-16 py-6 text-center text-sm text-white-700 print:hidden ${inReport || inBatch ? "hidden" : ""
+          }`}
       >
         <p>Copyright 2026 Dr. Moheeb and Eng. Hagar</p>
         <p className="mt-1">
           CCIT - College of Computing and Information Technology - Cairo
         </p>
       </footer>
+
+      <AdvisorGuideModal
+        isOpen={isGuideOpen}
+        onClose={handleCloseGuide}
+        advisorName={advisor.name}
+        onDontShowAgain={(dontShow) => {
+          if (dontShow && advisor && typeof window !== "undefined") {
+            window.localStorage.setItem(`ershad_guide_seen_${advisor.staff_id}`, "true");
+          }
+        }}
+      />
+
       <Analytics />
     </div>
   );

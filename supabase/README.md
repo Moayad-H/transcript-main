@@ -14,6 +14,7 @@ file is independent of both.
 3. `ai_advice_quota.sql` — global per-day cap behind the `advise` function.
    **Required before deploying `advise`** — the function fails closed if the
    counter is missing, so notes will return 503 until this is applied.
+4. `advisor_audit_logs.sql` — immutable append-only audit trail table (`advisor_audit_logs`) tracking who parsed/printed/downloaded what.
 
 There is no migration tooling in this repo; the files are idempotent enough to
 re-run, but read them before you do.

@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { AnalysisReport, TranscriptData, Department } from "@/types";
 import { formatReportAsText } from "@/lib/analysis/reportGenerator";
 import { downloadTextFile } from "@/lib/utils/helpers";
+import { logAdvisorAction } from "@/lib/logging/auditLogger";
 import { StudentBar } from "./report/StudentBar";
 import { AlertStrip } from "./report/AlertStrip";
 import { NextSemesterHero } from "./report/NextSemesterHero";
@@ -38,6 +39,14 @@ export function ReportDisplay({
   }, []);
 
   const handleDownload = async () => {
+    logAdvisorAction({
+      action: "REPORT_DOWNLOADED",
+      studentId: report.studentID,
+      studentName: report.studentName,
+      department: transcriptData.department,
+      metadata: { format: "text" },
+    });
+
     try {
       const response = await fetch("/api/download-report", {
         method: "POST",
@@ -65,6 +74,12 @@ export function ReportDisplay({
   };
 
   const handlePrint = () => {
+    logAdvisorAction({
+      action: "STUDENT_PRINTED",
+      studentId: report.studentID,
+      studentName: report.studentName,
+      department: transcriptData.department,
+    });
     window.print();
   };
 
