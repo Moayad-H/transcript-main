@@ -23,6 +23,7 @@ import {
   BatchProcessingProgress,
   processBatchTranscripts,
 } from "@/lib/utils/batchTranscriptProcessor";
+import { CourseGraph, buildCourseGraph } from "@/lib/analysis/courseGraphBuilder";
 import { BatchGraphView } from "@/components/batch/BatchGraphView";
 import { AdvisorGuideModal } from "@/components/AdvisorGuideModal";
 
@@ -42,6 +43,10 @@ export default function Home() {
   const [batchProgress, setBatchProgress] = useState<BatchProcessingProgress | null>(
     null
   );
+  const [singleFileName, setSingleFileName] = useState<string>("");
+  const [singleGraph, setSingleGraph] = useState<CourseGraph | null>(null);
+  const [batchStudentIndex, setBatchStudentIndex] = useState<number | undefined>(undefined);
+  const [batchTotalStudents, setBatchTotalStudents] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
@@ -123,6 +128,22 @@ export default function Home() {
       );
 
       setReport(generatedReport);
+      setSingleFileName(file.name);
+      setSingleGraph(null);
+      setBatchStudentIndex(undefined);
+      setBatchTotalStudents(undefined);
+
+      try {
+        const g = await buildCourseGraph(
+          data.department,
+          data,
+          generatedReport
+        );
+        setSingleGraph(g);
+      } catch (graphErr) {
+        console.warn("Could not pre-build graph for single upload:", graphErr);
+      }
+
       setStep("report");
 
       logAdvisorAction({
@@ -194,6 +215,11 @@ export default function Home() {
   const handleOpenSingleReportFromBatch = (student: BatchStudentResult) => {
     setTranscriptData(student.transcriptData);
     setReport(student.report);
+    setSingleFileName(student.fileName);
+    setSingleGraph(student.graph);
+    const idx = batchStudents.findIndex((s) => s.id === student.id);
+    setBatchStudentIndex(idx >= 0 ? idx : 0);
+    setBatchTotalStudents(batchStudents.length);
     setStep("report");
   };
 
@@ -201,6 +227,10 @@ export default function Home() {
     setStep("upload");
     setTranscriptData(null);
     setReport(null);
+    setSingleFileName("");
+    setSingleGraph(null);
+    setBatchStudentIndex(undefined);
+    setBatchTotalStudents(undefined);
     setBatchStudents([]);
     setBatchErrors([]);
     setBatchProgress(null);
@@ -226,6 +256,17 @@ export default function Home() {
       );
 
       setReport(generatedReport);
+
+      try {
+        const g = await buildCourseGraph(
+          newDepartment,
+          updatedTranscriptData,
+          generatedReport
+        );
+        setSingleGraph(g);
+      } catch (graphErr) {
+        console.warn("Could not pre-build graph on department change:", graphErr);
+      }
 
       logAdvisorAction({
         action: "DEPARTMENT_CHANGED",
@@ -343,6 +384,10 @@ export default function Home() {
               transcriptData={transcriptData}
               onReset={handleReset}
               onDepartmentChange={handleDepartmentChange}
+              fileName={singleFileName}
+              initialGraph={singleGraph}
+              studentIndex={batchStudentIndex}
+              totalStudents={batchTotalStudents}
             />
           </div>
         )}

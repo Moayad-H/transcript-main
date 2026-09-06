@@ -87,6 +87,10 @@ export function BatchGraphView({
 
   const handlePrintSingle = (student: BatchStudentResult) => {
     setPrintingStudentId(student.id);
+    const originalTitle = document.title;
+    if (student.name) {
+      document.title = student.name.trim();
+    }
     logAdvisorAction({
       action: "STUDENT_PRINTED",
       studentId: student.transcriptData.studentId,
@@ -98,6 +102,7 @@ export function BatchGraphView({
     setTimeout(() => {
       window.print();
       setPrintingStudentId(null);
+      document.title = originalTitle;
     }, 80);
   };
 
