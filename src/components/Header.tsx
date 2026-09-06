@@ -5,6 +5,7 @@ import ccitLogo from "@/lib/assets/ccit.png";
 interface HeaderProps {
   advisorName?: string;
   onLogout?: () => void;
+  onOpenGuide?: () => void;
   /**
    * Slim variant used by the report dashboard, where every row of header is a
    * row the advisor loses off the board.
@@ -12,7 +13,12 @@ interface HeaderProps {
   compact?: boolean;
 }
 
-export function Header({ advisorName, onLogout, compact = false }: HeaderProps = {}) {
+export function Header({
+  advisorName,
+  onLogout,
+  onOpenGuide,
+  compact = false,
+}: HeaderProps = {}) {
   return (
     <header
       className={`flex-shrink-0 bg-brand text-white print:hidden ${
@@ -39,7 +45,7 @@ export function Header({ advisorName, onLogout, compact = false }: HeaderProps =
               ERSHAD
             </h1>
             <span className="rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-bold text-blue-100">
-              v0.6.2
+              v0.6.5
             </span>
           </div>
           {compact ? (
@@ -56,20 +62,37 @@ export function Header({ advisorName, onLogout, compact = false }: HeaderProps =
           )}
         </div>
 
-        {advisorName && (
-          <div className="ml-auto flex items-center gap-4">
-            <span className="text-sm text-blue-100">{advisorName}</span>
-            {onLogout && (
-              <button
-                type="button"
-                onClick={onLogout}
-                className="rounded-lg border border-blue-200/60 px-3 py-1.5 text-sm text-white transition-colors hover:bg-white/10"
-              >
-                Sign Out
-              </button>
-            )}
-          </div>
-        )}
+        <div className="ml-auto flex items-center gap-2.5 sm:gap-4">
+          {onOpenGuide && (
+            <button
+              type="button"
+              onClick={onOpenGuide}
+              className={`flex items-center gap-1.5 rounded-lg border border-blue-200/60 transition-colors hover:bg-white/10 text-white cursor-pointer ${
+                compact ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-sm"
+              }`}
+              title="Open Advisor Guide & Tutorial"
+            >
+              <span className="text-sm leading-none">📖</span>
+              <span className="font-medium">Advisor Guide</span>
+            </button>
+          )}
+
+          {advisorName && (
+            <span className="text-sm text-blue-100 hidden sm:inline">{advisorName}</span>
+          )}
+
+          {onLogout && (
+            <button
+              type="button"
+              onClick={onLogout}
+              className={`rounded-lg border border-blue-200/60 transition-colors hover:bg-white/10 text-white cursor-pointer ${
+                compact ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-sm"
+              }`}
+            >
+              Sign Out
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );

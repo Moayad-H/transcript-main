@@ -7,7 +7,6 @@ interface StudentBarProps {
   onViewChange: (view: "report" | "graph") => void;
   onBack: () => void;
   onPrint: () => void;
-  onDownload: () => void;
   onDepartmentChange?: (department: Department) => void;
 }
 
@@ -43,7 +42,6 @@ export function StudentBar({
   onViewChange,
   onBack,
   onPrint,
-  onDownload,
   onDepartmentChange,
 }: StudentBarProps) {
   return (
@@ -131,13 +129,7 @@ export function StudentBar({
         >
           Print
         </button>
-        <button
-          onClick={onDownload}
-          title="Download report as text"
-          className="rounded-lg border border-white/25 px-3 py-1.5 text-sm text-blue-100 transition-colors hover:bg-white/10 hover:text-white"
-        >
-          Download
-        </button>
+
         <button
           onClick={onBack}
           className="rounded-lg border border-white/25 px-3 py-1.5 text-sm text-blue-100 transition-colors hover:bg-white/10 hover:text-white"

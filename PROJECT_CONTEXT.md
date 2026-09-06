@@ -211,6 +211,10 @@ Infra: `Dockerfile` (multi-stage), `nginx.conf`, `docker-compose.yml`, `next.con
 
 ## 9. Recent work & history (most recent first)
 
+- **v0.6.5: Supabase Advisor Audit Logging System**
+  - **Audit Log Migration (`supabase/advisor_audit_logs.sql`)**: Created append-only `advisor_audit_logs` table with Row Level Security (RLS) restricting anon clients to `INSERT` only (with `UPDATE` and `DELETE` revoked to preserve tamper-proof audit trails). Indexed on `created_at`, `staff_id`, `student_id`, and `action`.
+  - **Zero-Dependency Async Logger (`src/lib/logging/auditLogger.ts`)**: Implemented non-blocking, fire-and-forget client audit logger using native browser `fetch` against the Supabase REST API (0 extra npm packages, 0 KB bundle weight, fully error-suppressed).
+  - **Application Instrumentation**: Instrumented advisor logins, single transcript parsing, batch processing runs, manual department overrides, advising report downloads, and batch/single student graph prints.
 - **v0.6.3: Batch Transcript Upload & Printable Student Course Graphs**
   - **Batch Transcript Processing (`batchTranscriptProcessor.ts`)**: Added support for uploading and parsing multiple transcripts simultaneously from `.zip` archives or folders (via native `webkitdirectory` or multi-file selection). Client-side unzipping via `jszip` filters out system metadata (`__MACOSX`, `.DS_Store`) and processes PDFs sequentially into `TranscriptData`, `AnalysisReport`, and `CourseGraph` structures with real-time extraction/parsing progress callbacks and resilient error isolation.
   - **Printable Student Course Graph View (`PrintableStudentGraph.tsx`)**: High-fidelity printable student advising sheet displaying student name, ID, department, GPA, earned/in-progress/expected credits, academic standing badges (Good Standing vs Half-Load Probation), status legend, 8-term curriculum course matrix with earned letter grades, and next-semester recommendation bar. Configured with dedicated `@media print` rules (`@page { size: landscape; margin: 8mm; }`, `break-after: page;`, `print-color-adjust: exact;`) for clean 1-page-per-student printing.

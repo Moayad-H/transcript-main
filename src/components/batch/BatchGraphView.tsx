@@ -6,6 +6,7 @@ import { BatchStudentResult, BatchProcessingError } from "@/lib/utils/batchTrans
 import { PrintableStudentGraph } from "./PrintableStudentGraph";
 import { Department } from "@/types";
 import { DEPARTMENTS } from "@/lib/constants";
+import { logAdvisorAction } from "@/lib/logging/auditLogger";
 
 // Dynamically import CourseGraphView for single-student interactive mode
 const CourseGraphView = dynamic(() => import("../CourseGraphView"), {
@@ -77,15 +78,31 @@ export function BatchGraphView({
 
   const handlePrintAll = () => {
     setPrintingStudentId(null);
+    logAdvisorAction({
+      action: "BATCH_PRINTED",
+      metadata: { count: filteredStudents.length },
+    });
     window.print();
   };
 
   const handlePrintSingle = (student: BatchStudentResult) => {
     setPrintingStudentId(student.id);
+    const originalTitle = document.title;
+    if (student.name) {
+      document.title = student.name.trim();
+    }
+    logAdvisorAction({
+      action: "STUDENT_PRINTED",
+      studentId: student.transcriptData.studentId,
+      studentName: student.transcriptData.studentName,
+      department: student.transcriptData.department,
+      metadata: { source: "batch" },
+    });
     // Give state a moment to render print isolation class, then trigger print
     setTimeout(() => {
       window.print();
       setPrintingStudentId(null);
+      document.title = originalTitle;
     }, 80);
   };
 

@@ -108,10 +108,14 @@ export function PrintableStudentGraph({
       .map(([x, data]) => ({ x, ...data }));
   }, [graph]);
 
+  const isSingleOrLast = totalStudents <= 1 || index === totalStudents - 1;
+
   return (
     <div
       id={`student-sheet-${student.id}`}
-      className="student-print-sheet relative rounded-xl border border-slate-200 bg-white p-5 shadow-sm print:m-0 print:rounded-none print:border-none print:p-2 print:shadow-none print:break-after-page mb-8"
+      className={`student-print-sheet relative rounded-xl border border-slate-200 bg-white p-5 shadow-sm print:m-0 print:rounded-none print:border-none print:p-2 print:shadow-none ${
+        isSingleOrLast ? "no-break-after print:break-after-auto" : "print:break-after-page"
+      } mb-8 print:mb-0`}
     >
       {/* Top Banner / Student Information Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4 print:pb-2">

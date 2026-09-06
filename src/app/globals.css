@@ -78,4 +78,9 @@ footer {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+
+  .student-print-sheet.no-break-after {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
 }
