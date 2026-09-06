@@ -63,6 +63,21 @@ Similarly there are two text formatters with the same function name `formatRepor
 
 Manual department choice is supported (user can override the auto-detected department — commit "Manual Department choice, fix AI conflict").
 
+### 4.2.1 Batch upload & printable graph flow
+
+1. **`FileUpload.tsx` (Batch Mode) → `page.tsx`**: Advisor uploads a `.zip` archive, a folder of PDFs (via `webkitdirectory`), or multiple PDF transcripts.
+2. **`batchTranscriptProcessor.ts`**:
+   - Recursively extracts `.pdf` files from `.zip` archives client-side using `jszip` (skipping OS artifacts like `__MACOSX` and `.DS_Store`).
+   - Sequentially parses each transcript with `parseTranscriptPDF`, generates an advising report via `generateReport`, and builds the prerequisite DAG via `buildCourseGraph`.
+   - Emits real-time progress events (`extracting`, `parsing`, current file, percentage).
+   - Resiliently records individual parsing errors without interrupting the batch.
+3. **`BatchGraphView.tsx` & `PrintableStudentGraph.tsx`**:
+   - Renders a batch cohort dashboard with aggregate metrics (total students, avg GPA, probation count, graduation ready count).
+   - Shows a printable course graph sheet for each student with student info, academic standing, status legend, and 8-term prerequisite curriculum matrix with earned grades.
+   - 1-click **"Print All Students"** and single-student print targeting with landscape print rules (`@page { size: landscape; margin: 8mm; }` and `page-break-after: always;`).
+   - Supports search/filters (by student name/ID/department) and toggle to an interactive single-student React Flow graph view.
+
+
 ### 4.3 CSV "database" — `public/data/`
 
 | Folder | Contents |
@@ -165,7 +180,7 @@ src/app/page.tsx              main orchestrator (upload → parse → report →
 src/app/layout.tsx, globals.css
 
 src/components/
-  FileUpload.tsx (177)        dropzone + kicks off parsing
+  FileUpload.tsx (177)        dropzone + kicks off parsing (single & batch modes)
   StudentForm.tsx (98)        name / dept entry
   ManualEntryForm.tsx (132)   manual course entry fallback → clientParser
   ReportDisplay.tsx (410)     report/graph toggle, download
@@ -173,6 +188,7 @@ src/components/
   CourseGraphView.tsx (697)   React Flow graph + manual + GPA modes
   Header.tsx (12)
   RemoteBanner.tsx (222)      Edge Config broadcast announcement banner
+  batch/                      BatchGraphView.tsx, PrintableStudentGraph.tsx
   report/                     NextSemesterHero, CourseRow, StudentBar, AcademicAuditCard, etc.
 
 src/lib/analysis/
@@ -184,7 +200,7 @@ src/lib/analysis/
   clientReportGenerator.ts (128)  manual-entry report generator
 
 src/lib/data/  csvLoader.ts, clientCsvLoader.ts   (fetch+parse public/data CSVs)
-src/lib/utils/ reportFormatter.ts, helpers.ts, fileValidation.ts
+src/lib/utils/ batchTranscriptProcessor.ts, reportFormatter.ts, helpers.ts, fileValidation.ts
 src/lib/constants.ts (99)     departments, grades, prefixes, canonicalizeCode, credit rules
 src/types/     course.ts, report.ts, transcript.ts, index.ts
 ```
@@ -195,6 +211,11 @@ Infra: `Dockerfile` (multi-stage), `nginx.conf`, `docker-compose.yml`, `next.con
 
 ## 9. Recent work & history (most recent first)
 
+- **v0.6.3: Batch Transcript Upload & Printable Student Course Graphs**
+  - **Batch Transcript Processing (`batchTranscriptProcessor.ts`)**: Added support for uploading and parsing multiple transcripts simultaneously from `.zip` archives or folders (via native `webkitdirectory` or multi-file selection). Client-side unzipping via `jszip` filters out system metadata (`__MACOSX`, `.DS_Store`) and processes PDFs sequentially into `TranscriptData`, `AnalysisReport`, and `CourseGraph` structures with real-time extraction/parsing progress callbacks and resilient error isolation.
+  - **Printable Student Course Graph View (`PrintableStudentGraph.tsx`)**: High-fidelity printable student advising sheet displaying student name, ID, department, GPA, earned/in-progress/expected credits, academic standing badges (Good Standing vs Half-Load Probation), status legend, 8-term curriculum course matrix with earned letter grades, and next-semester recommendation bar. Configured with dedicated `@media print` rules (`@page { size: landscape; margin: 8mm; }`, `break-after: page;`, `print-color-adjust: exact;`) for clean 1-page-per-student printing.
+  - **Batch Advising Dashboard (`BatchGraphView.tsx`)**: Cohort control center with summary statistics (total transcripts, average GPA, probation count, graduation ready count), 1-click **"Print All Students"** and individual student print targeting, dynamic search (by student name, ID, filename), department filter, sorting (by Name, ID, GPA, Credits), and dual view modes (printable sheets preview vs single-student interactive React Flow graph).
+  - **Upload Screen Mode Selector (`FileUpload.tsx`)**: Added a segmented mode toggle between *Single Transcript* and *Batch Mode (Folder or ZIP)* with drag-and-drop, quick file pickers (`Select ZIP`, `Select Folder`, `Multiple PDFs`), file preview badge, optional batch-wide department override, and live progress bar.
 - **v0.6.2: Recommendation Reasoning, 4-Tier Scheduling Algorithm & Remote Banner**
   - **Course Recommendation Reasoning (`CourseRecommendationReason`)**: Enhanced `splitAvailableCourses` and `CourseRow.tsx` with contextual recommendation explanations (`summary`, `priorityTier`, `planSemester`, `isOverdue`, `loadConstraint`, and `unlockedCourses` downstream chain). Surfaced via interactive expandable "💡 Why?" pills in `CourseRow.tsx` and summary badge in `NextSemesterHero.tsx`.
   - **4-Tier Priority & 2-Credit Terminal Deprioritization**: Refined recommendation algorithm with `countDownstreamDependents` and 4 tiers (Tier 1: 3 CR prereq chain; Tier 2: 3 CR standalone core/science; Tier 3: 2 CR prereq chain e.g. `UNR1403`; Tier 4: 2 CR terminal with 0 dependents e.g. `CNC1401` Entrepreneurship Skills and standalone UNR requirements). Prevents low-credit terminal courses from prematurely filling semester capacity or displacing critical 3 CR prerequisites.
