@@ -16,7 +16,15 @@ import {
   saveSession,
 } from "@/lib/auth/session";
 
-type Step = "upload" | "report";
+import {
+  BatchStudentResult,
+  BatchProcessingError,
+  BatchProcessingProgress,
+  processBatchTranscripts,
+} from "@/lib/utils/batchTranscriptProcessor";
+import { BatchGraphView } from "@/components/batch/BatchGraphView";
+
+type Step = "upload" | "report" | "batch";
 
 export default function Home() {
   const [advisor, setAdvisor] = useState<AdvisorSession | null>(null);
@@ -27,6 +35,11 @@ export default function Home() {
     null
   );
   const [report, setReport] = useState<AnalysisReport | null>(null);
+  const [batchStudents, setBatchStudents] = useState<BatchStudentResult[]>([]);
+  const [batchErrors, setBatchErrors] = useState<BatchProcessingError[]>([]);
+  const [batchProgress, setBatchProgress] = useState<BatchProcessingProgress | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,6 +59,9 @@ export default function Home() {
     setStep("upload");
     setTranscriptData(null);
     setReport(null);
+    setBatchStudents([]);
+    setBatchErrors([]);
+    setBatchProgress(null);
     setError(null);
   };
 
@@ -85,10 +101,55 @@ export default function Home() {
     }
   };
 
+  const handleBatchUpload = async (files: File[], department?: Department) => {
+    setLoading(true);
+    setError(null);
+    setBatchProgress(null);
+
+    try {
+      const result = await processBatchTranscripts(files, {
+        departmentOverride: department,
+        onProgress: (progress) => setBatchProgress(progress),
+      });
+
+      if (result.students.length === 0) {
+        throw new Error(
+          result.errors.length > 0
+            ? `Failed to process transcripts: ${result.errors
+                .map((e) => `${e.fileName}: ${e.error}`)
+                .join("; ")}`
+            : "No valid PDF transcripts found in the selected folder or archive."
+        );
+      }
+
+      setBatchStudents(result.students);
+      setBatchErrors(result.errors);
+      setStep("batch");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred during batch transcript processing"
+      );
+    } finally {
+      setLoading(false);
+      setBatchProgress(null);
+    }
+  };
+
+  const handleOpenSingleReportFromBatch = (student: BatchStudentResult) => {
+    setTranscriptData(student.transcriptData);
+    setReport(student.report);
+    setStep("report");
+  };
+
   const handleReset = () => {
     setStep("upload");
     setTranscriptData(null);
     setReport(null);
+    setBatchStudents([]);
+    setBatchErrors([]);
+    setBatchProgress(null);
     setError(null);
   };
 
@@ -133,46 +194,80 @@ export default function Home() {
   // The report is a full-viewport dashboard: it needs the whole width, a
   // slimmer header, and the leftover height as a flex child.
   const inReport = step === "report" && !!report && !!transcriptData;
+  const inBatch = step === "batch" && batchStudents.length > 0;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-gradient-to-br from-blue-50 to-indigo-50">
       <Header
         advisorName={advisor.name}
         onLogout={handleLogout}
-        compact={inReport}
+        compact={inReport || inBatch}
       />
 
       <main
         className={
           inReport
             ? "flex min-h-0 flex-1 flex-col px-3 py-3 print:block print:p-0"
+            : inBatch
+            ? "container mx-auto px-4 py-6 max-w-7xl print:block print:p-0 print:max-w-none"
             : "container mx-auto px-4 py-8 max-w-6xl"
         }
       >
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
             <p className="font-semibold">Error:</p>
             <p>{error}</p>
           </div>
         )}
 
         {step === "upload" && (
-          <FileUpload onFileUpload={handleFileUpload} loading={loading} />
+          <FileUpload
+            onFileUpload={handleFileUpload}
+            onBatchUpload={handleBatchUpload}
+            batchProgress={batchProgress}
+            loading={loading}
+          />
+        )}
+
+        {step === "batch" && inBatch && (
+          <BatchGraphView
+            students={batchStudents}
+            errors={batchErrors}
+            onReset={handleReset}
+            onOpenSingleReport={handleOpenSingleReportFromBatch}
+          />
         )}
 
         {step === "report" && report && transcriptData && (
-          <ReportDisplay
-            report={report}
-            transcriptData={transcriptData}
-            onReset={handleReset}
-            onDepartmentChange={handleDepartmentChange}
-          />
+          <div className="flex flex-col gap-2">
+            {batchStudents.length > 0 && (
+              <div className="print:hidden mb-1 flex items-center justify-between bg-blue-50/80 px-3 py-1.5 rounded-lg border border-blue-200 text-xs">
+                <span className="text-blue-900 font-medium">
+                  Viewing student report from batch ({batchStudents.length} students loaded)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setStep("batch")}
+                  className="font-bold text-blue-700 hover:text-blue-900 underline cursor-pointer"
+                >
+                  ← Return to Batch Graphs
+                </button>
+              </div>
+            )}
+            <ReportDisplay
+              report={report}
+              transcriptData={transcriptData}
+              onReset={handleReset}
+              onDepartmentChange={handleDepartmentChange}
+            />
+          </div>
         )}
       </main>
 
       <footer
-        className={`mt-16 py-6 text-center text-sm text-white-600 print:hidden ${inReport ? "hidden" : ""
-          }`}
+        className={`mt-16 py-6 text-center text-sm text-white-600 print:hidden ${
+          inReport || inBatch ? "hidden" : ""
+        }`}
       >
         <p>Copyright 2026 Dr. Moheeb and Eng. Hagar</p>
         <p className="mt-1">

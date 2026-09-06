@@ -64,4 +64,18 @@ footer {
     height: auto;
     overflow: visible;
   }
+
+  @page {
+    size: landscape;
+    margin: 8mm;
+  }
+
+  .student-print-sheet {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    page-break-after: always;
+    break-after: page;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 }

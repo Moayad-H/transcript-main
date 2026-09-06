@@ -13,6 +13,7 @@
     "@vercel/analytics": "^2.0.1",
     "@xyflow/react": "^12.11.2",
     "clsx": "^2.1.1",
+    "jszip": "^3.10.1",
     "next": "16.1.1",
     "papaparse": "^5.5.3",
     "pdf-parse": "^2.4.5",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/jszip": "^3.4.0",
     "@types/node": "^20",
     "@types/papaparse": "^5.5.2",
     "@types/pdf-parse": "^1.1.5",
