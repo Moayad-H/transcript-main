@@ -47,7 +47,7 @@ export function StudentBar({
   onDepartmentChange,
 }: StudentBarProps) {
   return (
-    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl bg-brand px-4 py-3 text-white print:rounded-none">
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl bg-brand px-4 py-3 text-white print:rounded-none shrink-0">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <h1 className="truncate text-md font-bold">{report.studentName}</h1>

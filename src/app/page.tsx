@@ -239,9 +239,9 @@ export default function Home() {
         )}
 
         {step === "report" && report && transcriptData && (
-          <div className="flex flex-col gap-2">
+          <div className="flex min-h-0 flex-1 flex-col gap-2">
             {batchStudents.length > 0 && (
-              <div className="print:hidden mb-1 flex items-center justify-between bg-blue-50/80 px-3 py-1.5 rounded-lg border border-blue-200 text-xs">
+              <div className="print:hidden mb-1 flex shrink-0 items-center justify-between bg-blue-50/80 px-3 py-1.5 rounded-lg border border-blue-200 text-xs">
                 <span className="text-blue-900 font-medium">
                   Viewing student report from batch ({batchStudents.length} students loaded)
                 </span>

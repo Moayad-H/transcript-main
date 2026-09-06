@@ -47,8 +47,8 @@ footer {
 /* Cockpit report view: on a desktop screen the document must not scroll, so the
    dashboard fills exactly one viewport and each card scrolls its own body.
    Added by ReportDisplay while it is mounted, removed when it unmounts. Below
-   1280px (and on paper) the class does nothing and the page scrolls normally. */
-@media (min-width: 1280px) {
+   1280px (and on paper, or on very short displays) the class does nothing and the page scrolls normally. */
+@media (min-width: 1280px) and (min-height: 600px) {
   body.cockpit-lock {
     height: 100dvh;
     overflow: hidden;
