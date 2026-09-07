@@ -50,6 +50,9 @@ import {
   getSummerSemester,
 } from "@/lib/analysis/semester";
 import { generateReport } from "@/lib/analysis/reportGenerator";
+import { createPortal } from "react-dom";
+import { logAdvisorAction } from "@/lib/logging/auditLogger";
+import { PrintableSemesterPlan } from "@/components/planner/PrintableSemesterPlan";
 
 // Canonical practical-training code, precomputed for the planner's pass/fail check.
 const PRACTICAL_TRAINING_CANON = canonicalizeCode(PRACTICAL_TRAINING_CODE);
@@ -352,6 +355,54 @@ export default function CourseGraphView({
   // Transient message shown when a manual action is blocked by the probation
   // half-load cap.
   const [capWarning, setCapWarning] = useState<string | null>(null);
+  // Controls the official semester study plan print preview modal.
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  // Transient toast when a previously saved plan is restored for this student.
+  const [planSavedNotice, setPlanSavedNotice] = useState<string | null>(null);
+
+  // Storage key for auto-persisting the student's graduation plan
+  const planStorageKey = report.studentID ? `ershad_plan_${report.studentID}` : null;
+
+  // Hydrate saved plan on mount / when report.studentID changes
+  useEffect(() => {
+    if (!planStorageKey) return;
+    try {
+      const raw = window.localStorage.getItem(planStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed.terms) && parsed.terms.length > 0) {
+          setPlannerTerms(parsed.terms);
+          if (Array.isArray(parsed.projGrades)) {
+            setProjGrades(new Map(parsed.projGrades));
+          }
+          setPlanSavedNotice("Restored saved plan");
+          const timer = setTimeout(() => setPlanSavedNotice(null), 4000);
+          return () => clearTimeout(timer);
+        }
+      }
+    } catch {
+      // Ignore localStorage read errors
+    }
+  }, [planStorageKey]);
+
+  // Auto-save plan when plannerTerms or projGrades change
+  useEffect(() => {
+    if (!planStorageKey) return;
+    try {
+      if (plannerTerms.length > 0) {
+        window.localStorage.setItem(
+          planStorageKey,
+          JSON.stringify({
+            terms: plannerTerms,
+            projGrades: Array.from(projGrades.entries()),
+            savedAt: new Date().toISOString(),
+          })
+        );
+      }
+    } catch {
+      // Ignore localStorage write errors
+    }
+  }, [planStorageKey, plannerTerms, projGrades]);
 
   // Whether the student is on academic probation (half-load): registration is
   // capped at 12 Cr and Project I is blocked until the GPA reaches 2.0. Uses the
@@ -934,6 +985,62 @@ export default function CourseGraphView({
     []
   );
 
+  const clearPlan = useCallback(() => {
+    setPlannerTerms([]);
+    setActivePlannerTerm(null);
+    if (planStorageKey) {
+      try {
+        window.localStorage.removeItem(planStorageKey);
+      } catch {
+        // Ignore
+      }
+    }
+  }, [planStorageKey]);
+
+  const handlePrintPlan = useCallback(() => {
+    const studentName =
+      report.studentName || transcriptData.studentName || report.studentID;
+    const originalTitle = document.title;
+    document.title = `${studentName} - Semester Study Plan`;
+    document.body.classList.add("printing-semester-plan");
+
+    logAdvisorAction({
+      action: "SEMESTER_PLAN_PRINTED",
+      studentId: report.studentID,
+      studentName: report.studentName,
+      department: report.department,
+      metadata: {
+        termsCount: plannerTerms.length,
+        projectedGpa: plan.finalGpa,
+        projectedCredits: plan.finalEarnedCredits,
+      },
+    });
+
+    const cleanup = () => {
+      document.body.classList.remove("printing-semester-plan");
+      document.title = originalTitle;
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
+
+    setTimeout(() => {
+      window.print();
+      setTimeout(cleanup, 1200);
+    }, 100);
+  }, [report, transcriptData, plannerTerms, plan]);
+
+  // Close print preview on Escape key
+  useEffect(() => {
+    if (!showPrintModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowPrintModal(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showPrintModal]);
+
   // Two chains from the selected node:
   //  - prereqSet: all its transitive prerequisites (what must come before it).
   //  - dependentSet: everything it transitively unlocks (what it's a prereq of).
@@ -1421,6 +1528,14 @@ export default function CourseGraphView({
               </div>
             </div>
 
+            {planSavedNotice && (
+              <div className="self-center">
+                <span className="text-[11px] font-medium text-emerald-800 bg-emerald-100/90 border border-emerald-300 px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-2xs">
+                  <span>💾</span> {planSavedNotice}
+                </span>
+              </div>
+            )}
+
             <div className="flex items-center gap-2 ml-auto">
               <button
                 type="button"
@@ -1442,13 +1557,24 @@ export default function CourseGraphView({
               )}
 
               {plannerTerms.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setPlannerTerms([])}
-                  className="text-xs font-medium px-2.5 py-1.5 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 bg-white"
-                >
-                  Clear plan
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowPrintModal(true)}
+                    title="Print or save semester plan as PDF for the student"
+                    className="text-xs font-semibold px-3 py-1.5 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm flex items-center gap-1.5 transition-colors"
+                  >
+                    <span>🖨️</span> Print Plan
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={clearPlan}
+                    className="text-xs font-medium px-2.5 py-1.5 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 bg-white"
+                  >
+                    Clear plan
+                  </button>
+                </>
               )}
 
               <button
@@ -1535,6 +1661,17 @@ export default function CourseGraphView({
                     </span>
                   </div>
                   <div className="flex items-center gap-1">
+                    {plannerTerms.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowPrintModal(true)}
+                        title="Print Semester Plan"
+                        className="px-2 py-0.5 rounded text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-900 border border-emerald-200 transition-colors flex items-center gap-1 text-[11px] font-bold"
+                      >
+                        <span>🖨️</span>
+                        <span>Print</span>
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => setIsSheetCollapsed(true)}
@@ -2079,6 +2216,63 @@ export default function CourseGraphView({
           </div>
         </>
       )}
+      {/* Semester Plan Print Modal / Print View */}
+      {showPrintModal &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            id="semester-plan-print-portal"
+            className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex flex-col items-center justify-start p-4 md:p-8 print:p-0 print:m-0 print:bg-white print:overflow-visible"
+          >
+            {/* Modal Controls Bar (Hidden during printing) */}
+            <div className="w-full max-w-5xl mb-3 flex items-center justify-between bg-white px-4 py-3 rounded-xl shadow-md border border-slate-200 print:hidden shrink-0">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xl">📄</span>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Semester Study Plan — Print Preview
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Official advising graduation roadmap for {report.studentName || report.studentID}.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPrintModal(false)}
+                  className="px-3.5 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePrintPlan}
+                  className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all transform hover:scale-[1.02]"
+                >
+                  <span>🖨️</span> Print / Save PDF
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Document Paper Card */}
+            <div className="w-full max-w-5xl bg-white shadow-2xl rounded-xl border border-slate-300 overflow-hidden print:shadow-none print:border-none print:max-w-none print:w-full print:rounded-none">
+              <PrintableSemesterPlan
+                report={report}
+                transcriptData={transcriptData}
+                plan={plan}
+                plannerCourses={plannerCourses}
+                plannerCourseById={plannerCourseById}
+                planTermLabels={planTermLabels}
+                inProgressSemesters={inProgressSemesters}
+                projGrades={projGrades}
+                ungradedNodeByCode={ungradedNodeByCode}
+              />
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

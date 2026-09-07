@@ -83,4 +83,29 @@ footer {
     page-break-after: auto !important;
     break-after: auto !important;
   }
+
+  /* Isolate semester plan print portal when printing a student's study plan */
+  body.printing-semester-plan > *:not(#semester-plan-print-portal) {
+    display: none !important;
+  }
+
+  body.printing-semester-plan,
+  body.printing-semester-plan #semester-plan-print-portal {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .semester-plan-print-sheet {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    width: 100%;
+    margin: 0;
+  }
 }
