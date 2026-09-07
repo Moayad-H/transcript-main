@@ -19,7 +19,8 @@ export type AuditAction =
   | "DEPARTMENT_CHANGED"
   | "REPORT_DOWNLOADED"
   | "BATCH_PRINTED"
-  | "STUDENT_PRINTED";
+  | "STUDENT_PRINTED"
+  | "SEMESTER_PLAN_PRINTED";
 
 export interface AuditLogPayload {
   action: AuditAction;

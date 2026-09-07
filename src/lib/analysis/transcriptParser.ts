@@ -196,8 +196,8 @@ function extractProbationSemesters(text: string): number {
   return 0;
 }
 
-/** A course code as printed in the "COURSE NO." column, e.g. "CCS2401". */
-const COURSE_CODE_PATTERN = /^[A-Z]{3}\d{4}$/;
+/** A course code as printed in the "COURSE NO." column, e.g. "CCS2401" or "NE364". */
+const COURSE_CODE_PATTERN = /^[A-Z]{2,4}\d{3,4}$/;
 
 /** Rows are printed on a shared baseline; allow for sub-point jitter. */
 const ROW_Y_TOLERANCE = 2.5;
@@ -207,7 +207,7 @@ const ROW_Y_TOLERANCE = 2.5;
  * layout and flat-text scans so both agree on what a course row looks like.
  */
 const COURSE_LINE_PATTERN =
-  /([A-Z]{3}\d{4})\s+(.+?)\s+(\d+(?:\.\d+)?)\s+(A\s*\+|A\s*-|A|B\s*\+|B\s*-|B|C\s*\+|C\s*-|C|D\s*\+|D\s*-|D|F|P|U|W|I|Tr\.?)/;
+  /([A-Z]{2,4}\d{3,4})\s+(.+?)\s+(\d+(?:\.\d+)?)\s+(A\s*\+|A\s*-|A|B\s*\+|B\s*-|B|C\s*\+|C\s*-|C|D\s*\+|D\s*-|D|F|P|U|W|I|Tr\.?)/;
 
 /**
  * Turn one course line into a StudiedCourse, or null when the line is a table
@@ -557,7 +557,7 @@ function getCourseCreditValue(course: StudiedCourse): number {
   ) {
     return 0;
   }
-  return isTwoCreditCourse(course.code) ? TWO_CREDIT_HOURS : CREDIT_HOURS_PER_COURSE;
+  return isTwoCreditCourse(canonical) ? TWO_CREDIT_HOURS : CREDIT_HOURS_PER_COURSE;
 }
 
 /**

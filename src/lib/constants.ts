@@ -175,8 +175,10 @@ export const ELECTIVE_KEYWORDS = {
 //
 // CCS3601 (CS/IS/GM plans) and CAI3101 (AI/SE/CY plans) are both
 // "Introduction to Artificial Intelligence".
+// NE364 (Engineering) is equivalent to UNR2303 (Computing) for "Engineering Economy".
 const COURSE_CODE_EQUIVALENCE: Record<string, string> = {
   CCS3601: "CAI3101",
+  NE364: "UNR2303",
 };
 
 /**

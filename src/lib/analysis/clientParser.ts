@@ -115,7 +115,7 @@ function getCourseCreditValue(course: StudiedCourse): number {
   ) {
     return 0;
   }
-  return isTwoCreditCourse(course.code) ? TWO_CREDIT_HOURS : CREDIT_HOURS_PER_COURSE;
+  return isTwoCreditCourse(canonical) ? TWO_CREDIT_HOURS : CREDIT_HOURS_PER_COURSE;
 }
 
 /**

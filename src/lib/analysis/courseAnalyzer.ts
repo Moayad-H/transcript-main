@@ -32,6 +32,13 @@ import {
   YEAR_FOUR_CORE_COURSES_PER_SEMESTER,
 } from "@/lib/constants";
 
+function normalizeCourseTitle(title: string): string {
+  return title
+    .trim()
+    .toLowerCase()
+    .replace(/economics\b/i, "economy");
+}
+
 /**
  * Get elective courses that student has completed
  * Ports Python's get_elective function
@@ -42,15 +49,24 @@ export function getCompletedElectives(
   electiveCourses: ElectiveCourse[]
 ): ElectiveCourse[] {
   const passingGrades = new Set([...GRADES.PASSING] as string[]);
+  const completedStudied = studiedCourses.filter((c) =>
+    passingGrades.has(c.grade)
+  );
   const completedCodes = new Set(
-    studiedCourses
-      .filter((c) => passingGrades.has(c.grade))
-      .map((c) => canonicalizeCode(c.code))
+    completedStudied.map((c) => canonicalizeCode(c.code))
+  );
+  const completedTitles = new Set(
+    completedStudied.map((c) => normalizeCourseTitle(c.title))
   );
   const electives: ElectiveCourse[] = [];
 
   for (const elective of electiveCourses) {
-    if (completedCodes.has(canonicalizeCode(elective.code))) {
+    const electiveCode = canonicalizeCode(elective.code);
+    const electiveTitle = normalizeCourseTitle(elective.title);
+    if (
+      completedCodes.has(electiveCode) ||
+      completedTitles.has(electiveTitle)
+    ) {
       electives.push(elective);
     }
   }
@@ -68,14 +84,29 @@ export function getUngradedElectives(
   studiedCourses: StudiedCourse[],
   electiveCourses: ElectiveCourse[]
 ): ElectiveCourse[] {
+  const ungradedStudied = studiedCourses.filter((c) =>
+    (GRADES.UNGRADED as readonly string[]).includes(c.grade)
+  );
   const ungradedCodes = new Set(
-    studiedCourses
-      .filter((c) => (GRADES.UNGRADED as readonly string[]).includes(c.grade))
-      .map((c) => canonicalizeCode(c.code))
+    ungradedStudied.map((c) => canonicalizeCode(c.code))
   );
-  return electiveCourses.filter((elective) =>
-    ungradedCodes.has(canonicalizeCode(elective.code))
+  const ungradedTitles = new Set(
+    ungradedStudied.map((c) => normalizeCourseTitle(c.title))
   );
+  const electives: ElectiveCourse[] = [];
+
+  for (const elective of electiveCourses) {
+    const electiveCode = canonicalizeCode(elective.code);
+    const electiveTitle = normalizeCourseTitle(elective.title);
+    if (
+      ungradedCodes.has(electiveCode) ||
+      ungradedTitles.has(electiveTitle)
+    ) {
+      electives.push(elective);
+    }
+  }
+
+  return electives;
 }
 
 /**
@@ -730,15 +761,23 @@ export function getOutOfPlanCourses(
   const universityCodes = new Set(
     completedUniversityElectives.map((c) => canonicalizeCode(c.code))
   );
+  const completedElectiveTitles = new Set([
+    ...completedMajorElectives.map((c) => normalizeCourseTitle(c.title)),
+    ...completedScienceElectives.map((c) => normalizeCourseTitle(c.title)),
+    ...completedUniversityElectives.map((c) => normalizeCourseTitle(c.title)),
+  ]);
 
   return studiedCourses.filter((course) => {
     const code = canonicalizeCode(course.code);
+    const title = normalizeCourseTitle(course.title);
     return (
       !planCodes.has(code) &&
       !majorCodes.has(code) &&
       !scienceCodes.has(code) &&
       !universityCodes.has(code) &&
+      !completedElectiveTitles.has(title) &&
       !code.startsWith("IT") // Exclude IT courses
     );
   });
 }
+
