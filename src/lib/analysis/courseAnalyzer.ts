@@ -483,7 +483,8 @@ export function splitAvailableCourses(
   codeToSemester: Map<string, number> | null,
   completedCreditHours: number,
   onProbation: boolean,
-  coursePlan?: Course[] | null
+  coursePlan?: Course[] | null,
+  failedCourseCodes?: Set<string>
 ): { recommended: Course[]; otherEligible: Course[] } {
   const cap = onProbation
     ? PROBATION_HALF_LOAD_CREDITS
@@ -520,9 +521,14 @@ export function splitAvailableCourses(
   };
 
   // Stable sort: preserve original plan order as the final tiebreak.
+  // Courses with an outstanding F are prioritized ahead of untaken courses.
   const ranked = availableCourses
     .map((course, index) => ({ course, index }))
     .sort((a, b) => {
+      const failedA = failedCourseCodes?.has(canonicalizeCode(a.course.code)) ? 0 : 1;
+      const failedB = failedCourseCodes?.has(canonicalizeCode(b.course.code)) ? 0 : 1;
+      if (failedA !== failedB) return failedA - failedB;
+
       const tierA = getPriorityTier(a.course);
       const tierB = getPriorityTier(b.course);
       if (tierA !== tierB) return tierA - tierB;
@@ -567,15 +573,21 @@ export function splitAvailableCourses(
       const hasPlanSem = Number.isFinite(sem);
       const unlocked = downstreamMap.get(codeKey) ?? [];
       const unlocksCount = unlocked.length;
+      const isFailed = failedCourseCodes?.has(codeKey) ?? false;
 
       const isOverdue =
-        hasPlanSem &&
-        ((sem <= 2 && completedCreditHours >= 33) ||
-          (sem <= 4 && completedCreditHours >= 69) ||
-          (sem <= 6 && completedCreditHours >= 99));
+        isFailed ||
+        (hasPlanSem &&
+          ((sem <= 2 && completedCreditHours >= 33) ||
+            (sem <= 4 && completedCreditHours >= 69) ||
+            (sem <= 6 && completedCreditHours >= 99)));
 
       let summary = "";
-      if (unlocksCount > 0) {
+      if (isFailed) {
+        summary = unlocksCount > 0
+          ? `Urgent Repeat (F): Prior failed prerequisite unlocking ${unlocksCount} downstream course${unlocksCount === 1 ? "" : "s"}. Must be repeated to replace 0.0 grade.`
+          : `Urgent Repeat (F): Prior failed course. Must be repeated to replace 0.0 grade and clear degree requirement.`;
+      } else if (unlocksCount > 0) {
         if (isOverdue) {
           summary = `Overdue prerequisite from Sem ${sem}: unlocks ${unlocksCount} downstream course${unlocksCount === 1 ? "" : "s"}.`;
         } else if (hasPlanSem) {
@@ -598,7 +610,7 @@ export function splitAvailableCourses(
         planSemester: hasPlanSem ? sem : undefined,
         unlocksCount,
         unlockedCourses: unlocked.length > 0 ? unlocked : undefined,
-        priorityTier: tier,
+        priorityTier: isFailed ? 0 : tier,
         isOverdue,
         loadConstraint: onProbation
           ? "Academic probation: prioritized within strict 12 Cr half-load cap"

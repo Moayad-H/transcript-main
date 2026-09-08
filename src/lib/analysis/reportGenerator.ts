@@ -39,6 +39,7 @@ import {
   PROBATION_GPA_THRESHOLD,
   PROBATION_MAX_SEMESTERS,
   TWO_CREDIT_HOURS,
+  canonicalizeCode,
 } from "@/lib/constants";
 
 /**
@@ -135,9 +136,17 @@ export async function generateReport(
     department
   );
 
+  const retakeRecommendations = getRetakeRecommendations(transcriptData.courses);
+  const failedCourseCodes = new Set(
+    withdrawnFailedCourses
+      .filter((c) => c.grade === "F")
+      .map((c) => canonicalizeCode(c.code))
+  );
+
   // Split the eligible pool into a capped, priority "recommended this semester"
   // list (group A) and the remaining eligible courses (group B), ranked by the
-  // department plan sequence.
+  // department plan sequence. For students on probation, both balanced recovery
+  // and prerequisite-focused schedules are generated.
   const planSemesters = await loadPlanSemesters(department);
   const { recommended: recommendedCourses, otherEligible: otherEligibleCourses } =
     splitAvailableCourses(
@@ -145,7 +154,8 @@ export async function generateReport(
       planSemesters?.codeToSemester ?? null,
       creditHours,
       onProbation,
-      coursePlan
+      coursePlan,
+      failedCourseCodes
     );
 
   // Get out-of-plan courses
@@ -265,7 +275,7 @@ export async function generateReport(
       creditHours >= GRADUATION_CREDIT_HOURS && !practicalTraining.completed,
     outOfPlanCourses,
     latestSemester: getLatestSemester(transcriptData.courses),
-    retakeRecommendations: getRetakeRecommendations(transcriptData.courses),
+    retakeRecommendations,
     totalCreditHours: creditHours,
     expectedCreditHours: creditHours + ungradedCreditHours,
     completedCourses: transcriptData.courses.length,
