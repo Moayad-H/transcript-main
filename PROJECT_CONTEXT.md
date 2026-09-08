@@ -247,6 +247,9 @@ Infra: `Dockerfile` (multi-stage), `nginx.conf`, `docker-compose.yml`, `next.con
 
 ## 9. Recent work & history (most recent first)
 
+- **v0.7.0: Outstanding Failed (F) Course Recommendation Prioritization**
+  - **Guaranteed Failed Course Prioritization (`courseAnalyzer.ts`)**: In `splitAvailableCourses`, eligible courses with an uncompleted failing grade (`F`) are assigned Priority Tier 0 and flagged as overdue (`isOverdue: true`). This guarantees that failed courses are always placed at the top of next-semester recommendations (both under standard semester loads and the 12 Cr probation half-load cap), ensuring students address prerequisites and replace 0.0 grade points for maximum cumulative GPA recovery.
+  - **Dual Report Generator Invariant (`reportGenerator.ts`, `clientReportGenerator.ts`)**: Kept both server and client report generators in sync by extracting uncompleted failed course codes from `withdrawnFailedCourses` and passing them into `splitAvailableCourses`.
 - **v0.6.5: Official Semester Study Plan, Single-Print Parity, Advisor Guide & Supabase Audit System**
   - **Official Semester Study Plan & Printable Graduation Roadmap (`PrintableSemesterPlan.tsx` & `CourseGraphView.tsx`)**:
     - Built a dedicated printable study plan modal and graduation roadmap component (`PrintableSemesterPlan.tsx`) rendered via React portal (`#semester-plan-print-portal`).
