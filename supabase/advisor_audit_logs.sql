@@ -1,7 +1,14 @@
 -- Advisor Audit Log table for ERSHAD.
 --
--- Records advisor actions (transcript parsing, batch processing, department changes,
--- downloads, and prints) with complete attribution.
+-- Records advisor actions (authentication, transcript parsing, batch processing,
+-- department changes, semester planning, schedule finding & timetable printing,
+-- custom schedule uploads, and downloads) with complete attribution.
+--
+-- Supported actions:
+--   LOGIN, LOGOUT, TRANSCRIPT_PARSED, BATCH_PROCESSED, DEPARTMENT_CHANGED,
+--   REPORT_DOWNLOADED, BATCH_PRINTED, STUDENT_PRINTED, SEMESTER_PLAN_PRINTED,
+--   SEMESTER_PLAN_CLEARED, SCHEDULE_VIEWED, SCHEDULE_GROUP_CHANGED,
+--   SCHEDULE_PRINTED, SCHEDULE_UPLOADED, SCHEDULE_RESET, GUIDE_VIEWED.
 --
 -- Run this once in the Supabase SQL editor (Dashboard -> SQL Editor -> New query).
 

@@ -51,6 +51,14 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
 
+  const handleOpenGuide = (source: "header" | "banner" | "first_login" = "header") => {
+    setIsGuideOpen(true);
+    logAdvisorAction({
+      action: "GUIDE_VIEWED",
+      metadata: { source },
+    });
+  };
+
   useEffect(() => {
     const session = loadSession();
     setAdvisor(session);
@@ -59,7 +67,7 @@ export default function Home() {
     if (session && typeof window !== "undefined") {
       const guideKey = `ershad_guide_seen_${session.staff_id}`;
       if (!window.localStorage.getItem(guideKey)) {
-        setIsGuideOpen(true);
+        handleOpenGuide("first_login");
       }
     }
   }, []);
@@ -75,12 +83,19 @@ export default function Home() {
     if (typeof window !== "undefined") {
       const guideKey = `ershad_guide_seen_${session.staff_id}`;
       if (!window.localStorage.getItem(guideKey)) {
-        setIsGuideOpen(true);
+        handleOpenGuide("first_login");
       }
     }
   };
 
   const handleLogout = () => {
+    if (advisor) {
+      logAdvisorAction({
+        action: "LOGOUT",
+        staffId: advisor.staff_id,
+        advisorName: advisor.name,
+      });
+    }
     clearSession();
     setAdvisor(null);
     setStep("upload");
@@ -155,6 +170,10 @@ export default function Home() {
           gpa: data.gpa,
           totalCreditHours: generatedReport.totalCreditHours,
           expectedCreditHours: generatedReport.expectedCreditHours,
+          onProbation: generatedReport.onProbation,
+          failedCoursesCount:
+            generatedReport.withdrawnFailedCourses?.filter((c) => c.grade === "F").length ?? 0,
+          recommendedCoursesCount: generatedReport.recommendedCourses?.length ?? 0,
           fileName: file.name,
         },
       });
@@ -197,6 +216,7 @@ export default function Home() {
           totalFiles: files.length,
           successfulStudents: result.students.length,
           failedCount: result.errors.length,
+          probationCount: result.students.filter((s) => s.report.onProbation).length,
           studentIds: result.students.map((s) => s.transcriptData.studentId),
         },
       });
@@ -307,7 +327,7 @@ export default function Home() {
       <Header
         advisorName={advisor.name}
         onLogout={handleLogout}
-        onOpenGuide={() => setIsGuideOpen(true)}
+        onOpenGuide={() => handleOpenGuide("header")}
         compact={inReport || inBatch}
       />
 
@@ -345,7 +365,7 @@ export default function Home() {
               </div>
               <button
                 type="button"
-                onClick={() => setIsGuideOpen(true)}
+                onClick={() => handleOpenGuide("banner")}
                 className="font-bold text-blue-700 hover:text-blue-950 underline shrink-0 cursor-pointer"
               >
                 Open Advisor Guide →

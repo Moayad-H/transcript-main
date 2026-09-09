@@ -8,6 +8,7 @@ import {
   clearCustomSchedules,
   loadCustomSchedules,
 } from "@/lib/analysis/scheduleLoader";
+import { logAdvisorAction } from "@/lib/logging/auditLogger";
 
 interface ScheduleUploaderProps {
   onSchedulesUpdated: () => void;
@@ -54,19 +55,40 @@ export function ScheduleUploader({ onSchedulesUpdated, onClose }: ScheduleUpload
       saveCustomSchedules(merged);
       setCustomCount(merged.length);
       setSuccessMsg(`Successfully parsed and saved ${allExtracted.length} timetable group(s)!`);
+      
+      logAdvisorAction({
+        action: "SCHEDULE_UPLOADED",
+        metadata: {
+          fileCount: files.length,
+          fileNames: Array.from(files).map((f) => f.name),
+          extractedGroupsCount: allExtracted.length,
+          totalStoredCustomGroups: merged.length,
+          groupNames: Array.from(new Set(allExtracted.map((g) => g.groupName))),
+        },
+      });
+
       onSchedulesUpdated();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Upload error:", err);
-      setError(err?.message || "Failed to parse schedule PDF");
+      setError(err instanceof Error ? err.message : "Failed to parse schedule PDF");
     } finally {
       setLoading(false);
     }
   };
 
   const handleReset = () => {
+    const prevCount = customCount;
     clearCustomSchedules();
     setCustomCount(0);
     setSuccessMsg("Reverted to default semester schedules.");
+    
+    logAdvisorAction({
+      action: "SCHEDULE_RESET",
+      metadata: {
+        previousCustomCount: prevCount,
+      },
+    });
+
     onSchedulesUpdated();
   };
 

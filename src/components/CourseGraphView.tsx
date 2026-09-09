@@ -986,6 +986,7 @@ export default function CourseGraphView({
   );
 
   const clearPlan = useCallback(() => {
+    const termsCount = plannerTerms.length;
     setPlannerTerms([]);
     setActivePlannerTerm(null);
     if (planStorageKey) {
@@ -995,7 +996,18 @@ export default function CourseGraphView({
         // Ignore
       }
     }
-  }, [planStorageKey]);
+    if (termsCount > 0) {
+      logAdvisorAction({
+        action: "SEMESTER_PLAN_CLEARED",
+        studentId: report.studentID,
+        studentName: report.studentName,
+        department: report.department,
+        metadata: {
+          clearedTermsCount: termsCount,
+        },
+      });
+    }
+  }, [planStorageKey, plannerTerms.length, report.studentID, report.studentName, report.department]);
 
   const handlePrintPlan = useCallback(() => {
     const studentName =

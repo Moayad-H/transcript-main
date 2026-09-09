@@ -1,12 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { AnalysisReport, Course, Department } from "@/types";
 
 import {
   GroupSchedule,
-  ScheduleSolution,
-  CourseAssignment,
 } from "@/types/schedule";
 import { getAllSchedules } from "@/lib/analysis/scheduleLoader";
 import {
@@ -14,6 +12,7 @@ import {
   recomputeScheduleWithGroupChange,
   TargetCourseInput,
 } from "@/lib/analysis/scheduleFinder";
+import { logAdvisorAction } from "@/lib/logging/auditLogger";
 import { TimetableGrid } from "./TimetableGrid";
 import { ScheduleUploader } from "./ScheduleUploader";
 
@@ -42,6 +41,7 @@ export function ScheduleFinderModal({
   const [customTargetCourses, setCustomTargetCourses] = useState<TargetCourseInput[] | null>(null);
   const [swappingCourseCode, setSwappingCourseCode] = useState<string | null>(null);
   const [isAddingCourse, setIsAddingCourse] = useState(false);
+  const hasLoggedViewRef = useRef(false);
 
   // Full pool of courses available to register for this student
   const availableCoursesPool = useMemo(() => {
@@ -169,6 +169,33 @@ export function ScheduleFinderModal({
     return sol;
   }, [allSolutions, effectiveBaseGroup, courseGroupOverrides, schedules]);
 
+  // Audit log: Record schedule view when solutions are computed and modal is active
+  useEffect(() => {
+    if (!isOpen) {
+      hasLoggedViewRef.current = false;
+      return;
+    }
+    if (isOpen && currentSolution && !hasLoggedViewRef.current) {
+      hasLoggedViewRef.current = true;
+      logAdvisorAction({
+        action: "SCHEDULE_VIEWED",
+        studentId: report.studentID,
+        studentName: report.studentName,
+        department,
+        metadata: {
+          baseGroup: currentSolution.baseGroup,
+          semester: currentSolution.semester,
+          totalCourses: currentSolution.totalCoursesCount,
+          coveredInBase: currentSolution.coveredInBaseCount,
+          hasConflicts: currentSolution.hasConflicts,
+          conflictCoursesCount: currentSolution.conflictCourses.length,
+          solutionsCount: allSolutions.length,
+          courses: currentSolution.assignments.map((a) => a.courseCode),
+        },
+      });
+    }
+  }, [isOpen, currentSolution, report.studentID, report.studentName, department, allSolutions.length]);
+
   // Candidate base groups for dropdown selector
   const candidateBaseGroups = useMemo(() => {
     if (!currentSolution || schedules.length === 0) return [];
@@ -180,8 +207,20 @@ export function ScheduleFinderModal({
 
   // Handle base group change from dropdown
   const handleBaseGroupChange = (newBase: string) => {
+    const prevBase = effectiveBaseGroup;
     setSelectedBaseGroup(newBase);
     setCourseGroupOverrides({}); // reset individual overrides when changing base group
+    logAdvisorAction({
+      action: "SCHEDULE_GROUP_CHANGED",
+      studentId: report.studentID,
+      studentName: report.studentName,
+      department,
+      metadata: {
+        changeType: "base_group",
+        previousBaseGroup: prevBase,
+        newBaseGroup: newBase,
+      },
+    });
   };
 
   // Handle manual group change for an individual course
@@ -190,6 +229,17 @@ export function ScheduleFinderModal({
       ...prev,
       [courseCode]: newGroupName,
     }));
+    logAdvisorAction({
+      action: "SCHEDULE_GROUP_CHANGED",
+      studentId: report.studentID,
+      studentName: report.studentName,
+      department,
+      metadata: {
+        changeType: "course_override",
+        courseCode,
+        newGroupName,
+      },
+    });
   };
 
   // Swap a course with another course from the available pool
@@ -250,9 +300,25 @@ export function ScheduleFinderModal({
     setIsAddingCourse(false);
   };
 
-
-
   const handlePrint = () => {
+    logAdvisorAction({
+      action: "SCHEDULE_PRINTED",
+      studentId: report.studentID,
+      studentName: report.studentName,
+      department,
+      metadata: {
+        baseGroup: currentSolution?.baseGroup || effectiveBaseGroup,
+        semester: currentSolution?.semester,
+        coursesCount: currentSolution?.assignments?.length || 0,
+        hasConflicts: currentSolution?.hasConflicts || false,
+        conflictCourses: currentSolution?.conflictCourses || [],
+        assignments: currentSolution?.assignments?.map((a) => ({
+          courseCode: a.courseCode,
+          groupName: a.assignedGroup,
+          isAlternative: a.isAlternativeGroup,
+        })),
+      },
+    });
     window.print();
   };
 

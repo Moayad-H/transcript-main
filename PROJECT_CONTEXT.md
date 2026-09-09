@@ -87,7 +87,7 @@ Advisors can assemble multi-semester graduation roadmaps in the Semester Planner
 
 ### 4.2.4 Advisor Activity Audit Logging System (`auditLogger.ts`)
 
-Non-blocking, zero-dependency async client audit logger invoking the Supabase REST API via native `fetch`. Captures key actions (`ADVISOR_LOGIN`, `TRANSCRIPT_PARSED`, `BATCH_TRANSCRIPT_PARSED`, `DEPARTMENT_CHANGED`, `REPORT_DOWNLOADED`, `BATCH_PRINTED`, `STUDENT_PRINTED`, `SEMESTER_PLAN_PRINTED`) into the append-only `advisor_audit_logs` table. Protected by Row Level Security (RLS) restricting anonymous clients to `INSERT`-only with `UPDATE`/`DELETE` revoked.
+Non-blocking, zero-dependency async client audit logger invoking the Supabase REST API via native `fetch`. Captures key actions (`LOGIN`, `LOGOUT`, `TRANSCRIPT_PARSED`, `BATCH_PROCESSED`, `DEPARTMENT_CHANGED`, `REPORT_DOWNLOADED`, `BATCH_PRINTED`, `STUDENT_PRINTED`, `SEMESTER_PLAN_PRINTED`, `SEMESTER_PLAN_CLEARED`, `SCHEDULE_VIEWED`, `SCHEDULE_GROUP_CHANGED`, `SCHEDULE_PRINTED`, `SCHEDULE_UPLOADED`, `SCHEDULE_RESET`, `GUIDE_VIEWED`) into the append-only `advisor_audit_logs` table. Protected by Row Level Security (RLS) restricting anonymous clients to `INSERT`-only with `UPDATE`/`DELETE` revoked.
 
 ### 4.2.5 Outstanding Failed (F) Course Recommendation Prioritization (`courseAnalyzer.ts`)
 
