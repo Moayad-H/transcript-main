@@ -5,3 +5,5 @@
 export * from "./course";
 export * from "./transcript";
 export * from "./report";
+export * from "./schedule";
+

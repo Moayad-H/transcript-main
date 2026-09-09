@@ -237,7 +237,7 @@ src/lib/data/  csvLoader.ts, clientCsvLoader.ts   (fetch+parse public/data CSVs)
 src/lib/logging/ auditLogger.ts (105) non-blocking Supabase audit logger
 src/lib/utils/ batchTranscriptProcessor.ts, reportFormatter.ts, helpers.ts, fileValidation.ts
 src/lib/constants.ts (105)    departments, grades, prefixes, canonicalizeCode, credit rules, equivalents
-src/types/     course.ts, report.ts, transcript.ts, index.ts
+src/types/     course.ts, report.ts, transcript.ts, schedule.ts, index.ts
 supabase/      advisor_audit_logs.sql, README.md
 ```
 
@@ -247,7 +247,21 @@ Infra: `Dockerfile` (multi-stage), `nginx.conf`, `docker-compose.yml`, `next.con
 
 ## 9. Recent work & history (most recent first)
 
+- **v0.7.1: Timetable Schedule Finder & Course Registration Customization Engine**
+  - **Timetable Schedule Finder (`scheduleFinder.ts`, `ScheduleFinderModal.tsx`, `TimetableGrid.tsx`)**:
+    - **Base Group Registration Prioritization**: Prioritizes registering all courses from a single cohort/base group (e.g. `3CS1`, `5SE1`, `2CS1`) matching the student's department and target semester, ensuring cohesive cohort scheduling without internal time slot collisions.
+    - **Placement-Aware Missing Course Matching (`departmentPlanMapper.ts`)**: When a recommended course or retake is absent from the chosen base group (e.g., `EBA1204` for a third-semester student), the engine references the department study plans (`public/data/department_plans/*.md`) to resolve its curricular term (e.g., Term 2), inspects candidate groups for that term (`2CS1`..`2CS3`), and assigns a collision-free timetable slot.
+    - **Collision Detection & Multi-Solution Ranking**: Implemented time-slot collision validation across 6 standard AAST periods (8:30–20:10) and 6 academic days (Saturday to Thursday), generating ranked alternative base group solutions.
+    - **Course Customization from Available Registration Pool**: Enables advisors to swap any course directly for an alternative from the student's eligible courses pool (Recommended Core, Other Eligible Core, Major Electives, Science Electives, University Requirements, Professional Training), add extra subjects, or drop courses, with automatic real-time timetable recalculation and collision checking.
+    - **Interactive Timetable Cockpit & Print Parity**: Full-featured modal displaying base group selector with recommendations, course assignment status badges (Base Group vs Alt Group placement), manual group overrides, color-coded weekly matrix with conflict banners, and clean browser print support.
+  - **Schedule Ingestion & Dataset Bundling (`scheduleParser.ts`, `scheduleLoader.ts`, `default_schedules.json`)**:
+    - Extracted and bundled 46 default semester groups from institutional timetable PDFs across terms 2, 3, 4, 5, 8 (CS, IS, SE, CY, AI).
+    - Client-side timetable PDF parser using `pdfjs-dist` to dynamically parse newly uploaded semester PDFs, merging custom schedules into browser storage (`localStorage`) with one-click restore to defaults.
+  - **UI Entry Points (`NextSemesterHero.tsx`, `StudentBar.tsx`, `ReportDisplay.tsx`)**:
+    - Added `📅 Find Schedule` button to the Registration Hub actions bar, passing the student's active registration basket directly into the solver.
+    - Added quick-access `📅 Schedule` button in `StudentBar.tsx`.
 - **v0.7.0: Outstanding Failed (F) Course Recommendation Prioritization**
+
   - **Guaranteed Failed Course Prioritization (`courseAnalyzer.ts`)**: In `splitAvailableCourses`, eligible courses with an uncompleted failing grade (`F`) are assigned Priority Tier 0 and flagged as overdue (`isOverdue: true`). This guarantees that failed courses are always placed at the top of next-semester recommendations (both under standard semester loads and the 12 Cr probation half-load cap), ensuring students address prerequisites and replace 0.0 grade points for maximum cumulative GPA recovery.
   - **Dual Report Generator Invariant (`reportGenerator.ts`, `clientReportGenerator.ts`)**: Kept both server and client report generators in sync by extracting uncompleted failed course codes from `withdrawnFailedCourses` and passing them into `splitAvailableCourses`.
 - **v0.6.5: Official Semester Study Plan, Single-Print Parity, Advisor Guide & Supabase Audit System**

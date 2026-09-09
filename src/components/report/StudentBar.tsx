@@ -8,7 +8,9 @@ interface StudentBarProps {
   onBack: () => void;
   onPrint: () => void;
   onDepartmentChange?: (department: Department) => void;
+  onOpenSchedule?: () => void;
 }
+
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: "warn" | "ok" | "amber" }) {
   return (
@@ -43,7 +45,9 @@ export function StudentBar({
   onBack,
   onPrint,
   onDepartmentChange,
+  onOpenSchedule,
 }: StudentBarProps) {
+
   return (
     <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl bg-brand px-4 py-3 text-white print:rounded-none shrink-0">
       <div className="min-w-0">
@@ -122,6 +126,18 @@ export function StudentBar({
             Course Graph
           </button>
         </div>
+
+        {onOpenSchedule && (
+          <button
+            onClick={onOpenSchedule}
+            title="Find course timetable schedule"
+            className="flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-sm font-semibold text-white shadow-2xs transition-colors hover:bg-white/25"
+          >
+            <span>📅</span>
+            <span>Schedule</span>
+          </button>
+        )}
+
         <button
           onClick={onPrint}
           title="Print report"
@@ -129,6 +145,7 @@ export function StudentBar({
         >
           Print
         </button>
+
 
         <button
           onClick={onBack}
