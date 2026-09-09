@@ -27,8 +27,9 @@ export default function RootLayout({
         <RemoteBanner />
         <div className="flex min-h-0 flex-1 flex-col">{children}</div>
         <footer className="flex-shrink-0 py-4 text-center text-md text-gray-400 print:hidden">
-          v0.7.0 +51
+          v0.7.1 +52
         </footer>
+
         <Analytics />
       </body>
     </html>

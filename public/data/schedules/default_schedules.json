@@ -1,0 +1,4332 @@
+[
+  {
+    "groupName": "2CS1",
+    "semester": 2,
+    "department": "CS",
+    "subGroup": "1",
+    "courses": [
+      {
+        "code": "EBA1204",
+        "title": "Calculus II",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "Th",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS1302",
+        "title": "Problem Solving and Programming",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Su",
+            "period": 4
+          },
+          {
+            "day": "Th",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "UNR1407",
+        "title": "Academic Writing",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Mo",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "UNR2101",
+        "title": "Communication and Presentation Skills",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS1001",
+        "title": "Discrete Structures",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 2
+          },
+          {
+            "day": "Mo",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "EBA1106",
+        "title": "Advanced Physics",
+        "slots": [
+          {
+            "day": "We",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CNC1401",
+        "title": "Entrepreneurship Skills",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "2CS2-Science",
+    "semester": 2,
+    "department": "CS",
+    "subGroup": "2-Science",
+    "courses": [
+      {
+        "code": "CCS1302",
+        "title": "Problem Solving and Programming",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "Mo",
+            "period": 6
+          },
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "EBA1110",
+        "title": "Physics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Su",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "EBA1203",
+        "title": "Calculus I",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Th",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "UNR1407",
+        "title": "Academic Writing",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Mo",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "UNR2101",
+        "title": "Communication and Presentation Skills",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS1001",
+        "title": "Discrete Structures",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 3
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CNC1401",
+        "title": "Entrepreneurship Skills",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "2CS3",
+    "semester": 2,
+    "department": "CS",
+    "subGroup": "3",
+    "courses": [
+      {
+        "code": "EBA1204",
+        "title": "Calculus II",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS1001",
+        "title": "Discrete Structures",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "EBA1106",
+        "title": "Advanced Physics",
+        "slots": [
+          {
+            "day": "We",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "3CS1",
+    "semester": 3,
+    "department": "CS",
+    "subGroup": "1",
+    "courses": [
+      {
+        "code": "EBA2203",
+        "title": "Probability & Statistics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "Tu",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS2303",
+        "title": "Object Oriented Programming",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Mo",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS2201",
+        "title": "Introduction to Networks",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 1
+          },
+          {
+            "day": "We",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "CIS2101",
+        "title": "Database Systems",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS2102",
+        "title": "Digital Logic Design",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 3
+          },
+          {
+            "day": "Mo",
+            "period": 5
+          },
+          {
+            "day": "We",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "EBA2204",
+        "title": "Linear Algebra",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "3CS2",
+    "semester": 3,
+    "department": "CS",
+    "subGroup": "2",
+    "courses": [
+      {
+        "code": "CCS2303",
+        "title": "Object Oriented Programming",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "EBA2203",
+        "title": "Probability & Statistics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Su",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS2102",
+        "title": "Digital Logic Design",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Su",
+            "period": 5
+          },
+          {
+            "day": "Mo",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CIS2101",
+        "title": "Database Systems",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 1
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "EBA2204",
+        "title": "Linear Algebra",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS2201",
+        "title": "Introduction to Networks",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 1
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "3CS3",
+    "semester": 3,
+    "department": "CS",
+    "subGroup": "3",
+    "courses": [
+      {
+        "code": "EBA2203",
+        "title": "Probability & Statistics",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS2102",
+        "title": "Digital Logic Design",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "Mo",
+            "period": 5
+          },
+          {
+            "day": "Tu",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CIS2101",
+        "title": "Database Systems",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 5
+          },
+          {
+            "day": "Tu",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS2303",
+        "title": "Object Oriented Programming",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          },
+          {
+            "day": "Th",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "EBA2204",
+        "title": "Linear Algebra",
+        "slots": [
+          {
+            "day": "We",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS2201",
+        "title": "Introduction to Networks",
+        "slots": [
+          {
+            "day": "We",
+            "period": 4
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "3CS4",
+    "semester": 3,
+    "department": "CS",
+    "subGroup": "4",
+    "courses": [
+      {
+        "code": "CCS2303",
+        "title": "Object Oriented Programming",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Su",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CIS2101",
+        "title": "Database Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "EBA2204",
+        "title": "Linear Algebra",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 1
+          },
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS2201",
+        "title": "Introduction to Networks",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Mo",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CCS2102",
+        "title": "Digital Logic Design",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 6
+          },
+          {
+            "day": "Mo",
+            "period": 4
+          },
+          {
+            "day": "Tu",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "EBA2203",
+        "title": "Probability & Statistics",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "3CS5",
+    "semester": 3,
+    "department": "CS",
+    "subGroup": "5",
+    "courses": [
+      {
+        "code": "EBA2203",
+        "title": "Probability & Statistics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Su",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS2303",
+        "title": "Object Oriented Programming",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS2201",
+        "title": "Introduction to Networks",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Tu",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CIS2101",
+        "title": "Database Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "We",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "EBA2204",
+        "title": "Linear Algebra",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Mo",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS2102",
+        "title": "Digital Logic Design",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 6
+          },
+          {
+            "day": "Mo",
+            "period": 6
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "3CS6",
+    "semester": 3,
+    "department": "CS",
+    "subGroup": "6",
+    "courses": [
+      {
+        "code": "CCS2102",
+        "title": "Digital Logic Design",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Mo",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CCS2303",
+        "title": "Object Oriented Programming",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Mo",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "EBA2203",
+        "title": "Probability & Statistics",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "Su",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "EBA2204",
+        "title": "Linear Algebra",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS2201",
+        "title": "Introduction to Networks",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 4
+          },
+          {
+            "day": "Tu",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CIS2101",
+        "title": "Database Systems",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 6
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "3CS7",
+    "semester": 3,
+    "department": "CS",
+    "subGroup": "7",
+    "courses": [
+      {
+        "code": "EBA2203",
+        "title": "Probability & Statistics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "Sa",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "EBA2204",
+        "title": "Linear Algebra",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CIS2101",
+        "title": "Database Systems",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 1
+          },
+          {
+            "day": "We",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CCS2303",
+        "title": "Object Oriented Programming",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Mo",
+            "period": 1
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS2201",
+        "title": "Introduction to Networks",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "Tu",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS2102",
+        "title": "Digital Logic Design",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 2
+          },
+          {
+            "day": "Mo",
+            "period": 5
+          },
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "3CS8",
+    "semester": 3,
+    "department": "CS",
+    "subGroup": "8",
+    "courses": [
+      {
+        "code": "EBA2204",
+        "title": "Linear Algebra",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "Tu",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "CIS2101",
+        "title": "Database Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 6
+          },
+          {
+            "day": "Su",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "EBA2203",
+        "title": "Probability & Statistics",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "Mo",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS2102",
+        "title": "Digital Logic Design",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 6
+          },
+          {
+            "day": "Tu",
+            "period": 5
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS2303",
+        "title": "Object Oriented Programming",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 1
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS2201",
+        "title": "Introduction to Networks",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "3CS9",
+    "semester": 3,
+    "department": "CS",
+    "subGroup": "9",
+    "courses": [
+      {
+        "code": "EBA2203",
+        "title": "Probability & Statistics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Mo",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS2201",
+        "title": "Introduction to Networks",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Su",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "EBA2204",
+        "title": "Linear Algebra",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 6
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS2303",
+        "title": "Object Oriented Programming",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "Mo",
+            "period": 4
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS2102",
+        "title": "Digital Logic Design",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 5
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          },
+          {
+            "day": "Tu",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CIS2101",
+        "title": "Database Systems",
+        "slots": [
+          {
+            "day": "We",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "3CS10",
+    "semester": 3,
+    "department": "CS",
+    "subGroup": "10",
+    "courses": [
+      {
+        "code": "EBA2203",
+        "title": "Probability & Statistics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "Sa",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS2201",
+        "title": "Introduction to Networks",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Su",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CCS2303",
+        "title": "Object Oriented Programming",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "Mo",
+            "period": 2
+          },
+          {
+            "day": "Mo",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CIS2101",
+        "title": "Database Systems",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 6
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS2102",
+        "title": "Digital Logic Design",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 6
+          },
+          {
+            "day": "We",
+            "period": 5
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "EBA2204",
+        "title": "Linear Algebra",
+        "slots": [
+          {
+            "day": "We",
+            "period": 2
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "3CS11",
+    "semester": 3,
+    "department": "CS",
+    "subGroup": "11",
+    "courses": [
+      {
+        "code": "CCS2303",
+        "title": "Object Oriented Programming",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "Su",
+            "period": 1
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS2201",
+        "title": "Introduction to Networks",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "EBA2203",
+        "title": "Probability & Statistics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Su",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CIS2101",
+        "title": "Database Systems",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 1
+          },
+          {
+            "day": "Th",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CCS2102",
+        "title": "Digital Logic Design",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 6
+          },
+          {
+            "day": "We",
+            "period": 5
+          },
+          {
+            "day": "We",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "EBA2204",
+        "title": "Linear Algebra",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 3
+          },
+          {
+            "day": "Th",
+            "period": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "3CS12",
+    "semester": 3,
+    "department": "CS",
+    "subGroup": "12",
+    "courses": [
+      {
+        "code": "CCS2303",
+        "title": "Object Oriented Programming",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Mo",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS2102",
+        "title": "Digital Logic Design",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Su",
+            "period": 5
+          },
+          {
+            "day": "Mo",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "EBA2203",
+        "title": "Probability & Statistics",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 1
+          },
+          {
+            "day": "Mo",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "CCS2201",
+        "title": "Introduction to Networks",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 4
+          },
+          {
+            "day": "Th",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "EBA2204",
+        "title": "Linear Algebra",
+        "slots": [
+          {
+            "day": "We",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CIS2101",
+        "title": "Database Systems",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 3
+          },
+          {
+            "day": "Th",
+            "period": 6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "3CS13",
+    "semester": 3,
+    "department": "CS",
+    "subGroup": "13",
+    "courses": [
+      {
+        "code": "EBA2203",
+        "title": "Probability & Statistics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CIS2101",
+        "title": "Database Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CCS2201",
+        "title": "Introduction to Networks",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS2303",
+        "title": "Object Oriented Programming",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 1
+          },
+          {
+            "day": "Mo",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS2102",
+        "title": "Digital Logic Design",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 3
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "EBA2204",
+        "title": "Linear Algebra",
+        "slots": [
+          {
+            "day": "We",
+            "period": 1
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "3CS14",
+    "semester": 3,
+    "department": "CS",
+    "subGroup": "14",
+    "courses": [
+      {
+        "code": "CCS2102",
+        "title": "Digital Logic Design",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Su",
+            "period": 5
+          },
+          {
+            "day": "Mo",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CIS2101",
+        "title": "Database Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Mo",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CCS2303",
+        "title": "Object Oriented Programming",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 1
+          },
+          {
+            "day": "Th",
+            "period": 1
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "EBA2204",
+        "title": "Linear Algebra",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "EBA2203",
+        "title": "Probability & Statistics",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 3
+          },
+          {
+            "day": "Tu",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS2201",
+        "title": "Introduction to Networks",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 6
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "3CS15",
+    "semester": 3,
+    "department": "CS",
+    "subGroup": "15",
+    "courses": [
+      {
+        "code": "CCS2201",
+        "title": "Introduction to Networks",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Su",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CIS2101",
+        "title": "Database Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Mo",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "EBA2204",
+        "title": "Linear Algebra",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Su",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS2303",
+        "title": "Object Oriented Programming",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "Th",
+            "period": 1
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS2102",
+        "title": "Digital Logic Design",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 6
+          },
+          {
+            "day": "Tu",
+            "period": 1
+          },
+          {
+            "day": "Tu",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "EBA2203",
+        "title": "Probability & Statistics",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 3
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "3CS16",
+    "semester": 3,
+    "department": "CS",
+    "subGroup": "16",
+    "courses": [
+      {
+        "code": "CCS2102",
+        "title": "Digital Logic Design",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CCS2303",
+        "title": "Object Oriented Programming",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Su",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "EBA2203",
+        "title": "Probability & Statistics",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 1
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS2201",
+        "title": "Introduction to Networks",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Mo",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CIS2101",
+        "title": "Database Systems",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "EBA2204",
+        "title": "Linear Algebra",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "3CS17",
+    "semester": 3,
+    "department": "CS",
+    "subGroup": "17",
+    "courses": [
+      {
+        "code": "CCS2102",
+        "title": "Digital Logic Design",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          },
+          {
+            "day": "Tu",
+            "period": 6
+          },
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS2303",
+        "title": "Object Oriented Programming",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS2201",
+        "title": "Introduction to Networks",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Th",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "CIS2101",
+        "title": "Database Systems",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 4
+          },
+          {
+            "day": "We",
+            "period": 6
+          },
+          {
+            "day": "Th",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "EBA2203",
+        "title": "Probability & Statistics",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 1
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "EBA2204",
+        "title": "Linear Algebra",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "4CS1",
+    "semester": 4,
+    "department": "CS",
+    "subGroup": "1",
+    "courses": [
+      {
+        "code": "CCS2103",
+        "title": "Introduction to Computer Architecture",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS2401",
+        "title": "Data Structures and Algorithms",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CSE2001",
+        "title": "Introduction to Software Engineering",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "Su",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS2304",
+        "title": "Advanced Programming Applications",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 1
+          },
+          {
+            "day": "Su",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCY2001",
+        "title": "Introduction to Cybersecurity",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 6
+          },
+          {
+            "day": "We",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CCS2305",
+        "title": "Web Programming",
+        "slots": [
+          {
+            "day": "We",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "4CS2",
+    "semester": 4,
+    "department": "CS",
+    "subGroup": "2",
+    "courses": [
+      {
+        "code": "CCS2103",
+        "title": "Introduction to Computer Architecture",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS2304",
+        "title": "Advanced Programming Applications",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Su",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "CSE2001",
+        "title": "Introduction to Software Engineering",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Su",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS2401",
+        "title": "Data Structures and Algorithms",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCY2001",
+        "title": "Introduction to Cybersecurity",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 5
+          },
+          {
+            "day": "We",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CCS2305",
+        "title": "Web Programming",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "4CS3",
+    "semester": 4,
+    "department": "CS",
+    "subGroup": "3",
+    "courses": [
+      {
+        "code": "CCS2103",
+        "title": "Introduction to Computer Architecture",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCY2001",
+        "title": "Introduction to Cybersecurity",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Su",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CCS2304",
+        "title": "Advanced Programming Applications",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS2401",
+        "title": "Data Structures and Algorithms",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "Tu",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "CCS2305",
+        "title": "Web Programming",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CSE2001",
+        "title": "Introduction to Software Engineering",
+        "slots": [
+          {
+            "day": "We",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "4CS4",
+    "semester": 4,
+    "department": "CS",
+    "subGroup": "4",
+    "courses": [
+      {
+        "code": "CCS2103",
+        "title": "Introduction to Computer Architecture",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "Th",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "CCY2001",
+        "title": "Introduction to Cybersecurity",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Su",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CSE2001",
+        "title": "Introduction to Software Engineering",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS2304",
+        "title": "Advanced Programming Applications",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS2401",
+        "title": "Data Structures and Algorithms",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 4
+          },
+          {
+            "day": "Tu",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "CCS2305",
+        "title": "Web Programming",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5CS1",
+    "semester": 5,
+    "department": "CS",
+    "subGroup": "1",
+    "courses": [
+      {
+        "code": "EBA3202",
+        "title": "Differential Equations",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS3202",
+        "title": "Systems Programming",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Th",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CCS3402",
+        "title": "Theory of Computation",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 1
+          },
+          {
+            "day": "Tu",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 4
+          },
+          {
+            "day": "Mo",
+            "period": 6
+          },
+          {
+            "day": "Tu",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5CS2",
+    "semester": 5,
+    "department": "CS",
+    "subGroup": "2",
+    "courses": [
+      {
+        "code": "EBA3202",
+        "title": "Differential Equations",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 1
+          },
+          {
+            "day": "Tu",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS3402",
+        "title": "Theory of Computation",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS3202",
+        "title": "Systems Programming",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 3
+          },
+          {
+            "day": "Th",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 4
+          },
+          {
+            "day": "We",
+            "period": 4
+          },
+          {
+            "day": "Th",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "We",
+            "period": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5IS",
+    "semester": 5,
+    "department": "IS",
+    "subGroup": "1",
+    "courses": [
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CNC3402",
+        "title": "Introduction to Accounting",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "Sa",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CIS3001",
+        "title": "Systems Analysis & Design",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CIS3002",
+        "title": "Information Systems Theory & Practice",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 4
+          },
+          {
+            "day": "We",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5SE1",
+    "semester": 5,
+    "department": "SE",
+    "subGroup": "1",
+    "courses": [
+      {
+        "code": "CSE3101",
+        "title": "Software Requirements and Specifications",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "EBA3202",
+        "title": "Differential Equations",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Mo",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Mo",
+            "period": 1
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CSE3402",
+        "title": "Project Management",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 3
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "We",
+            "period": 2
+          },
+          {
+            "day": "Th",
+            "period": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5SE2",
+    "semester": 5,
+    "department": "SE",
+    "subGroup": "2",
+    "courses": [
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 1
+          },
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "EBA3202",
+        "title": "Differential Equations",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 1
+          },
+          {
+            "day": "Mo",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CSE3402",
+        "title": "Project Management",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 2
+          },
+          {
+            "day": "Th",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CSE3101",
+        "title": "Software Requirements and Specifications",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5SE3",
+    "semester": 5,
+    "department": "SE",
+    "subGroup": "3",
+    "courses": [
+      {
+        "code": "CSE3101",
+        "title": "Software Requirements and Specifications",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Mo",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "Su",
+            "period": 1
+          },
+          {
+            "day": "Mo",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "EBA3202",
+        "title": "Differential Equations",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "CSE3402",
+        "title": "Project Management",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "We",
+            "period": 2
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5SE4",
+    "semester": 5,
+    "department": "SE",
+    "subGroup": "4",
+    "courses": [
+      {
+        "code": "CSE3402",
+        "title": "Project Management",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CSE3101",
+        "title": "Software Requirements and Specifications",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "EBA3202",
+        "title": "Differential Equations",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "Mo",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 4
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 1
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5SE5",
+    "semester": 5,
+    "department": "SE",
+    "subGroup": "5",
+    "courses": [
+      {
+        "code": "CSE3402",
+        "title": "Project Management",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "EBA3202",
+        "title": "Differential Equations",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Mo",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 1
+          },
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Mo",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CSE3101",
+        "title": "Software Requirements and Specifications",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 4
+          },
+          {
+            "day": "Tu",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5SE6",
+    "semester": 5,
+    "department": "SE",
+    "subGroup": "6",
+    "courses": [
+      {
+        "code": "CSE3101",
+        "title": "Software Requirements and Specifications",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Tu",
+            "period": 1
+          },
+          {
+            "day": "We",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "EBA3202",
+        "title": "Differential Equations",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CSE3402",
+        "title": "Project Management",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 1
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5SE7",
+    "semester": 5,
+    "department": "SE",
+    "subGroup": "7",
+    "courses": [
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 3
+          },
+          {
+            "day": "Th",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "EBA3202",
+        "title": "Differential Equations",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 3
+          },
+          {
+            "day": "Mo",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CSE3101",
+        "title": "Software Requirements and Specifications",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 4
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CSE3402",
+        "title": "Project Management",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 6
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5CY1",
+    "semester": 5,
+    "department": "CY",
+    "subGroup": "1",
+    "courses": [
+      {
+        "code": "CCY3501",
+        "title": "Cybersecurity Law and Ethics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Su",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Mo",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CCY3101",
+        "title": "Software Security",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "Su",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 4
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCY3002",
+        "title": "Introduction to Cryptography",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 6
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5CY2",
+    "semester": 5,
+    "department": "CY",
+    "subGroup": "2",
+    "courses": [
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCY3101",
+        "title": "Software Security",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "Mo",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 4
+          },
+          {
+            "day": "Th",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 4
+          },
+          {
+            "day": "Tu",
+            "period": 4
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCY3002",
+        "title": "Introduction to Cryptography",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 6
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCY3501",
+        "title": "Cybersecurity Law and Ethics",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 5
+          },
+          {
+            "day": "Th",
+            "period": 6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5CY3",
+    "semester": 5,
+    "department": "CY",
+    "subGroup": "3",
+    "courses": [
+      {
+        "code": "CCY3101",
+        "title": "Software Security",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Mo",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CCY3002",
+        "title": "Introduction to Cryptography",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "Su",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 5
+          },
+          {
+            "day": "Th",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CCY3501",
+        "title": "Cybersecurity Law and Ethics",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 6
+          },
+          {
+            "day": "Th",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "We",
+            "period": 1
+          },
+          {
+            "day": "We",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5CY4",
+    "semester": 5,
+    "department": "CY",
+    "subGroup": "4",
+    "courses": [
+      {
+        "code": "CCY3002",
+        "title": "Introduction to Cryptography",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 6
+          },
+          {
+            "day": "Su",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CCY3101",
+        "title": "Software Security",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 4
+          },
+          {
+            "day": "Mo",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CCY3501",
+        "title": "Cybersecurity Law and Ethics",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 5
+          },
+          {
+            "day": "Th",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "We",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 4
+          },
+          {
+            "day": "Th",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "We",
+            "period": 5
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5CY5",
+    "semester": 5,
+    "department": "CY",
+    "subGroup": "5",
+    "courses": [
+      {
+        "code": "CCY3501",
+        "title": "Cybersecurity Law and Ethics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Su",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CCY3002",
+        "title": "Introduction to Cryptography",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "Tu",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CCY3101",
+        "title": "Software Security",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 6
+          },
+          {
+            "day": "Mo",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 5
+          },
+          {
+            "day": "We",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 4
+          },
+          {
+            "day": "We",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5CY6",
+    "semester": 5,
+    "department": "CY",
+    "subGroup": "6",
+    "courses": [
+      {
+        "code": "CCY3101",
+        "title": "Software Security",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Tu",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "Mo",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CCY3002",
+        "title": "Introduction to Cryptography",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 6
+          },
+          {
+            "day": "Mo",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 4
+          },
+          {
+            "day": "Mo",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCY3501",
+        "title": "Cybersecurity Law and Ethics",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 4
+          },
+          {
+            "day": "Tu",
+            "period": 6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5CY7",
+    "semester": 5,
+    "department": "CY",
+    "subGroup": "7",
+    "courses": [
+      {
+        "code": "CCY3501",
+        "title": "Cybersecurity Law and Ethics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Su",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "Mo",
+            "period": 4
+          },
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCY3101",
+        "title": "Software Security",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 6
+          },
+          {
+            "day": "Mo",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCY3002",
+        "title": "Introduction to Cryptography",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 6
+          },
+          {
+            "day": "Tu",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 5
+          },
+          {
+            "day": "Tu",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5AI1",
+    "semester": 5,
+    "department": "AI",
+    "subGroup": "1",
+    "courses": [
+      {
+        "code": "CAI3401",
+        "title": "Fundamentals of Robotics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Mo",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "Su",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 1
+          },
+          {
+            "day": "Tu",
+            "period": 4
+          },
+          {
+            "day": "We",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "EBA3201",
+        "title": "Advanced Statistics",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Mo",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CAI3002",
+        "title": "Mathematical Foundations of AI",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 3
+          },
+          {
+            "day": "Tu",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5AI2",
+    "semester": 5,
+    "department": "AI",
+    "subGroup": "2",
+    "courses": [
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Mo",
+            "period": 5
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CAI3401",
+        "title": "Fundamentals of Robotics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "Mo",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "EBA3201",
+        "title": "Advanced Statistics",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Su",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 4
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CAI3002",
+        "title": "Mathematical Foundations of AI",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 4
+          },
+          {
+            "day": "Tu",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "5AI3",
+    "semester": 5,
+    "department": "AI",
+    "subGroup": "3",
+    "courses": [
+      {
+        "code": "CCS3203",
+        "title": "Operating Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "Mo",
+            "period": 3
+          },
+          {
+            "day": "Th",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CAI3401",
+        "title": "Fundamentals of Robotics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Mo",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "CAI3101",
+        "title": "Introduction to Artificial Intelligence",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Th",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "EBA3201",
+        "title": "Advanced Statistics",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 4
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CAI3002",
+        "title": "Mathematical Foundations of AI",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CIT3200",
+        "title": "Professional Training in Mobile Apps Programming",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "8SE1",
+    "semester": 8,
+    "department": "SE",
+    "subGroup": "1",
+    "courses": [
+      {
+        "code": "CSE4407",
+        "title": "Software Risk Management",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CSE4302",
+        "title": "Software Quality Assurance",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 4
+          },
+          {
+            "day": "We",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CCS4204",
+        "title": "Computer System Security",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 6
+          },
+          {
+            "day": "Tu",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CSE4401",
+        "title": "Software Engineering Process",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 5
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CIT4103",
+        "title": "Professional Training in Software Testing III",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "8IS1",
+    "semester": 8,
+    "department": "IS",
+    "subGroup": "1",
+    "courses": [
+      {
+        "code": "CIS4104",
+        "title": "Distributed Database Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Sa",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CIT4903",
+        "title": "Professional Training in Data Science III",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CIS4105",
+        "title": "Knowledge Management",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 4
+          },
+          {
+            "day": "Th",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "CCS4204",
+        "title": "Computer System Security",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 6
+          },
+          {
+            "day": "Tu",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CIS4303",
+        "title": "Decision Support Systems",
+        "slots": [
+          {
+            "day": "We",
+            "period": 6
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      }
+    ]
+  }
+]

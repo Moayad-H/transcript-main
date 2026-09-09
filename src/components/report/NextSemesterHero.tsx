@@ -17,9 +17,15 @@ import { RegisterSection } from "./RegisterSection";
 interface NextSemesterHeroProps {
   report: AnalysisReport;
   className?: string;
+  onOpenSchedule?: () => void;
 }
 
-export function NextSemesterHero({ report, className = "" }: NextSemesterHeroProps) {
+export function NextSemesterHero({
+  report,
+  className = "",
+  onOpenSchedule,
+}: NextSemesterHeroProps) {
+
   // Determine standard cap and academic standing
   const cap = report.onProbation
     ? PROBATION_HALF_LOAD_CREDITS
@@ -278,6 +284,17 @@ export function NextSemesterHero({ report, className = "" }: NextSemesterHeroPro
       className={className}
       actions={
         <div className="flex items-center gap-2 print:hidden">
+          {onOpenSchedule && (
+            <button
+              type="button"
+              onClick={onOpenSchedule}
+              className="flex items-center gap-1 rounded border border-blue-600 bg-blue-600 px-2.5 py-0.5 text-[11px] font-bold text-white shadow-xs hover:bg-blue-700 transition-colors"
+              title="Find timetable schedule and conflict-free groups for recommended courses"
+            >
+              <span>📅</span>
+              <span>Find Schedule</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setShowGuide(!showGuide)}
@@ -295,6 +312,7 @@ export function NextSemesterHero({ report, className = "" }: NextSemesterHeroPro
           </button>
         </div>
       }
+
     >
       {/* 1. Advising Standing & Registration Blueprint Banner */}
       <div

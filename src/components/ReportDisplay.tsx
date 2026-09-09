@@ -12,6 +12,8 @@ import { AlertStrip } from "./report/AlertStrip";
 import { NextSemesterHero } from "./report/NextSemesterHero";
 import { RequirementsCard } from "./report/RequirementsCard";
 import { AcademicAuditCard } from "./report/AcademicAuditCard";
+import { ScheduleFinderModal } from "./schedule/ScheduleFinderModal";
+
 
 // Client-only: React Flow measures the DOM, so keep it out of the static export prerender.
 const CourseGraphView = dynamic(() => import("./CourseGraphView"), {
@@ -41,6 +43,8 @@ export function ReportDisplay({
 }: ReportDisplayProps) {
   const [view, setView] = useState<"report" | "graph">("report");
   const [graph, setGraph] = useState<CourseGraph | null>(initialGraph || null);
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+
 
   // Sync initial graph if provided
   useEffect(() => {
@@ -154,6 +158,7 @@ export function ReportDisplay({
           onBack={onReset}
           onPrint={handlePrint}
           onDepartmentChange={onDepartmentChange}
+          onOpenSchedule={() => setIsScheduleOpen(true)}
         />
 
         {view === "graph" ? (
@@ -173,8 +178,10 @@ export function ReportDisplay({
                 <NextSemesterHero
                   report={report}
                   className="min-h-[22rem] xl:min-h-0 xl:h-full"
+                  onOpenSchedule={() => setIsScheduleOpen(true)}
                 />
               </div>
+
 
               {/* Zone 2: Degree Audit & Diagnostics */}
               <div className="flex min-h-0 flex-col gap-3 xl:col-span-5 xl:h-full">
@@ -202,6 +209,15 @@ export function ReportDisplay({
           />
         </div>
       )}
+
+      {/* Timetable Schedule Finder Modal */}
+      <ScheduleFinderModal
+        isOpen={isScheduleOpen}
+        onClose={() => setIsScheduleOpen(false)}
+        report={report}
+        department={transcriptData.department}
+      />
     </div>
   );
 }
+

@@ -45,8 +45,9 @@ export function Header({
               ERSHAD
             </h1>
             <span className="rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-bold text-blue-100">
-              v0.7.0
+              v0.7.1
             </span>
+
           </div>
           {compact ? (
             <p className="text-[11px] text-blue-200">
