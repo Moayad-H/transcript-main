@@ -1,5 +1,1209 @@
 [
   {
+    "groupName": "1CS1",
+    "semester": 1,
+    "department": "CS",
+    "subGroup": "1",
+    "courses": [
+      {
+        "code": "EBA1110",
+        "title": "Physics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "EBA1203",
+        "title": "Calculus I",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "CCS1101",
+        "title": "Introduction to Computing",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 1
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CIS1000",
+        "title": "Introduction to Information Systems",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "UNR1102",
+        "title": "Creativity and Innovation",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "UNR1403",
+        "title": "Academic English",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 4
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "UNR1302",
+        "title": "Fundamentals of Business",
+        "slots": [
+          {
+            "day": "We",
+            "period": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "1CS2",
+    "semester": 1,
+    "department": "CS",
+    "subGroup": "2",
+    "courses": [
+      {
+        "code": "UNR1302",
+        "title": "Fundamentals of Business",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "EBA1110",
+        "title": "Physics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS1101",
+        "title": "Introduction to Computing",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "We",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "EBA1203",
+        "title": "Calculus I",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 1
+          },
+          {
+            "day": "Tu",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "UNR1403",
+        "title": "Academic English",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CIS1000",
+        "title": "Introduction to Information Systems",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 1
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "UNR1102",
+        "title": "Creativity and Innovation",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "1CS3",
+    "semester": 1,
+    "department": "CS",
+    "subGroup": "3",
+    "courses": [
+      {
+        "code": "EBA1203",
+        "title": "Calculus I",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS1101",
+        "title": "Introduction to Computing",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Th",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "UNR1403",
+        "title": "Academic English",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 3
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CIS1000",
+        "title": "Introduction to Information Systems",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 4
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "EBA1110",
+        "title": "Physics",
+        "slots": [
+          {
+            "day": "We",
+            "period": 1
+          },
+          {
+            "day": "Th",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "UNR1102",
+        "title": "Creativity and Innovation",
+        "slots": [
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "UNR1302",
+        "title": "Fundamentals of Business",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "1CS4",
+    "semester": 1,
+    "department": "CS",
+    "subGroup": "4",
+    "courses": [
+      {
+        "code": "CCS1101",
+        "title": "Introduction to Computing",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "Mo",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "CIS1000",
+        "title": "Introduction to Information Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Mo",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "EBA1110",
+        "title": "Physics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "EBA1203",
+        "title": "Calculus I",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 3
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "UNR1403",
+        "title": "Academic English",
+        "slots": [
+          {
+            "day": "We",
+            "period": 1
+          },
+          {
+            "day": "Th",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "UNR1102",
+        "title": "Creativity and Innovation",
+        "slots": [
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "UNR1302",
+        "title": "Fundamentals of Business",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "1CS5",
+    "semester": 1,
+    "department": "CS",
+    "subGroup": "5",
+    "courses": [
+      {
+        "code": "CIS1000",
+        "title": "Introduction to Information Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          },
+          {
+            "day": "Tu",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "EBA1203",
+        "title": "Calculus I",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "EBA1110",
+        "title": "Physics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 6
+          },
+          {
+            "day": "We",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "CCS1101",
+        "title": "Introduction to Computing",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 3
+          },
+          {
+            "day": "Tu",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "UNR1403",
+        "title": "Academic English",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 4
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "UNR1302",
+        "title": "Fundamentals of Business",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "UNR1501",
+        "title": "Art Appreciation",
+        "slots": [
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "1CS6",
+    "semester": 1,
+    "department": "CS",
+    "subGroup": "6",
+    "courses": [
+      {
+        "code": "CIS1000",
+        "title": "Introduction to Information Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "We",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "EBA1110",
+        "title": "Physics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "Su",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "UNR1403",
+        "title": "Academic English",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Tu",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "EBA1203",
+        "title": "Calculus I",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "Tu",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CCS1101",
+        "title": "Introduction to Computing",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 4
+          },
+          {
+            "day": "Tu",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "UNR1501",
+        "title": "Art Appreciation",
+        "slots": [
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "UNR1302",
+        "title": "Fundamentals of Business",
+        "slots": [
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "1CS7",
+    "semester": 1,
+    "department": "CS",
+    "subGroup": "7",
+    "courses": [
+      {
+        "code": "EBA1110",
+        "title": "Physics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 1
+          },
+          {
+            "day": "Su",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CIS1000",
+        "title": "Introduction to Information Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS1101",
+        "title": "Introduction to Computing",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 1
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "EBA1203",
+        "title": "Calculus I",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "UNR1403",
+        "title": "Academic English",
+        "slots": [
+          {
+            "day": "We",
+            "period": 3
+          },
+          {
+            "day": "Th",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "GLA0001",
+        "title": "Remedial English",
+        "slots": [
+          {
+            "day": "We",
+            "period": 3
+          },
+          {
+            "day": "Th",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "UNR1501",
+        "title": "Art Appreciation",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "UNR1302",
+        "title": "Fundamentals of Business",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "1CS8",
+    "semester": 1,
+    "department": "CS",
+    "subGroup": "8",
+    "courses": [
+      {
+        "code": "EBA1110",
+        "title": "Physics",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Sa",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "EBA1203",
+        "title": "Calculus I",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 6
+          },
+          {
+            "day": "Mo",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "GLA0001",
+        "title": "Remedial English",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 2
+          },
+          {
+            "day": "Mo",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CIS1000",
+        "title": "Introduction to Information Systems",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "Mo",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "UNR1302",
+        "title": "Fundamentals of Business",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS1101",
+        "title": "Introduction to Computing",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 1
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "UNR1501",
+        "title": "Art Appreciation",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "1CS9",
+    "semester": 1,
+    "department": "CS",
+    "subGroup": "9",
+    "courses": [
+      {
+        "code": "EBA1110",
+        "title": "Physics",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "UNR1403",
+        "title": "Academic English",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 4
+          },
+          {
+            "day": "Th",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "UNR1302",
+        "title": "Fundamentals of Business",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 6
+          }
+        ]
+      },
+      {
+        "code": "EBA1203",
+        "title": "Calculus I",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 2
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS1101",
+        "title": "Introduction to Computing",
+        "slots": [
+          {
+            "day": "Tu",
+            "period": 3
+          },
+          {
+            "day": "Tu",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CIS1000",
+        "title": "Introduction to Information Systems",
+        "slots": [
+          {
+            "day": "We",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "UNR1501",
+        "title": "Art Appreciation",
+        "slots": [
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "1SCIENCE1",
+    "semester": 1,
+    "department": "PSCS",
+    "subGroup": "1",
+    "courses": [
+      {
+        "code": "UNR1302",
+        "title": "Fundamentals of Business",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CIS1000",
+        "title": "Introduction to Information Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 3
+          },
+          {
+            "day": "Sa",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "UNR1403",
+        "title": "Academic English",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 4
+          },
+          {
+            "day": "We",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "CCS1101",
+        "title": "Introduction to Computing",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 1
+          },
+          {
+            "day": "Th",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "UNR1501",
+        "title": "Art Appreciation",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "EBA1300",
+        "title": "Biochemistry",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 4
+          },
+          {
+            "day": "We",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "EBA0201",
+        "title": "Precalculus",
+        "slots": [
+          {
+            "day": "Th",
+            "period": 3
+          },
+          {
+            "day": "Th",
+            "period": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "1SCIENCE2",
+    "semester": 1,
+    "department": "PSCS",
+    "subGroup": "2",
+    "courses": [
+      {
+        "code": "CCS1101",
+        "title": "Introduction to Computing",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "Mo",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "CIS1000",
+        "title": "Introduction to Information Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 6
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "EBA0201",
+        "title": "Precalculus",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 4
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "UNR1302",
+        "title": "Fundamentals of Business",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "UNR1501",
+        "title": "Art Appreciation",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "EBA1300",
+        "title": "Biochemistry",
+        "slots": [
+          {
+            "day": "We",
+            "period": 2
+          },
+          {
+            "day": "We",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "UNR1403",
+        "title": "Academic English",
+        "slots": [
+          {
+            "day": "We",
+            "period": 3
+          },
+          {
+            "day": "Th",
+            "period": 1
+          }
+        ]
+      },
+      {
+        "code": "GLA0001",
+        "title": "Remedial English",
+        "slots": [
+          {
+            "day": "We",
+            "period": 3
+          },
+          {
+            "day": "Th",
+            "period": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "groupName": "1SCIENCE3",
+    "semester": 1,
+    "department": "PSCS",
+    "subGroup": "3",
+    "courses": [
+      {
+        "code": "UNR1302",
+        "title": "Fundamentals of Business",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CIS1000",
+        "title": "Introduction to Information Systems",
+        "slots": [
+          {
+            "day": "Sa",
+            "period": 5
+          },
+          {
+            "day": "Th",
+            "period": 2
+          }
+        ]
+      },
+      {
+        "code": "EBA0201",
+        "title": "Precalculus",
+        "slots": [
+          {
+            "day": "Su",
+            "period": 5
+          },
+          {
+            "day": "Th",
+            "period": 4
+          }
+        ]
+      },
+      {
+        "code": "CCS1101",
+        "title": "Introduction to Computing",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 2
+          },
+          {
+            "day": "Th",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "UNR1501",
+        "title": "Art Appreciation",
+        "slots": [
+          {
+            "day": "Mo",
+            "period": 3
+          }
+        ]
+      },
+      {
+        "code": "EBA1300",
+        "title": "Biochemistry",
+        "slots": [
+          {
+            "day": "We",
+            "period": 3
+          },
+          {
+            "day": "We",
+            "period": 5
+          }
+        ]
+      },
+      {
+        "code": "UNR1403",
+        "title": "Academic English",
+        "slots": [
+          {
+            "day": "We",
+            "period": 4
+          },
+          {
+            "day": "Th",
+            "period": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
     "groupName": "2CS1",
     "semester": 2,
     "department": "CS",

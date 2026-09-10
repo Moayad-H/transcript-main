@@ -40,8 +40,8 @@ const DAY_ALIASES: Record<string, DayOfWeek> = {
 // Course code pattern e.g. CCS1302, EBA1204, UNR2101, CIT3200, CSE2001, 1EBA0201, 2GLA0001
 const COURSE_CODE_REGEX = /\b([1-2]?[A-Z]{2,4}\s*\d{3,4}[A-Z]?)\b/i;
 
-// Group name pattern e.g. 2CS1, 2CS2-Science, 3CS12, 5SE4, 5IS, 8IS1
-const GROUP_NAME_REGEX = /\b([1-8])([A-Za-z]{2,4})([0-9A-Za-z\-_]*)\b/;
+// Group name pattern e.g. 2CS1, 2CS2-Science, 3CS12, 5SE4, 5IS, 8IS1, 1SCIENCE1
+const GROUP_NAME_REGEX = /\b([1-8])(SCIENCE|[A-Za-z]{2,4})([0-9A-Za-z\-_]*)\b/i;
 
 /**
  * Parse an uploaded PDF timetable file
@@ -110,7 +110,8 @@ function parsePageSchedule(
       if (/college|academy|timetables|cairo|street/i.test(raw)) continue;
       detectedGroupName = raw;
       semester = parseInt(match[1], 10);
-      department = match[2].toUpperCase();
+      const rawDept = match[2].toUpperCase();
+      department = rawDept === "SCIENCE" ? "PSCS" : rawDept;
       subGroup = match[3] || "";
       break;
     }
