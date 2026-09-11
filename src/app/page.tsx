@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FileUpload } from "@/components/FileUpload";
 import { ReportDisplay } from "@/components/ReportDisplay";
 import { Header } from "@/components/Header";
@@ -26,6 +26,22 @@ import {
 import { CourseGraph, buildCourseGraph } from "@/lib/analysis/courseGraphBuilder";
 import { BatchGraphView } from "@/components/batch/BatchGraphView";
 import { AdvisorGuideModal } from "@/components/AdvisorGuideModal";
+import { SavedStudentRecord } from "@/types/savedStudent";
+import {
+  createSavedStudentRecord,
+  saveStudentLocal,
+  saveBatchStudentsLocal,
+  getSavedStudentsLocal,
+  deleteSavedStudentLocal,
+  exportStudentsJSON,
+  importStudentsJSON,
+  syncSavedStudents,
+  syncStudentUpToCloud,
+  syncBatchStudentsUpToCloud,
+  deleteStudentFromCloud,
+} from "@/lib/storage/studentStorage";
+import { RecentStudentsBar } from "@/components/students/RecentStudentsBar";
+import { SavedStudentsModal } from "@/components/students/SavedStudentsModal";
 
 type Step = "upload" | "report" | "batch";
 
@@ -51,6 +67,21 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
 
+  // Saved students (advisee roster) state
+  const [savedStudents, setSavedStudents] = useState<SavedStudentRecord[]>([]);
+  const [isSavedModalOpen, setIsSavedModalOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatusMessage, setSyncStatusMessage] = useState<string | null>(null);
+
+  const refreshSavedStudents = useCallback(async (staffId: string) => {
+    try {
+      const list = await getSavedStudentsLocal(staffId);
+      setSavedStudents(list);
+    } catch (err) {
+      console.warn("Could not load saved students:", err);
+    }
+  }, []);
+
   const handleOpenGuide = (source: "header" | "banner" | "first_login" = "header") => {
     setIsGuideOpen(true);
     logAdvisorAction({
@@ -64,17 +95,37 @@ export default function Home() {
     setAdvisor(session);
     setSessionChecked(true);
 
-    if (session && typeof window !== "undefined") {
-      const guideKey = `ershad_guide_seen_${session.staff_id}`;
-      if (!window.localStorage.getItem(guideKey)) {
-        handleOpenGuide("first_login");
+    if (session) {
+      refreshSavedStudents(session.staff_id);
+      syncSavedStudents(session.staff_id)
+        .then((res) => {
+          if (res.syncedCount > 0) {
+            refreshSavedStudents(session.staff_id);
+          }
+        })
+        .catch(() => {});
+
+      if (typeof window !== "undefined") {
+        const guideKey = `ershad_guide_seen_${session.staff_id}`;
+        if (!window.localStorage.getItem(guideKey)) {
+          handleOpenGuide("first_login");
+        }
       }
     }
-  }, []);
+  }, [refreshSavedStudents]);
 
   const handleLogin = (session: AdvisorSession) => {
     saveSession(session);
     setAdvisor(session);
+    refreshSavedStudents(session.staff_id);
+    syncSavedStudents(session.staff_id)
+      .then((res) => {
+        if (res.syncedCount > 0) {
+          refreshSavedStudents(session.staff_id);
+        }
+      })
+      .catch(() => {});
+
     logAdvisorAction({
       action: "LOGIN",
       staffId: session.staff_id,
@@ -104,8 +155,126 @@ export default function Home() {
     setBatchStudents([]);
     setBatchErrors([]);
     setBatchProgress(null);
+    setSavedStudents([]);
+    setIsSavedModalOpen(false);
     setError(null);
     setIsGuideOpen(false);
+  };
+
+  const handleSelectSavedStudent = async (saved: SavedStudentRecord) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = saved.transcriptData;
+      setTranscriptData(data);
+
+      const generatedReport = await generateReport(
+        data.studentId,
+        data.studentName,
+        data.department,
+        data
+      );
+      setReport(generatedReport);
+      setSingleFileName(`${data.studentName.replace(/\s+/g, "_")}_${data.studentId}.pdf`);
+      setBatchStudentIndex(undefined);
+      setBatchTotalStudents(undefined);
+
+      try {
+        const g = await buildCourseGraph(data.department, data, generatedReport);
+        setSingleGraph(g);
+      } catch (graphErr) {
+        console.warn("Could not pre-build graph for saved student:", graphErr);
+      }
+
+      setStep("report");
+      setIsSavedModalOpen(false);
+
+      logAdvisorAction({
+        action: "SAVED_STUDENT_LOADED",
+        studentId: data.studentId,
+        studentName: data.studentName,
+        department: data.department,
+        metadata: {
+          gpa: data.gpa,
+          totalCreditHours: generatedReport.totalCreditHours,
+          onProbation: generatedReport.onProbation,
+        },
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load saved student");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteSavedStudent = async (studentId: string) => {
+    if (!advisor) return;
+    try {
+      await deleteSavedStudentLocal(advisor.staff_id, studentId);
+      await deleteStudentFromCloud(advisor.staff_id, studentId);
+      await refreshSavedStudents(advisor.staff_id);
+      logAdvisorAction({
+        action: "STUDENT_DELETED",
+        studentId,
+      });
+    } catch (err) {
+      console.warn("Could not delete saved student:", err);
+    }
+  };
+
+  const handleSync = async () => {
+    if (!advisor) return;
+    setIsSyncing(true);
+    setSyncStatusMessage(null);
+    try {
+      const res = await syncSavedStudents(advisor.staff_id);
+      await refreshSavedStudents(advisor.staff_id);
+      if (res.success) {
+        setSyncStatusMessage(
+          `Cloud sync complete. ${res.localCount} advisees stored (${res.syncedCount} records synced).`
+        );
+      } else {
+        setSyncStatusMessage(`Sync notice: ${res.error || "Could not complete cloud sync"}`);
+      }
+      logAdvisorAction({
+        action: "ROSTER_SYNCED",
+        metadata: { syncedCount: res.syncedCount, localCount: res.localCount },
+      });
+    } catch (err) {
+      setSyncStatusMessage(err instanceof Error ? err.message : "Sync error");
+    } finally {
+      setIsSyncing(false);
+      setTimeout(() => setSyncStatusMessage(null), 5000);
+    }
+  };
+
+  const handleExport = async () => {
+    if (!advisor) return;
+    try {
+      const jsonStr = await exportStudentsJSON(advisor.staff_id);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ershad_advisees_${advisor.staff_id}_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      logAdvisorAction({ action: "ROSTER_EXPORTED" });
+    } catch (err) {
+      alert("Failed to export advisees JSON: " + (err instanceof Error ? err.message : String(err)));
+    }
+  };
+
+  const handleImport = async (jsonString: string) => {
+    if (!advisor) return 0;
+    const count = await importStudentsJSON(advisor.staff_id, jsonString);
+    await refreshSavedStudents(advisor.staff_id);
+    const updated = await getSavedStudentsLocal(advisor.staff_id);
+    syncBatchStudentsUpToCloud(updated).catch(() => {});
+    logAdvisorAction({ action: "ROSTER_IMPORTED", metadata: { count } });
+    return count;
   };
 
   const handleCloseGuide = () => {
@@ -161,6 +330,23 @@ export default function Home() {
 
       setStep("report");
 
+      // Auto-save advisee to local IndexedDB & sync to cloud
+      if (advisor) {
+        const savedRecord = createSavedStudentRecord(
+          advisor.staff_id,
+          data,
+          generatedReport
+        );
+        saveStudentLocal(savedRecord)
+          .then(() => {
+            refreshSavedStudents(advisor.staff_id);
+            syncStudentUpToCloud(savedRecord);
+          })
+          .catch((saveErr) =>
+            console.warn("Could not auto-save student locally:", saveErr)
+          );
+      }
+
       logAdvisorAction({
         action: "TRANSCRIPT_PARSED",
         studentId: data.studentId,
@@ -208,6 +394,21 @@ export default function Home() {
       setBatchStudents(result.students);
       setBatchErrors(result.errors);
       setStep("batch");
+
+      // Auto-save batch advisees to local IndexedDB & sync to cloud
+      if (advisor && result.students.length > 0) {
+        const savedRecords = result.students.map((s) =>
+          createSavedStudentRecord(advisor.staff_id, s.transcriptData, s.report)
+        );
+        saveBatchStudentsLocal(savedRecords)
+          .then(() => {
+            refreshSavedStudents(advisor.staff_id);
+            syncBatchStudentsUpToCloud(savedRecords);
+          })
+          .catch((saveErr) =>
+            console.warn("Could not auto-save batch students locally:", saveErr)
+          );
+      }
 
       logAdvisorAction({
         action: "BATCH_PROCESSED",
@@ -288,6 +489,23 @@ export default function Home() {
         console.warn("Could not pre-build graph on department change:", graphErr);
       }
 
+      // Update advisee in local store and cloud with new department
+      if (advisor) {
+        const updatedRecord = createSavedStudentRecord(
+          advisor.staff_id,
+          updatedTranscriptData,
+          generatedReport
+        );
+        saveStudentLocal(updatedRecord)
+          .then(() => {
+            refreshSavedStudents(advisor.staff_id);
+            syncStudentUpToCloud(updatedRecord);
+          })
+          .catch((saveErr) =>
+            console.warn("Could not update student locally on dept change:", saveErr)
+          );
+      }
+
       logAdvisorAction({
         action: "DEPARTMENT_CHANGED",
         studentId: updatedTranscriptData.studentId,
@@ -328,6 +546,8 @@ export default function Home() {
         advisorName={advisor.name}
         onLogout={handleLogout}
         onOpenGuide={() => handleOpenGuide("header")}
+        savedStudentsCount={savedStudents.length}
+        onOpenSavedStudents={() => setIsSavedModalOpen(true)}
         compact={inReport || inBatch}
       />
 
@@ -353,6 +573,14 @@ export default function Home() {
               onFileUpload={handleFileUpload}
               onBatchUpload={handleBatchUpload}
               batchProgress={batchProgress}
+              loading={loading}
+            />
+
+            <RecentStudentsBar
+              students={savedStudents}
+              totalCount={savedStudents.length}
+              onSelectStudent={handleSelectSavedStudent}
+              onOpenFullModal={() => setIsSavedModalOpen(true)}
               loading={loading}
             />
 
@@ -432,6 +660,20 @@ export default function Home() {
             window.localStorage.setItem(`ershad_guide_seen_${advisor.staff_id}`, "true");
           }
         }}
+      />
+
+      <SavedStudentsModal
+        isOpen={isSavedModalOpen}
+        onClose={() => setIsSavedModalOpen(false)}
+        students={savedStudents}
+        onSelectStudent={handleSelectSavedStudent}
+        onDeleteStudent={handleDeleteSavedStudent}
+        onSync={handleSync}
+        onExport={handleExport}
+        onImport={handleImport}
+        isSyncing={isSyncing}
+        syncStatusMessage={syncStatusMessage}
+        loading={loading}
       />
 
       <Analytics />
