@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AnalysisReport } from "@/types";
 import { DashCard, CardEmpty } from "./DashCard";
 import { CourseRow } from "./CourseRow";
@@ -15,8 +15,17 @@ interface AcademicAuditCardProps {
 type TabType = "issues" | "pending" | "ai";
 
 export function AcademicAuditCard({ report, className = "" }: AcademicAuditCardProps) {
-  const issuesCount = report.retakeRecommendations.length + report.withdrawnFailedCourses.length;
+  const sortedFailedCourses = useMemo(() => {
+    return [...report.withdrawnFailedCourses].sort((a, b) => {
+      const aFailed = a.grade === "F" ? 0 : 1;
+      const bFailed = b.grade === "F" ? 0 : 1;
+      return aFailed - bFailed;
+    });
+  }, [report.withdrawnFailedCourses]);
+
+  const issuesCount = sortedFailedCourses.length;
   const pendingCount = report.ungradedCourses.length + report.outOfPlanCourses.length;
+  const hasFailed = sortedFailedCourses.some((c) => c.grade === "F");
 
   const [activeTab, setActiveTab] = useState<TabType>(
     issuesCount > 0 ? "issues" : pendingCount > 0 ? "pending" : "ai"
@@ -25,7 +34,7 @@ export function AcademicAuditCard({ report, className = "" }: AcademicAuditCardP
   return (
     <DashCard
       title="Academic Health & Audit"
-      tone={issuesCount > 0 ? "orange" : "slate"}
+      tone={hasFailed ? "red" : issuesCount > 0 ? "orange" : "slate"}
       badge={issuesCount > 0 ? `${issuesCount} items` : "All clear"}
       className={className}
       actions={
@@ -39,9 +48,13 @@ export function AcademicAuditCard({ report, className = "" }: AcademicAuditCardP
                 : "text-slate-500 hover:text-slate-800"
             }`}
           >
-            <span>Retakes & Failed</span>
+            <span>Failed &amp; Withdrawn</span>
             {issuesCount > 0 && (
-              <span className="rounded-full bg-orange-100 px-1.5 py-0.2 text-[10px] font-bold text-orange-800">
+              <span
+                className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
+                  hasFailed ? "bg-red-100 text-red-800" : "bg-orange-100 text-orange-800"
+                }`}
+              >
                 {issuesCount}
               </span>
             )}
@@ -82,62 +95,23 @@ export function AcademicAuditCard({ report, className = "" }: AcademicAuditCardP
         </div>
       }
     >
-      {/* TAB 1: Issues (Retakes + Withdrawn / Failed) */}
+      {/* TAB 1: Failed & Withdrawn Courses (Failed courses shown first) */}
       <div className={`${activeTab === "issues" ? "" : "hidden"} print:block space-y-3`}>
-        {/* Recommended Retakes */}
-        <div>
-          <div className="flex items-center justify-between border-b border-slate-100 pb-1 mb-1.5">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-orange-800 flex items-center gap-1">
-              <span>↺</span> Recommended Retakes
-            </h4>
-            <span className="text-[11px] font-bold text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded">
-              {report.retakeRecommendations.length}
-            </span>
-          </div>
-
-          {report.retakeRecommendations.length === 0 ? (
-            <CardEmpty>No courses graded D+ or lower within the last year.</CardEmpty>
-          ) : (
-            <>
-              <p className="mb-1 text-[11px] leading-snug text-slate-500">
-                Passed weakly within the last academic year
-                {report.latestSemester ? ` (as of ${report.latestSemester.label})` : ""}.
-                Repeating these can raise cumulative G.P.A.
-              </p>
-              <ul className="space-y-0.5">
-                {report.retakeRecommendations.map((course, idx) => (
-                  <CourseRow
-                    key={idx}
-                    code={course.code}
-                    title={course.title}
-                    credits={getCourseCredits(course.code)}
-                    meta={course.semester.label}
-                    tag={course.grade}
-                    tagTone="orange"
-                    tone="orange"
-                  />
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
-
-        {/* Withdrawn / Failed */}
         <div>
           <div className="flex items-center justify-between border-b border-slate-100 pb-1 mb-1.5">
             <h4 className="text-xs font-bold uppercase tracking-wider text-red-800 flex items-center gap-1">
-              <span>⚠</span> Withdrawn / Failed Courses
+              <span>⚠</span> Failed &amp; Withdrawn Courses
             </h4>
             <span className="text-[11px] font-bold text-red-700 bg-red-50 px-1.5 py-0.5 rounded">
-              {report.withdrawnFailedCourses.length}
+              {sortedFailedCourses.length}
             </span>
           </div>
 
-          {report.withdrawnFailedCourses.length === 0 ? (
-            <CardEmpty>No withdrawn or failed courses on record.</CardEmpty>
+          {sortedFailedCourses.length === 0 ? (
+            <CardEmpty>No failed or withdrawn courses on record.</CardEmpty>
           ) : (
             <ul className="space-y-0.5">
-              {report.withdrawnFailedCourses.map((course, idx) => (
+              {sortedFailedCourses.map((course, idx) => (
                 <CourseRow
                   key={idx}
                   code={course.code}
@@ -146,7 +120,7 @@ export function AcademicAuditCard({ report, className = "" }: AcademicAuditCardP
                   meta={course.semester?.label}
                   tag={course.grade}
                   tagTone={course.grade === "F" ? "red" : "orange"}
-                  tone="red"
+                  tone={course.grade === "F" ? "red" : "orange"}
                 />
               ))}
             </ul>

@@ -7,6 +7,9 @@ import {
   NORMAL_LOAD_UPPER_YEARS,
   NORMAL_LOAD_LOWER_YEARS,
   YEAR_UPPER_CREDIT_THRESHOLD,
+  YEAR_FOUR_CREDIT_THRESHOLD,
+  PRACTICAL_TRAINING_CODE,
+  PRACTICAL_TRAINING_MIN_CREDIT_HOURS,
   getCourseCredits,
   canonicalizeCode,
 } from "@/lib/constants";
@@ -65,6 +68,51 @@ export function NextSemesterHero({
     );
   }, [report]);
 
+  // Determine if student is in their last year (Year 4 / Senior, or entering Year 4 next semester)
+  const isLastYear = useMemo(() => {
+    return (
+      report.totalCreditHours >= YEAR_FOUR_CREDIT_THRESHOLD ||
+      report.expectedCreditHours >= YEAR_FOUR_CREDIT_THRESHOLD ||
+      report.creditHoursToGraduation <= 33 ||
+      report.practicalTrainingWarning
+    );
+  }, [
+    report.totalCreditHours,
+    report.expectedCreditHours,
+    report.creditHoursToGraduation,
+    report.practicalTrainingWarning,
+  ]);
+
+  // Determine if Practical Training is recommended this semester
+  const showPracticalTraining = useMemo(() => {
+    if (report.practicalTrainingCompleted || report.practicalTrainingUngraded) {
+      return false;
+    }
+    return (
+      isLastYear &&
+      (report.practicalTrainingEligible || report.totalCreditHours >= PRACTICAL_TRAINING_MIN_CREDIT_HOURS)
+    );
+  }, [
+    isLastYear,
+    report.practicalTrainingCompleted,
+    report.practicalTrainingUngraded,
+    report.practicalTrainingEligible,
+    report.totalCreditHours,
+  ]);
+
+  const ptCanonCode = useMemo(() => canonicalizeCode(PRACTICAL_TRAINING_CODE), []);
+
+  // Filter Practical Training from core lists to avoid duplicate entries when displayed as dedicated slot
+  const recommendedCoreCourses = useMemo(() => {
+    if (!showPracticalTraining) return report.recommendedCourses;
+    return report.recommendedCourses.filter((c) => canonicalizeCode(c.code) !== ptCanonCode);
+  }, [report.recommendedCourses, showPracticalTraining, ptCanonCode]);
+
+  const otherEligibleCoreCourses = useMemo(() => {
+    if (!showPracticalTraining) return report.otherEligibleCourses;
+    return report.otherEligibleCourses.filter((c) => canonicalizeCode(c.code) !== ptCanonCode);
+  }, [report.otherEligibleCourses, showPracticalTraining, ptCanonCode]);
+
   // Initial chosen major electives per slot: unselected by default so advisor chooses
   const initialMajorElectives = useMemo(() => {
     return Array(numMajorElectiveSlots).fill("");
@@ -88,18 +136,21 @@ export function NextSemesterHero({
     setSlotTraining(initialTraining);
   }, [initialMajorElectives, initialTraining]);
 
-  // Default selected codes: Core + Initial Major Electives + Initial Training
+  // Default selected codes: Core + Initial Major Electives + Initial Training + Practical Training
   const defaultSelectedCodes = useMemo(() => {
     const set = new Set<string>();
-    report.recommendedCourses.forEach((c) => set.add(canonicalizeCode(c.code)));
+    recommendedCoreCourses.forEach((c) => set.add(canonicalizeCode(c.code)));
     initialMajorElectives.forEach((code) => {
       if (code) set.add(canonicalizeCode(code));
     });
     if (initialTraining) {
       set.add(canonicalizeCode(initialTraining));
     }
+    if (showPracticalTraining) {
+      set.add(ptCanonCode);
+    }
     return set;
-  }, [report.recommendedCourses, initialMajorElectives, initialTraining]);
+  }, [recommendedCoreCourses, initialMajorElectives, initialTraining, showPracticalTraining, ptCanonCode]);
 
   const [selectedCodes, setSelectedCodes] = useState<Set<string>>(defaultSelectedCodes);
   const [showGuide, setShowGuide] = useState<boolean>(false);
@@ -245,8 +296,19 @@ export function NextSemesterHero({
       }
     });
 
+    if (showPracticalTraining) {
+      if (!map.has(ptCanonCode)) {
+        map.set(ptCanonCode, {
+          code: PRACTICAL_TRAINING_CODE,
+          title: "Practical Training",
+          credits: getCourseCredits(PRACTICAL_TRAINING_CODE),
+          source: "Practical Training",
+        });
+      }
+    }
+
     return map;
-  }, [report]);
+  }, [report, showPracticalTraining, ptCanonCode]);
 
   // Calculate live selected credit total
   const selectedSummary = useMemo(() => {
@@ -271,10 +333,14 @@ export function NextSemesterHero({
     report.availableMajorElectives.length +
     report.availableScienceElectives.length +
     report.availableUniversityRequirements.length +
-    report.availableProfessionalTraining.length;
+    report.availableProfessionalTraining.length +
+    (showPracticalTraining ? 1 : 0);
 
   const totalRecommendedItems =
-    report.recommendedCourses.length + numMajorElectiveSlots + (showTrainingSlot ? 1 : 0);
+    recommendedCoreCourses.length +
+    numMajorElectiveSlots +
+    (showTrainingSlot ? 1 : 0) +
+    (showPracticalTraining ? 1 : 0);
 
   return (
     <DashCard
@@ -461,7 +527,7 @@ export function NextSemesterHero({
               <strong className="text-slate-800">Review Core Schedule:</strong> Core courses due for this semester are pre-selected in Section A.
             </li>
             <li>
-              <strong className="text-slate-800">Select Major Electives & Training:</strong> Use the slot dropdowns in Section A to pick the student&apos;s chosen major electives and professional training.
+              <strong className="text-slate-800">Select Major Electives & Training:</strong> Use the slot dropdowns in Section A to pick the student&apos;s chosen major electives, professional training, and practical training (for final-year students).
             </li>
             <li>
               <strong className="text-slate-800">Address Retakes or Other Pools:</strong> If GPA is weak, check recommended retakes or explore secondary pools below.
@@ -485,7 +551,7 @@ export function NextSemesterHero({
                   Recommended Semester Schedule
                 </h4>
                 <p className="text-[11px] text-slate-500">
-                  Packaged schedule for next semester: Core requirements, Major Elective slots, and Professional Training.
+                  Packaged schedule for next semester: Core requirements, Major Elective slots, and Professional &amp; Practical Training.
                 </p>
               </div>
               <span className="rounded-full bg-blue-100 px-2 py-0.5 font-mono text-[11px] font-bold text-blue-800">
@@ -500,7 +566,7 @@ export function NextSemesterHero({
             ) : (
               <div className="space-y-1.5">
                 {/* 1. Core Courses */}
-                {report.recommendedCourses.map((course, idx) => {
+                {recommendedCoreCourses.map((course, idx) => {
                   const codeKey = canonicalizeCode(course.code);
                   const isSelected = selectedCodes.has(codeKey);
                   const credits = getCourseCredits(course.code);
@@ -758,6 +824,96 @@ export function NextSemesterHero({
                     )}
                   </div>
                 )}
+
+                {/* 4. Practical Training Slot (Senior / Final Year Graduation Requirement) */}
+                {showPracticalTraining && (
+                  <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-2 transition-colors">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedCodes.has(ptCanonCode)}
+                        onChange={() => toggleCourse(PRACTICAL_TRAINING_CODE)}
+                        aria-label="Toggle Practical Training (CIT4000)"
+                        className="h-3.5 w-3.5 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                      />
+
+                      <span className="flex-shrink-0 rounded bg-emerald-600 px-1.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wide">
+                        Practical Training
+                      </span>
+
+                      <span className="flex-shrink-0 rounded bg-emerald-100 px-1.5 py-0.5 font-mono text-[11px] font-bold text-emerald-900">
+                        {PRACTICAL_TRAINING_CODE}
+                      </span>
+
+                      <span className="min-w-0 flex-1 text-xs font-semibold text-slate-900 truncate" title="Practical Training (Field Internship)">
+                        Practical Training
+                      </span>
+
+                      <span className="flex-shrink-0 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
+                        0 Cr · Pass/Fail
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedSlotReasons((prev) => ({
+                            ...prev,
+                            practical: !prev["practical"],
+                          }))
+                        }
+                        className={`flex-shrink-0 flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold transition-colors cursor-pointer ${
+                          Boolean(expandedSlotReasons["practical"])
+                            ? "bg-emerald-200 text-emerald-900 font-bold"
+                            : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                        }`}
+                        title="Why is practical training recommended?"
+                        aria-expanded={Boolean(expandedSlotReasons["practical"])}
+                      >
+                        <span>💡 Why?</span>
+                        <span
+                          className={`inline-block text-[8px] transition-transform duration-200 ${
+                            expandedSlotReasons["practical"] ? "rotate-180" : ""
+                          }`}
+                        >
+                          ▼
+                        </span>
+                      </button>
+                    </div>
+
+                    <p className="mt-1 ml-6 text-[10px] font-medium text-emerald-800">
+                      Final Year Graduation Requirement: <strong className="font-semibold">{PRACTICAL_TRAINING_CODE} · Practical Training</strong> (Field Internship)
+                    </p>
+
+                    {Boolean(expandedSlotReasons["practical"]) && (
+                      <div className="mt-2 rounded-lg border border-emerald-200 bg-white/95 p-2.5 text-xs text-slate-700 shadow-xs">
+                        <div className="flex items-start gap-2">
+                          <span className="text-sm select-none" aria-hidden>
+                            💡
+                          </span>
+                          <div className="flex-1 space-y-1">
+                            <p className="font-semibold text-emerald-950">
+                              Final-Year Mandatory Practical Training (CIT4000)
+                            </p>
+                            <p className="text-[11px] leading-snug text-slate-600">
+                              Practical Training ({PRACTICAL_TRAINING_CODE}) is a mandatory core degree requirement for graduation. Because you are in your final year ({yearLevel}, with {report.totalCreditHours} credit hours completed out of 132), registering for Practical Training now ensures you fulfill your graduation requirements on schedule.
+                            </p>
+                            <div className="flex flex-wrap gap-1.5 pt-1 text-[10px]">
+                              <span className="rounded bg-emerald-100 px-1.5 py-0.5 font-medium text-emerald-800">
+                                90+ Cr Gate Met
+                              </span>
+                              <span className="rounded bg-emerald-100 px-1.5 py-0.5 font-medium text-emerald-800">
+                                Graduation Requirement
+                              </span>
+                              <span className="rounded bg-slate-100 px-1.5 py-0.5 font-medium text-slate-600">
+                                0 Credits (Pass/Fail)
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -766,10 +922,10 @@ export function NextSemesterHero({
         
 
           {/* SECTION B: Other Eligible Core Courses */}
-          {report.otherEligibleCourses.length > 0 && (
+          {otherEligibleCoreCourses.length > 0 && (
             <RegisterSection
               label="B · Other Eligible Core Courses"
-              count={report.otherEligibleCourses.length}
+              count={otherEligibleCoreCourses.length}
               labelClassName="text-slate-600"
               divider
             >
@@ -777,7 +933,7 @@ export function NextSemesterHero({
                 Prerequisites met, but not primary priority this term. Check box to add to schedule:
               </p>
               <ul className="space-y-0.5">
-                {report.otherEligibleCourses.map((course, idx) => {
+                {otherEligibleCoreCourses.map((course, idx) => {
                   const codeKey = canonicalizeCode(course.code);
                   const isSelected = selectedCodes.has(codeKey);
                   const credits = getCourseCredits(course.code);
