@@ -583,13 +583,7 @@ export default function Home() {
               loading={loading}
             />
 
-            <RecentStudentsBar
-              students={savedStudents}
-              totalCount={savedStudents.length}
-              onSelectStudent={handleSelectSavedStudent}
-              onOpenFullModal={() => setIsSavedModalOpen(true)}
-              loading={loading}
-            />
+
 
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-blue-50/90 border border-blue-200 px-4 py-3 text-xs text-blue-900 shadow-2xs">
               <div className="flex items-center gap-2.5">
