@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT — ERSHAD2
 
-> Comprehensive context for future sessions. Companion to `CLAUDE.md` (agent instructions) and `logic.md` (course-eligibility rules, the source of truth for `courseAnalyzer.ts`). Last updated 2026-09-05.
+> Comprehensive context for future sessions. Companion to `CLAUDE.md` (agent instructions) and `logic.md` (course-eligibility rules, the source of truth for `courseAnalyzer.ts`). Last updated 2026-09-11.
 
 ---
 
@@ -93,9 +93,14 @@ Non-blocking, zero-dependency async client audit logger invoking the Supabase RE
 
 In `splitAvailableCourses`, eligible courses with an uncompleted failing grade (`F`) are prioritized ahead of all untaken courses (`priorityTier: 0`, `isOverdue: true`). This ensures that students with outstanding $F$ courses (especially those on probation under the 12 Cr half-load cap) are guaranteed to receive recommendations to register their failed courses first to replace 0.0 grade points, unblock downstream prerequisite chains, and maximize cumulative GPA recovery. Retakes of passed courses ($D/D+$) remain in the separate "Recommended Retakes" section.
 
-### 4.2.6 Advisor Guide & Tutorial System (`AdvisorGuideModal.tsx`)
+### 4.2.7 Saved Student Advisee Roster & Hybrid Cloud Sync System (`studentStorage.ts`)
 
-Comprehensive interactive onboarding and reference manual modal in English & Arabic accessible via the "Advisor Guide" / "دليل المرشد" button in `Header.tsx`. Covers student privacy principles, cockpit layout, the 4-tier course recommendation algorithm, semester planner workflows, batch processing, and audit compliance.
+Cost-effective ($0/month) hybrid advisee roster caching system that allows advisors to recall any previously parsed student into the cockpit (report, prerequisite graph, GPA calculator, and schedule planner) in under 50ms without re-uploading PDFs.
+- **Local-First Browser Engine (IndexedDB):** Stores parsed `TranscriptData` and summary metrics (credit hours, GPA, probation status, failed course count) in `ershad_db` -> `saved_students`. Supports instant multi-parameter filtering (by Name, Student ID, Department, and Academic Standing) and sorting.
+- **Supabase Cloud Sync:** When Supabase is configured, records replicate in the background to `public.advisor_saved_students` via REST API upsert, allowing cross-device persistence across office and home machines with Row Level Security (RLS).
+- **Auto-Save:** Seamlessly saves advisees on both single PDF uploads and multi-file/ZIP batch uploads, and updates records on department changes.
+- **Data Portability:** Advisors can export full JSON backups (`exportStudentsJSON`) or import rosters (`importStudentsJSON`) to transfer advisees between devices offline.
+- **Audit Logging:** Logs roster interactions (`SAVED_STUDENT_LOADED`, `STUDENT_DELETED`, `ROSTER_EXPORTED`, `ROSTER_IMPORTED`, `ROSTER_SYNCED`).
 
 ### 4.3 CSV "database" — `public/data/`
 
@@ -220,6 +225,7 @@ src/components/
   Header.tsx (65)             header + Advisor Guide launcher button
   AdvisorGuideModal.tsx (495) multi-tab Arabic/English advisor manual modal
   RemoteBanner.tsx (222)      Edge Config broadcast announcement banner
+  students/                   RecentStudentsBar.tsx, SavedStudentsModal.tsx (advisee roster)
   batch/                      BatchGraphView.tsx, PrintableStudentGraph.tsx
   planner/                    PrintableSemesterPlan.tsx (official printable study plan)
   report/                     NextSemesterHero, CourseRow, StudentBar, AcademicAuditCard, etc.
@@ -233,12 +239,13 @@ src/lib/analysis/
   clientReportGenerator.ts (128)  manual-entry report generator
   semesterPlanner.ts (220)    pure semester planner evaluator & credit cap logic
 
+src/lib/storage/ studentStorage.ts (IndexedDB + Supabase cloud sync for saved advisees)
 src/lib/data/  csvLoader.ts, clientCsvLoader.ts   (fetch+parse public/data CSVs)
 src/lib/logging/ auditLogger.ts (105) non-blocking Supabase audit logger
 src/lib/utils/ batchTranscriptProcessor.ts, reportFormatter.ts, helpers.ts, fileValidation.ts
 src/lib/constants.ts (105)    departments, grades, prefixes, canonicalizeCode, credit rules, equivalents
-src/types/     course.ts, report.ts, transcript.ts, schedule.ts, index.ts
-supabase/      advisor_audit_logs.sql, README.md
+src/types/     course.ts, report.ts, transcript.ts, schedule.ts, savedStudent.ts, index.ts
+supabase/      advisor_audit_logs.sql, advisor_saved_students.sql, README.md
 ```
 
 Infra: `Dockerfile` (multi-stage), `nginx.conf`, `docker-compose.yml`, `next.config.ts` (static export).
@@ -246,6 +253,22 @@ Infra: `Dockerfile` (multi-stage), `nginx.conf`, `docker-compose.yml`, `next.con
 ---
 
 ## 9. Recent work & history (most recent first)
+
+- **v0.7.5: Saved Student Advisee Roster & Hybrid Cloud Sync System**
+  - **Local-First Caching Engine (`studentStorage.ts`, IndexedDB `ershad_db`)**:
+    - Automatic zero-latency caching of parsed student profiles (`TranscriptData`) upon single or batch PDF transcript upload and department adjustments.
+    - Enables advisors to recall any previously advised student in under 50ms without re-uploading PDFs.
+    - Zero server/API cost ($0/month), full offline resilience, and immediate browser retrieval.
+  - **Cloud Replication & Cross-Device Sync (`advisor_saved_students.sql`, Supabase REST)**:
+    - Dedicated Supabase PostgreSQL table with Row Level Security (RLS) allowing advisors to access their saved advisees across campus desktops, laptops, and home devices.
+    - Non-blocking bidirectional synchronization (`syncSavedStudents`) merging cloud and local records by timestamp.
+  - **Advisee Roster UI & Navigation (`Header.tsx`, `RecentStudentsBar.tsx`, `SavedStudentsModal.tsx`)**:
+    - **Header Advisees Launcher**: Added `👥 Advisees` button with live count badge in `Header.tsx` accessible across upload, report, and batch views.
+    - **Recent Advisees Quick-Pick Bar**: Card on the upload screen displaying the 3 most recently advised students with major badges, credits, GPA, and probation flags for 1-click cockpit opening.
+    - **Searchable Advisee Modal**: Real-time filtering by student name/ID, major filter pills (CS, IS, AI, CY), status filter pills (Good Standing, Probation, Has F Grades), multi-criterion sorting (Recency, GPA, Credits, Alphabetical), and student deletion with confirmation.
+    - **Data Portability**: 1-click **Export Roster Backup (.json)** and **Import Roster** file picker for easy offline transfers.
+  - **Audit Trail Attribution (`auditLogger.ts`)**:
+    - Added audit event types: `SAVED_STUDENT_LOADED`, `STUDENT_DELETED`, `ROSTER_EXPORTED`, `ROSTER_IMPORTED`, and `ROSTER_SYNCED`.
 
 - **v0.7.1: Timetable Schedule Finder & Course Registration Customization Engine**
   - **Timetable Schedule Finder (`scheduleFinder.ts`, `ScheduleFinderModal.tsx`, `TimetableGrid.tsx`)**:

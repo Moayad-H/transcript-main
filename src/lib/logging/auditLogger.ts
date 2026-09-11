@@ -28,7 +28,12 @@ export type AuditAction =
   | "SCHEDULE_PRINTED"
   | "SCHEDULE_UPLOADED"
   | "SCHEDULE_RESET"
-  | "GUIDE_VIEWED";
+  | "GUIDE_VIEWED"
+  | "SAVED_STUDENT_LOADED"
+  | "STUDENT_DELETED"
+  | "ROSTER_EXPORTED"
+  | "ROSTER_IMPORTED"
+  | "ROSTER_SYNCED";
 
 export interface AuditLogPayload {
   action: AuditAction;

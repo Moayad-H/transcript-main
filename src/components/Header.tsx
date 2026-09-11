@@ -6,6 +6,8 @@ interface HeaderProps {
   advisorName?: string;
   onLogout?: () => void;
   onOpenGuide?: () => void;
+  savedStudentsCount?: number;
+  onOpenSavedStudents?: () => void;
   /**
    * Slim variant used by the report dashboard, where every row of header is a
    * row the advisor loses off the board.
@@ -17,6 +19,8 @@ export function Header({
   advisorName,
   onLogout,
   onOpenGuide,
+  savedStudentsCount = 0,
+  onOpenSavedStudents,
   compact = false,
 }: HeaderProps = {}) {
   return (
@@ -45,7 +49,7 @@ export function Header({
               ERSHAD
             </h1>
             <span className="rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-bold text-blue-100">
-              v0.7.1
+              v0.7.5
             </span>
 
           </div>
@@ -63,7 +67,26 @@ export function Header({
           )}
         </div>
 
-        <div className="ml-auto flex items-center gap-2.5 sm:gap-4">
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+          {onOpenSavedStudents && (
+            <button
+              type="button"
+              onClick={onOpenSavedStudents}
+              className={`flex items-center gap-1.5 rounded-lg border border-blue-200/60 transition-colors hover:bg-white/10 text-white cursor-pointer ${
+                compact ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-sm"
+              }`}
+              title="View and search saved advisees"
+            >
+              <span className="text-sm leading-none">👥</span>
+              <span className="font-medium">Advisees</span>
+              {savedStudentsCount > 0 && (
+                <span className="rounded-full bg-white/20 px-1.5 py-0.2 text-[10px] font-bold text-blue-100">
+                  {savedStudentsCount}
+                </span>
+              )}
+            </button>
+          )}
+
           {onOpenGuide && (
             <button
               type="button"
