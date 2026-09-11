@@ -43,6 +43,8 @@ export function ScheduleFinderModal({
   const [isAddingCourse, setIsAddingCourse] = useState(false);
   const hasLoggedViewRef = useRef(false);
 
+  const hasInProgressCourses = Boolean(report.ungradedCourses && report.ungradedCourses.length > 0);
+
   // Full pool of courses available to register for this student
   const availableCoursesPool = useMemo(() => {
     const map = new Map<string, { code: string; title: string; category: string }>();
@@ -62,6 +64,9 @@ export function ScheduleFinderModal({
       });
     };
 
+    if (hasInProgressCourses) {
+      add(report.ungradedCourses, "Currently Enrolled (U)");
+    }
     add(report.recommendedCourses, "Recommended Core");
     add(report.otherEligibleCourses, "Other Eligible Core");
     add(report.availableCourses, "Available Core");
@@ -71,7 +76,7 @@ export function ScheduleFinderModal({
     add(report.availableProfessionalTraining, "Professional Training");
 
     return Array.from(map.values());
-  }, [report]);
+  }, [report, hasInProgressCourses]);
 
   // Grouped pool by category for optgroup rendering
   const poolByCategory = useMemo(() => {
@@ -85,12 +90,15 @@ export function ScheduleFinderModal({
 
   // Stable key for course inputs to prevent unnecessary recalculations
   const coursesKey = useMemo(() => {
+    const ungr = (report.ungradedCourses || []).map((c) => c.code).join(";");
     const rec = (report.recommendedCourses || []).map((c) => c.code).join(";");
     const add = additionalCourses.map((c) => c.code).join(";");
-    return `${report.studentID}_${rec}_${add}`;
-  }, [report.studentID, report.recommendedCourses, additionalCourses]);
+    return `${report.studentID}_${ungr}_${rec}_${add}`;
+  }, [report.studentID, report.ungradedCourses, report.recommendedCourses, additionalCourses]);
 
-  // Default recommended courses from report + any chosen electives/training
+  // Default target courses:
+  // If student has courses Currently Enrolled & In Progress (courses marked with U), use those.
+  // Otherwise, default to recommended courses from report + any chosen electives/training.
   const defaultTargetCourses: TargetCourseInput[] = useMemo(() => {
     const combined: TargetCourseInput[] = [];
     const seen = new Set<string>();
@@ -102,16 +110,20 @@ export function ScheduleFinderModal({
       combined.push({ code, title: c.title });
     };
 
-    (report.recommendedCourses || []).forEach(addCourse);
-    additionalCourses.forEach(addCourse);
+    if (hasInProgressCourses) {
+      report.ungradedCourses.forEach(addCourse);
+    } else {
+      (report.recommendedCourses || []).forEach(addCourse);
+      additionalCourses.forEach(addCourse);
 
-    if (combined.length === 0 && report.availableCourses) {
-      report.availableCourses.slice(0, 5).forEach(addCourse);
+      if (combined.length === 0 && report.availableCourses) {
+        report.availableCourses.slice(0, 5).forEach(addCourse);
+      }
     }
 
     return combined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [coursesKey, report.availableCourses]);
+  }, [coursesKey, report.availableCourses, report.ungradedCourses, hasInProgressCourses]);
 
   // Active target courses: custom if modified by advisor, otherwise default
   const activeTargetCourses = useMemo(() => {
@@ -335,11 +347,17 @@ export function ScheduleFinderModal({
               📅
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-base font-bold text-slate-900">Schedule Finder</h2>
                 <span className="rounded bg-blue-100 px-2 py-0.5 text-[11px] font-bold text-blue-800">
                   {department}
                 </span>
+                {hasInProgressCourses && (
+                  <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800 border border-amber-300">
+                    <span>⏳</span>
+                    <span>Currently Enrolled (U)</span>
+                  </span>
+                )}
                 <span className="rounded bg-red-100 px-2 py-0.5 text-[13px] font-bold text-red-800">
                   Experimental Feature
                 </span>
@@ -397,7 +415,7 @@ export function ScheduleFinderModal({
             <div className="text-3xl mb-2">📋</div>
             <h3 className="text-sm font-bold text-slate-800">No matching schedules found</h3>
             <p className="text-xs text-slate-500 mt-1 max-w-md">
-              No timetable groups were found matching the department and recommended courses.
+              No timetable groups were found matching the department and {hasInProgressCourses ? "currently enrolled courses" : "recommended courses"}.
               You can upload semester timetable PDFs using the Manage Schedules button.
             </p>
             <button
@@ -465,9 +483,16 @@ export function ScheduleFinderModal({
               {/* Left Column: Course Assignments & Group Pickers */}
               <div className="flex flex-col border-r border-slate-200 bg-slate-50/40 p-4 lg:col-span-4 overflow-y-auto print:hidden">
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Course Registrations ({currentSolution.assignments.length})
-                  </h3>
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Course Registrations ({currentSolution.assignments.length})
+                    </h3>
+                    {hasInProgressCourses && customTargetCourses === null && (
+                      <span className="text-[11px] text-amber-700 font-semibold block mt-0.5">
+                        ⏳ Enrolled & In Progress (U)
+                      </span>
+                    )}
+                  </div>
                   <span className="text-[11px] text-slate-400">Tap group to change</span>
                 </div>
 
@@ -671,7 +696,7 @@ export function ScheduleFinderModal({
                       {customTargetCourses !== null && (
                         <button
                           onClick={handleResetTargetCourses}
-                          title="Reset back to default recommended courses"
+                          title={hasInProgressCourses ? "Reset back to currently enrolled courses (U)" : "Reset back to default recommended courses"}
                           className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-2xs"
                         >
                           Reset

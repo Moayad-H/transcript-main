@@ -130,7 +130,11 @@ export function StudentBar({
         {onOpenSchedule && (
           <button
             onClick={onOpenSchedule}
-            title="Find course timetable schedule"
+            title={
+              report.ungradedCourses.length > 0
+                ? "View timetable schedule for currently enrolled courses (U)"
+                : "Find course timetable schedule"
+            }
             className="flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-sm font-semibold text-white shadow-2xs transition-colors hover:bg-white/25"
           >
             <span>📅</span>

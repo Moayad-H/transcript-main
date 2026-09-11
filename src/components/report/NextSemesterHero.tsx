@@ -289,7 +289,11 @@ export function NextSemesterHero({
               type="button"
               onClick={onOpenSchedule}
               className="flex items-center gap-1 rounded border border-blue-600 bg-blue-600 px-2.5 py-0.5 text-[11px] font-bold text-white shadow-xs hover:bg-blue-700 transition-colors"
-              title="Find timetable schedule and conflict-free groups for recommended courses"
+              title={
+                report.ungradedCourses.length > 0
+                  ? "Find timetable schedule for currently enrolled & in-progress courses (U)"
+                  : "Find timetable schedule and conflict-free groups for recommended courses"
+              }
             >
               <span>📅</span>
               <span>Find Schedule</span>
@@ -405,9 +409,21 @@ export function NextSemesterHero({
                 Currently Enrolled & In Progress ({report.ungradedCourses.length} Course{report.ungradedCourses.length === 1 ? "" : "s"})
               </h4>
             </div>
-            <span className="rounded-full bg-amber-200 px-2 py-0.5 font-mono text-[11px] font-bold text-amber-900">
-              +{report.expectedCreditHours - report.totalCreditHours} Cr. Pending
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-amber-200 px-2 py-0.5 font-mono text-[11px] font-bold text-amber-900">
+                +{report.expectedCreditHours - report.totalCreditHours} Cr. Pending
+              </span>
+              {onOpenSchedule && (
+                <button
+                  type="button"
+                  onClick={onOpenSchedule}
+                  className="flex items-center gap-1 rounded bg-amber-600 px-2 py-0.5 text-[11px] font-bold text-white shadow-2xs hover:bg-amber-700 transition-colors"
+                  title="View timetable schedule for currently enrolled courses (U)"
+                >
+                  <span>📅 View Schedule</span>
+                </button>
+              )}
+            </div>
           </div>
 
           <p className="mb-2 text-[11px] leading-snug text-amber-900 font-medium">
