@@ -103,7 +103,7 @@ export default function Home() {
             refreshSavedStudents(session.staff_id);
           }
         })
-        .catch(() => {});
+        .catch(() => { });
 
       if (typeof window !== "undefined") {
         const guideKey = `ershad_guide_seen_${session.staff_id}`;
@@ -124,7 +124,7 @@ export default function Home() {
           refreshSavedStudents(session.staff_id);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     logAdvisorAction({
       action: "LOGIN",
@@ -272,7 +272,7 @@ export default function Home() {
     const count = await importStudentsJSON(advisor.staff_id, jsonString);
     await refreshSavedStudents(advisor.staff_id);
     const updated = await getSavedStudentsLocal(advisor.staff_id);
-    syncBatchStudentsUpToCloud(updated).catch(() => {});
+    syncBatchStudentsUpToCloud(updated).catch(() => { });
     logAdvisorAction({ action: "ROSTER_IMPORTED", metadata: { count } });
     return count;
   };
@@ -569,6 +569,13 @@ export default function Home() {
 
         {step === "upload" && (
           <div className="space-y-4">
+            <RecentStudentsBar
+              students={savedStudents}
+              totalCount={savedStudents.length}
+              onSelectStudent={handleSelectSavedStudent}
+              onOpenFullModal={() => setIsSavedModalOpen(true)}
+              loading={loading}
+            />
             <FileUpload
               onFileUpload={handleFileUpload}
               onBatchUpload={handleBatchUpload}
