@@ -154,11 +154,16 @@ export function getElectiveRequirements(courses: Course[]): CourseRequirement {
 export function getProfessionalTraining(courses: StudiedCourse[]): string[] {
   const passingGrades = new Set([...GRADES.PASSING, "U"] as string[]);
   return courses
-    .filter(
-      (course) =>
-        course.title.includes(ELECTIVE_KEYWORDS.PROFESSIONAL) &&
-        passingGrades.has(course.grade)
-    )
+    .filter((course) => {
+      const canon = canonicalizeCode(course.code);
+      if (canon === canonicalizeCode(PRACTICAL_TRAINING_CODE)) return false;
+      if (canon.startsWith("UNR") || canon.startsWith("CNC")) return false;
+      const isProf =
+        canon.startsWith("CIT") ||
+        course.title.includes(ELECTIVE_KEYWORDS.PROFESSIONAL) ||
+        /Professional\s+Training/i.test(course.title);
+      return isProf && passingGrades.has(course.grade);
+    })
     .map((course) => course.title);
 }
 

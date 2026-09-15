@@ -12,7 +12,7 @@ import {
   DEPARTMENT_NAMES,
   GRADUATION_CREDIT_HOURS,
   GRADES,
-  isTwoCreditCourse,
+  getCourseCredits,
 } from "@/lib/constants";
 
 export interface InProgressSemesterGroup {
@@ -35,7 +35,7 @@ interface PrintableSemesterPlanProps {
 const UNGRADED_GRADES = new Set<string>([...GRADES.UNGRADED]);
 
 function creditValueForCode(code: string): number {
-  return isTwoCreditCourse(code) ? 2 : 3;
+  return getCourseCredits(code);
 }
 
 export function PrintableSemesterPlan({

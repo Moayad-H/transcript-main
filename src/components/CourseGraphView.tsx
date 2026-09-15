@@ -30,6 +30,7 @@ import {
   PLANNER_SUMMER_NORMAL_LOAD,
   PLANNER_SUMMER_MAX_LOAD,
   SPECIAL_COURSES,
+  getCourseCredits,
 } from "@/lib/constants";
 import {
   buildCourseGraph,
@@ -108,17 +109,9 @@ const UNGRADED_GRADES = new Set<string>([...GRADES.UNGRADED]);
 // Grade a newly-placed course starts on in the semester planner.
 const DEFAULT_PLAN_GRADE = "B";
 
-/** Credit-hour value of a course code (0 for Practical Training CIT4000 & remedial courses, 2 for UNR/CNC1401, else 3). */
+/** Credit-hour value of a course code (0 for training & remedial courses, 2 for UNR/CNC1401, else 3). */
 function creditValueForCode(code: string): number {
-  const canon = canonicalizeCode(code);
-  if (
-    canon === PRACTICAL_TRAINING_CANON ||
-    canon === canonicalizeCode(SPECIAL_COURSES.REMEDIAL_ENGLISH) ||
-    canon === canonicalizeCode(SPECIAL_COURSES.PRECALCULUS)
-  ) {
-    return 0;
-  }
-  return isTwoCreditCourse(canon) ? 2 : 3;
+  return getCourseCredits(code);
 }
 
 interface CourseGraphViewProps {

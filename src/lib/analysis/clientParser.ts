@@ -4,7 +4,7 @@
  */
 
 import { StudiedCourse, TranscriptData } from "@/types";
-import { GRADES, TWO_CREDIT_HOURS, CREDIT_HOURS_PER_COURSE, isTwoCreditCourse, canonicalizeCode, PRACTICAL_TRAINING_CODE, SPECIAL_COURSES } from "@/lib/constants";
+import { GRADES, canonicalizeCode, getCourseCredits } from "@/lib/constants";
 
 /**
  * Parse PDF transcript on the client side
@@ -106,27 +106,18 @@ export function getUngradedCourses(courses: StudiedCourse[]): StudiedCourse[] {
  * University Requirements (UNR*) and Entrepreneurship Skills (CNC1401): 2 credit hours
  */
 function getCourseCreditValue(course: StudiedCourse): number {
-  const canonical = canonicalizeCode(course.code);
-  // Ignore Remedial English, Precalculus, and Practical Training (0 Cr)
-  if (
-    canonical === canonicalizeCode(SPECIAL_COURSES.REMEDIAL_ENGLISH) ||
-    canonical === canonicalizeCode(SPECIAL_COURSES.PRECALCULUS) ||
-    canonical === canonicalizeCode(PRACTICAL_TRAINING_CODE)
-  ) {
-    return 0;
-  }
-  return isTwoCreditCourse(canonical) ? TWO_CREDIT_HOURS : CREDIT_HOURS_PER_COURSE;
+  return getCourseCredits(course.code, course.title);
 }
 
 /**
  * Calculate total credit hours
  * Standard courses: 3 credit hours
  * UNR and CNC courses: 2 credit hours
- * Professional training: 0 credit hours
+ * Professional training, Practical training, Precalculus, Remedial English: 0 credit hours
  */
 export function calculateCreditHours(
   courses: StudiedCourse[],
-  professionalTrainingCount: number = 0
+  _professionalTrainingCount: number = 0
 ): number {
   const validGrades = [...GRADES.PASSING];
   const completedCourses = courses.filter((course) =>
@@ -144,16 +135,7 @@ export function calculateCreditHours(
     totalCredits += getCourseCreditValue(course);
   }
 
-  // Practical Training (CIT4000) is pass/fail, like Professional Training, and
-  // doesn't count toward credit hours even though it was added to the loop above.
-  const practicalTraining = completedCourses.find(
-    (course) => canonicalizeCode(course.code) === canonicalizeCode(PRACTICAL_TRAINING_CODE)
-  );
-  const practicalTrainingCredits = practicalTraining
-    ? getCourseCreditValue(practicalTraining)
-    : 0;
-
-  return totalCredits - professionalTrainingCount * 3 - practicalTrainingCredits;
+  return totalCredits;
 }
 
 /**

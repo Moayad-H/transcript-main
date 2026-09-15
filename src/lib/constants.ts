@@ -204,19 +204,37 @@ export function isTwoCreditCourse(code: string): boolean {
 }
 
 /**
- * Returns credit hours for a given course code.
- * Special/Remedial courses (Precalculus, Remedial English) and Practical Training earn 0 credits.
- * UNR and CNC1401 earn 2 credits.
- * Standard courses earn 3 credits.
+ * Checks whether a course earns 0 degree credits (Precalculus, Remedial English,
+ * Practical Training, and Professional Training courses).
  */
-export function getCourseCredits(code: string): number {
-  if (!code) return 0;
-  const canonical = canonicalizeCode(code);
+export function isZeroCreditCourse(code?: string, title?: string): boolean {
+  if (!code && !title) return false;
+  const canonical = canonicalizeCode(code || "");
   if (
     canonical === canonicalizeCode(SPECIAL_COURSES.REMEDIAL_ENGLISH) ||
     canonical === canonicalizeCode(SPECIAL_COURSES.PRECALCULUS) ||
-    canonical === canonicalizeCode(PRACTICAL_TRAINING_CODE)
+    canonical === canonicalizeCode(PRACTICAL_TRAINING_CODE) ||
+    canonical.startsWith(COURSE_PREFIXES.IT)
   ) {
+    return true;
+  }
+  if (title && (/Prof.*Training/i.test(title) || /Practical\s+Training/i.test(title))) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Returns credit hours for a given course code and optional title.
+ * Special/Remedial courses (Precalculus, Remedial English), Practical Training, and
+ * Professional Training earn 0 credits.
+ * UNR and CNC1401 earn 2 credits.
+ * Standard courses earn 3 credits.
+ */
+export function getCourseCredits(code: string, title?: string): number {
+  if (!code && !title) return 0;
+  const canonical = canonicalizeCode(code || "");
+  if (isZeroCreditCourse(canonical, title)) {
     return 0;
   }
   return isTwoCreditCourse(canonical) ? TWO_CREDIT_HOURS : CREDIT_HOURS_PER_COURSE;
