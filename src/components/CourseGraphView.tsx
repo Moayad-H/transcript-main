@@ -622,7 +622,18 @@ export default function CourseGraphView({
       points += GRADE_POINTS[grade] * cv;
       ch += cv;
     }
-    return { points, ch, gpa: ch > 0 ? points / ch : 0 };
+    return { points, ch, gpa: ch > 0 ? points / ch : 0, best };
+  }, [transcriptData]);
+
+  // Set of canonical course codes already completed with a passing grade on the transcript
+  const passedCodes = useMemo(() => {
+    const s = new Set<string>();
+    for (const c of transcriptData.courses) {
+      if (PASSING_GRADES.has(c.grade)) {
+        s.add(canonicalizeCode(c.code));
+      }
+    }
+    return s;
   }, [transcriptData]);
 
   // Courses currently "registered" (ungraded) — the ones you can project a
@@ -644,7 +655,9 @@ export default function CourseGraphView({
   );
 
   // Projected GPA = current GPA plus the hypothetical grades assigned to
-  // registered courses.
+  // registered courses. For retakes of previously attempted courses, credit attained
+  // was already counted in currentGpa.ch and remains unchanged; points update by
+  // replacing the previous attempt's grade points.
   const projectedGpa = useMemo(() => {
     let points = currentGpa.points;
     let ch = currentGpa.ch;
@@ -656,9 +669,26 @@ export default function CourseGraphView({
         // Only count a grade that's still on a registered course.
         if (!n || effectiveStatus.get(id) !== "ungraded") continue;
         if (!(grade in GRADE_POINTS)) continue;
-        const cv = creditValueForCode((n.data as CourseNodeData).code);
-        points += GRADE_POINTS[grade] * cv;
-        ch += cv;
+        const code = (n.data as CourseNodeData).code;
+        const canon = canonicalizeCode(code);
+        const isTraining =
+          id.startsWith("elective-PROFESSIONAL") ||
+          canon === PRACTICAL_TRAINING_CANON;
+        if (isTraining) continue; // pass/fail: no GPA contribution
+        const cv = creditValueForCode(code);
+        const prevGrade = currentGpa.best.get(canon);
+        if (prevGrade !== undefined) {
+          // Retake: credit attained was already counted in currentGpa.ch and remains unchanged.
+          // Quality points update: best attempt replaces previous attempt.
+          const prevPts = GRADE_POINTS[prevGrade] ?? 0;
+          const newPts = GRADE_POINTS[grade] ?? 0;
+          const bestPts = Math.max(newPts, prevPts);
+          points += (bestPts - prevPts) * cv;
+        } else {
+          // First attempt:
+          points += GRADE_POINTS[grade] * cv;
+          ch += cv;
+        }
         count += 1;
       }
     }
@@ -701,22 +731,26 @@ export default function CourseGraphView({
       const isTraining = isProfessional || isPractical;
       const gateMatch = d.creditReq?.match(/(\d+)/);
       const creditGate = gateMatch ? parseInt(gateMatch[1], 10) : null;
+      const canon = canonicalizeCode(d.code);
+      const prevGrade = currentGpa.best.get(canon);
+      const alreadyPassed = passedCodes.has(canon);
 
       plannerCourses.push({
         id: n.id,
         code: d.code || "Elective",
         title: d.title,
         loadCredit: isTraining ? 0 : cv,
-        earnedCredit: isTraining ? 0 : cv,
+        earnedCredit: isTraining || alreadyPassed ? 0 : cv,
         gpaCredit: isTraining ? 0 : cv,
         prereqs: prereqsByTarget.get(n.id) ?? [],
         creditGate,
         isProjectOne: isProjectOneTitle(d.title),
         order: n.position.x,
+        previousGrade: prevGrade,
       });
     }
     return { plannerCourses, plannerCompletedIds };
-  }, [graph, effectiveStatus, prereqsByTarget]);
+  }, [graph, effectiveStatus, prereqsByTarget, currentGpa, passedCodes]);
 
   const plannerCourseById = useMemo(
     () => new Map(plannerCourses.map((c) => [c.id, c])),
@@ -786,18 +820,39 @@ export default function CourseGraphView({
         if (!n || effectiveStatus.get(id) !== "ungraded") continue;
         if (!(grade in GRADE_POINTS)) continue;
         const code = (n.data as CourseNodeData).code;
+        const canon = canonicalizeCode(code);
         const isTraining =
           id.startsWith("elective-PROFESSIONAL") ||
-          canonicalizeCode(code) === PRACTICAL_TRAINING_CANON;
+          canon === PRACTICAL_TRAINING_CANON;
         if (isTraining) continue; // pass/fail: no earned/GPA contribution
         const cv = creditValueForCode(code);
-        earned += grade === "F" ? 0 : cv;
-        gpaPoints += GRADE_POINTS[grade] * cv;
-        gpaCredits += cv;
+
+        // Achieved (earned) credits:
+        // If the course was already passed previously, earned credit is already in achievedCreditHours.
+        // If it was failed or never taken, passing it now (grade !== "F") adds cv to achieved credits.
+        const alreadyPassed = passedCodes.has(canon);
+        if (!alreadyPassed && grade !== "F") {
+          earned += cv;
+        }
+
+        // GPA points and Credit Attained (gpaCredits):
+        const prevGrade = currentGpa.best.get(canon);
+        if (prevGrade !== undefined) {
+          // Retake: credit attained was already counted in currentGpa.ch and remains unchanged.
+          const prevPts = GRADE_POINTS[prevGrade] ?? 0;
+          const newPts = GRADE_POINTS[grade] ?? 0;
+          const bestPts = Math.max(newPts, prevPts);
+          gpaPoints += (bestPts - prevPts) * cv;
+          // gpaCredits does NOT increase
+        } else {
+          // First attempt:
+          gpaPoints += GRADE_POINTS[grade] * cv;
+          gpaCredits += cv;
+        }
       }
     }
     return { earned, gpaPoints, gpaCredits };
-  }, [achievedCreditHours, currentGpa, graph, projGrades, effectiveStatus]);
+  }, [achievedCreditHours, currentGpa, graph, projGrades, effectiveStatus, passedCodes]);
 
   // Score the advisor's hand-built plan. Earned credits and GPA start from the
   // projection base (achieved totals plus any graded current-semester courses)

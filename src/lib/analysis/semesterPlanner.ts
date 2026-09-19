@@ -63,6 +63,8 @@ export interface PlannerCourse {
   isProjectOne: boolean;
   /** Priority key for candidate ordering — earlier plan semester first. */
   order: number;
+  /** If this course is a retake of a course already on record, previousGrade is the best grade on record. */
+  previousGrade?: string;
 }
 
 export type YearBand = "1-2" | "3-4";
@@ -276,11 +278,24 @@ export function evaluateManualPlan(
       // Commit into the running projection (the advisor's plan is taken as-is,
       // even a flagged course, so downstream semesters reflect their intent).
       completed.add(entry.id);
-      earned += c.earnedCredit;
+      if (entry.grade !== "F") {
+        earned += c.earnedCredit;
+      }
       if (c.gpaCredit > 0) {
         const pts = gradePoints[entry.grade] ?? 0;
-        gpaPoints += pts * c.gpaCredit;
-        gpaCredits += c.gpaCredit;
+        if (c.previousGrade !== undefined) {
+          // Retake of an already attempted course:
+          // Attained credits were already counted in startGpaCredits and do not increase.
+          // Quality points update: best attempt replaces previous attempt.
+          const prevPts = gradePoints[c.previousGrade] ?? 0;
+          const bestPts = Math.max(pts, prevPts);
+          gpaPoints += (bestPts - prevPts) * c.gpaCredit;
+          // gpaCredits does NOT increase because credit attained was already counted
+        } else {
+          // First attempt:
+          gpaPoints += pts * c.gpaCredit;
+          gpaCredits += c.gpaCredit;
+        }
       }
     }
 
