@@ -254,6 +254,16 @@ Infra: `Dockerfile` (multi-stage), `nginx.conf`, `docker-compose.yml`, `next.con
 
 ## 9. Recent work & history (most recent first)
 
+- **v0.7.6: Schedule Finder Multi-Placement Group Override Persistence**
+  - **Selective Base Group Override Retention (`ScheduleFinderModal.tsx`)**:
+    - Preserved manual group overrides on subjects belonging to different term placements when switching the Primary Base Group dropdown.
+    - Only resets overrides for courses that are offered within the new base group, allowing regular courses to follow the chosen base group while keeping manual out-of-placement course selections intact.
+  - **Dynamic Conflict & Coverage Recalculation (`scheduleFinder.ts`)**:
+    - Updated candidate group collision indicators (`⚠️ (Conflict)` / `✓ (OK)`) dynamically in real time upon any course group switch.
+    - Accurately recalibrated `coveredInBaseCount` upon schedule recomputations.
+  - **Scoped Mutation Handlers**:
+    - Updated course swap, add, and remove operations to preserve manual group selections on unaffected courses.
+
 - **v0.7.5: Saved Student Advisee Roster & Hybrid Cloud Sync System**
   - **Local-First Caching Engine (`studentStorage.ts`, IndexedDB `ershad_db`)**:
     - Automatic zero-latency caching of parsed student profiles (`TranscriptData`) upon single or batch PDF transcript upload and department adjustments.

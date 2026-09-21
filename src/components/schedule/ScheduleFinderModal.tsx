@@ -12,6 +12,7 @@ import {
   recomputeScheduleWithGroupChange,
   TargetCourseInput,
 } from "@/lib/analysis/scheduleFinder";
+import { normalizeCode } from "@/lib/analysis/departmentPlanMapper";
 import { logAdvisorAction } from "@/lib/logging/auditLogger";
 import { TimetableGrid } from "./TimetableGrid";
 import { ScheduleUploader } from "./ScheduleUploader";
@@ -211,17 +212,42 @@ export function ScheduleFinderModal({
   // Candidate base groups for dropdown selector
   const candidateBaseGroups = useMemo(() => {
     if (!currentSolution || schedules.length === 0) return [];
+    if (allSolutions.length > 0) {
+      return Array.from(new Set(allSolutions.map((s) => s.baseGroup))).sort();
+    }
     return schedules
       .filter((g) => g.semester === currentSolution.semester)
       .map((g) => g.groupName)
       .sort();
-  }, [schedules, currentSolution]);
+  }, [allSolutions, schedules, currentSolution]);
 
   // Handle base group change from dropdown
   const handleBaseGroupChange = (newBase: string) => {
     const prevBase = effectiveBaseGroup;
     setSelectedBaseGroup(newBase);
-    setCourseGroupOverrides({}); // reset individual overrides when changing base group
+
+    // Identify courses offered in the new base group
+    const newBaseGroup = schedules.find(
+      (g) => g.groupName.toUpperCase() === newBase.toUpperCase()
+    );
+    const newBaseCourseCodes = new Set(
+      (newBaseGroup?.courses || []).map((c) => normalizeCode(c.code))
+    );
+
+    // Retain manual group overrides for courses that do NOT belong to the new base group
+    // (i.e. subjects from different term placements / alternative groups).
+    // Reset overrides only for courses that are offered in the new base group,
+    // so they adopt the new base group as intended.
+    setCourseGroupOverrides((prev) => {
+      const retained: Record<string, string> = {};
+      for (const [code, grp] of Object.entries(prev)) {
+        if (!newBaseCourseCodes.has(normalizeCode(code))) {
+          retained[code] = grp;
+        }
+      }
+      return retained;
+    });
+
     logAdvisorAction({
       action: "SCHEDULE_GROUP_CHANGED",
       studentId: report.studentID,
@@ -270,7 +296,11 @@ export function ScheduleFinderModal({
       );
     });
 
-    setCourseGroupOverrides({});
+    setCourseGroupOverrides((prev) => {
+      const next = { ...prev };
+      delete next[oldCode];
+      return next;
+    });
     setSwappingCourseCode(null);
   };
 
@@ -289,7 +319,6 @@ export function ScheduleFinderModal({
       return [...currentList, { code: selected.code, title: selected.title }];
     });
 
-    setCourseGroupOverrides({});
     setIsAddingCourse(false);
   };
 
@@ -301,7 +330,11 @@ export function ScheduleFinderModal({
         (c) => c.code.toUpperCase() !== codeToRemove.toUpperCase()
       );
     });
-    setCourseGroupOverrides({});
+    setCourseGroupOverrides((prev) => {
+      const next = { ...prev };
+      delete next[codeToRemove];
+      return next;
+    });
   };
 
   // Reset back to original recommended courses

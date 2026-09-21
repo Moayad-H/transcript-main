@@ -353,6 +353,27 @@ function buildSolutionForBaseGroup({
     });
   }
 
+  // Final pass: ensure all candidateGroups in assignments reflect accurate full schedule collision state
+  for (const as of assignments) {
+    const otherSlotsGrid = new Map<string, string>();
+    for (const other of assignments) {
+      if (normalizeCode(other.courseCode) !== normalizeCode(as.courseCode)) {
+        for (const s of other.slots) {
+          otherSlotsGrid.set(`${s.day}_${s.period}`, other.courseCode);
+        }
+      }
+    }
+
+    as.candidateGroups = (as.candidateGroups || []).map((cg) => {
+      const colliders = findCollidingCourses(cg.slots, otherSlotsGrid);
+      return {
+        ...cg,
+        hasConflict: colliders.length > 0,
+        conflictingCourses: colliders.length > 0 ? colliders : undefined,
+      };
+    });
+  }
+
   return {
     id: `sol-${baseGroup.groupName}`,
     baseGroup: baseGroup.groupName,
@@ -392,7 +413,7 @@ export function recomputeScheduleWithGroupChange(
     return {
       ...as,
       assignedGroup: targetGrp.groupName,
-      isAlternativeGroup: targetGrp.groupName !== currentSolution.baseGroup,
+      isAlternativeGroup: targetGrp.groupName.toUpperCase() !== currentSolution.baseGroup.toUpperCase(),
       slots: newSlots,
     };
   });
@@ -422,14 +443,40 @@ export function recomputeScheduleWithGroupChange(
     if (colliders.size > 0) {
       conflictCourses.add(as.courseCode);
     }
+
+    // Dynamic conflict recalculation for each candidate group
+    const updatedCandidateGroups = (as.candidateGroups || []).map((cg) => {
+      const cgColliders = new Set<string>();
+      for (const s of cg.slots) {
+        const key = `${s.day}_${s.period}`;
+        const occupants = occupied.get(key) || [];
+        for (const occ of occupants) {
+          if (occ !== as.courseCode) {
+            cgColliders.add(occ);
+          }
+        }
+      }
+      return {
+        ...cg,
+        hasConflict: cgColliders.size > 0,
+        conflictingCourses: cgColliders.size > 0 ? Array.from(cgColliders) : undefined,
+      };
+    });
+
     return {
       ...as,
       conflictWith: colliders.size > 0 ? Array.from(colliders) : undefined,
+      candidateGroups: updatedCandidateGroups,
     };
   });
 
+  const coveredInBaseCount = finalAssignments.filter(
+    (a) => a.assignedGroup.toUpperCase() === currentSolution.baseGroup.toUpperCase()
+  ).length;
+
   return {
     ...currentSolution,
+    coveredInBaseCount,
     assignments: finalAssignments,
     hasConflicts: conflictCourses.size > 0,
     conflictCourses: Array.from(conflictCourses),

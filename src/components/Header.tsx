@@ -49,7 +49,7 @@ export function Header({
               ERSHAD
             </h1>
             <span className="rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-bold text-blue-100">
-              v0.7.5
+              v0.7.6
             </span>
 
           </div>
