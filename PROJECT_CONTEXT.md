@@ -254,15 +254,23 @@ Infra: `Dockerfile` (multi-stage), `nginx.conf`, `docker-compose.yml`, `next.con
 
 ## 9. Recent work & history (most recent first)
 
-- **v0.7.6: Schedule Finder Multi-Placement Group Override Persistence**
-  - **Selective Base Group Override Retention (`ScheduleFinderModal.tsx`)**:
-    - Preserved manual group overrides on subjects belonging to different term placements when switching the Primary Base Group dropdown.
-    - Only resets overrides for courses that are offered within the new base group, allowing regular courses to follow the chosen base group while keeping manual out-of-placement course selections intact.
-  - **Dynamic Conflict & Coverage Recalculation (`scheduleFinder.ts`)**:
-    - Updated candidate group collision indicators (`⚠️ (Conflict)` / `✓ (OK)`) dynamically in real time upon any course group switch.
-    - Accurately recalibrated `coveredInBaseCount` upon schedule recomputations.
-  - **Scoped Mutation Handlers**:
-    - Updated course swap, add, and remove operations to preserve manual group selections on unaffected courses.
+- **v0.7.6: Schedule Finder Overrides, Retake GPA Calculations & Credit Architecture**
+  - **Schedule Finder Multi-Placement Override Persistence (`ScheduleFinderModal.tsx`, `scheduleFinder.ts`)**:
+    - **Selective Base Group Override Retention**: Fixed base group dropdown resetting manual group choices for courses from different term placements (`Term X Placement`). When an advisor selects a new Primary Base Group, overrides are selectively cleared only for courses offered by the new base group, while preserving manual group selections for subjects from other term placements or cohorts.
+    - **Dynamic Conflict & Candidate Recalculation**: Updated candidate group options within course dropdowns to recalculate collisions dynamically against the entire current schedule in real time, displaying accurate `⚠️ (Conflict)` and `✓ (OK)` badges instead of stale initial state.
+    - **Accurate Base Coverage Tracking**: Recalculated `coveredInBaseCount` upon manual group overrides to keep summary KPIs accurate.
+    - **Scoped Mutation Handlers**: Refactored `handleSwapCourse`, `handleAddCourse`, and `handleRemoveCourse` to eliminate indiscriminate override wiping and only affect the targeted course code.
+  - **Repeated Course (Retake) Cumulative & Projected GPA Calculation (`CourseGraphView.tsx`, `semesterPlanner.ts`)**:
+    - **Institutional Retake Policy Parity**: Fixed GPA projection and manual semester plan evaluation for repeated/retake courses.
+    - **Grade Point Replacement**: When a student repeats a previously attempted course, credit attained (`gpaCredits` / `ch`) does not double-count since it was already incorporated in their baseline GPA credits. Quality points now correctly update by substituting the previous attempt's grade points with the higher/best attempt: `(Math.max(newPts, prevPts) - prevPts) * creditValue`.
+    - **Achieved Credits Non-Duplication**: Earned degree credits only increment if the course was not previously passed with a passing grade (`A+` through `D`).
+    - **Planner Retake Metadata**: Extended `PlannerCourse` interface with `previousGrade` and `alreadyPassed` checks so that multi-semester roadmaps reflect genuine institutional GPA and credit trajectories.
+  - **Professional Training & Zero-Credit Course Classification Standardization (`constants.ts`, `courseAnalyzer.ts`, `transcriptParser.ts`, `clientParser.ts`, `AI Courses.csv`)**:
+    - **Centralized Zero-Credit Resolver (`constants.ts`)**: Introduced `isZeroCreditCourse(code, title)` and updated `getCourseCredits(code, title)` to standardize zero-credit attribution across Precalculus, Remedial English, Practical Training (`CIT4000`), and all Professional Training variants (`CIT*` courses and titles matching `Professional Training`).
+    - **Parser Simplification**: Replaced fragile retroactive subtraction logic (`totalCredits - professionalTrainingCount * 3`) across both `transcriptParser.ts` and `clientParser.ts` with direct per-course evaluation, ensuring total credit calculations match degree requirements without rounding errors.
+    - **Catalog Fixes**: Corrected credit specifications for training courses in `public/data/courses/AI Courses.csv`.
+  - **Advisee Roster Landing Page Alignment (`page.tsx`)**:
+    - Adjusted spacing and flex alignment for the recent advisees quick-pick card on the transcript upload landing page.
 
 - **v0.7.5: Saved Student Advisee Roster & Hybrid Cloud Sync System**
   - **Local-First Caching Engine (`studentStorage.ts`, IndexedDB `ershad_db`)**:

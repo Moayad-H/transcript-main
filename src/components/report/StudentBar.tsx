@@ -9,6 +9,7 @@ interface StudentBarProps {
   onPrint: () => void;
   onDepartmentChange?: (department: Department) => void;
   onOpenSchedule?: () => void;
+  onOpenPreRegistration?: () => void;
 }
 
 
@@ -46,6 +47,7 @@ export function StudentBar({
   onPrint,
   onDepartmentChange,
   onOpenSchedule,
+  onOpenPreRegistration,
 }: StudentBarProps) {
 
   return (
@@ -135,10 +137,21 @@ export function StudentBar({
                 ? "View timetable schedule for currently enrolled courses (U)"
                 : "Find course timetable schedule"
             }
-            className="flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-sm font-semibold text-white shadow-2xs transition-colors hover:bg-white/25"
+            className="flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-sm font-semibold text-white shadow-2xs transition-colors hover:bg-white/25 cursor-pointer"
           >
             <span>📅</span>
             <span>Schedule</span>
+          </button>
+        )}
+
+        {onOpenPreRegistration && (
+          <button
+            onClick={onOpenPreRegistration}
+            title="Fill and download the Pre-registration Form (.docx) for this student"
+            className="flex items-center gap-1.5 rounded-lg bg-emerald-600/90 px-3 py-1.5 text-sm font-semibold text-white shadow-2xs transition-colors hover:bg-emerald-500 cursor-pointer"
+          >
+            <span>📝</span>
+            <span>Pre-registration Form</span>
           </button>
         )}
 

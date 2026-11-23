@@ -7,6 +7,8 @@ import { PrintableStudentGraph } from "./PrintableStudentGraph";
 import { Department } from "@/types";
 import { DEPARTMENTS } from "@/lib/constants";
 import { logAdvisorAction } from "@/lib/logging/auditLogger";
+import { PreRegistrationModal } from "../PreRegistrationModal";
+import { PreRegistrationStudentInput } from "@/lib/utils/preRegistrationForm";
 
 // Dynamically import CourseGraphView for single-student interactive mode
 const CourseGraphView = dynamic(() => import("../CourseGraphView"), {
@@ -34,6 +36,9 @@ export function BatchGraphView({
     students[0]?.id || ""
   );
   const [printingStudentId, setPrintingStudentId] = useState<string | null>(null);
+  const [preRegTargets, setPreRegTargets] = useState<
+    PreRegistrationStudentInput[] | null
+  >(null);
 
   // Filter & sort students
   const filteredStudents = useMemo(() => {
@@ -127,6 +132,24 @@ export function BatchGraphView({
 
           {/* Top Actions */}
           <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() =>
+                setPreRegTargets(
+                  filteredStudents.map((s) => ({
+                    report: s.report,
+                    transcriptData: s.transcriptData,
+                  }))
+                )
+              }
+              disabled={filteredStudents.length === 0}
+              className="inline-flex items-center gap-2 rounded-lg bg-indigo-500 px-4 py-2 text-xs font-bold text-white shadow hover:bg-indigo-400 transition-colors disabled:opacity-50 cursor-pointer"
+              title="Fill and download Pre-registration Forms for batch students (all in one file or individual files)"
+            >
+              <span>📝</span>
+              <span>Fill Pre-registration Form ({filteredStudents.length})</span>
+            </button>
+
             <button
               type="button"
               onClick={handlePrintAll}
@@ -307,6 +330,11 @@ export function BatchGraphView({
                     totalStudents={filteredStudents.length}
                     onViewReport={() => onOpenSingleReport(student)}
                     onPrintStudent={handlePrintSingle}
+                    onFillPreRegistration={(s) =>
+                      setPreRegTargets([
+                        { report: s.report, transcriptData: s.transcriptData },
+                      ])
+                    }
                   />
                 </div>
               );
@@ -359,7 +387,22 @@ export function BatchGraphView({
                     {selectedStudent.totalCreditHours}/132 Credits
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPreRegTargets([
+                        {
+                          report: selectedStudent.report,
+                          transcriptData: selectedStudent.transcriptData,
+                        },
+                      ])
+                    }
+                    className="inline-flex items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 cursor-pointer"
+                  >
+                    <span>📝</span>
+                    <span>Pre-registration Form</span>
+                  </button>
                   <button
                     type="button"
                     onClick={() => handlePrintSingle(selectedStudent)}
@@ -387,6 +430,14 @@ export function BatchGraphView({
           )}
         </div>
       )}
+
+      {/* Pre-registration Form Modal (Batch or Individual Student) */}
+      <PreRegistrationModal
+        isOpen={preRegTargets !== null}
+        onClose={() => setPreRegTargets(null)}
+        students={preRegTargets ?? []}
+        source="batch"
+      />
     </div>
   );
 }

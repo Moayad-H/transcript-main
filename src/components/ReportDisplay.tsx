@@ -13,6 +13,7 @@ import { NextSemesterHero } from "./report/NextSemesterHero";
 import { RequirementsCard } from "./report/RequirementsCard";
 import { AcademicAuditCard } from "./report/AcademicAuditCard";
 import { ScheduleFinderModal } from "./schedule/ScheduleFinderModal";
+import { PreRegistrationModal } from "./PreRegistrationModal";
 
 
 // Client-only: React Flow measures the DOM, so keep it out of the static export prerender.
@@ -44,6 +45,7 @@ export function ReportDisplay({
   const [view, setView] = useState<"report" | "graph">("report");
   const [graph, setGraph] = useState<CourseGraph | null>(initialGraph || null);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [isPreRegOpen, setIsPreRegOpen] = useState(false);
 
 
   // Sync initial graph if provided
@@ -147,6 +149,11 @@ export function ReportDisplay({
     };
   }, [report, transcriptData, fileName, graph]);
 
+  const preRegStudents = useMemo(
+    () => [{ report, transcriptData }],
+    [report, transcriptData]
+  );
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 print:block print:gap-0">
       {/* Interactive Cockpit View (Hidden when printing) */}
@@ -159,6 +166,7 @@ export function ReportDisplay({
           onPrint={handlePrint}
           onDepartmentChange={onDepartmentChange}
           onOpenSchedule={() => setIsScheduleOpen(true)}
+          onOpenPreRegistration={() => setIsPreRegOpen(true)}
         />
 
         {view === "graph" ? (
@@ -216,6 +224,14 @@ export function ReportDisplay({
         onClose={() => setIsScheduleOpen(false)}
         report={report}
         department={transcriptData.department}
+      />
+
+      {/* Pre-registration Form Modal */}
+      <PreRegistrationModal
+        isOpen={isPreRegOpen}
+        onClose={() => setIsPreRegOpen(false)}
+        students={preRegStudents}
+        source="single"
       />
     </div>
   );

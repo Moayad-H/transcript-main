@@ -11,6 +11,7 @@ interface PrintableStudentGraphProps {
   totalStudents: number;
   onViewReport?: (student: BatchStudentResult) => void;
   onPrintStudent?: (student: BatchStudentResult) => void;
+  onFillPreRegistration?: (student: BatchStudentResult) => void;
 }
 
 const STATUS_COLOR_MAP: Record<
@@ -73,6 +74,7 @@ export function PrintableStudentGraph({
   totalStudents,
   onViewReport,
   onPrintStudent,
+  onFillPreRegistration,
 }: PrintableStudentGraphProps) {
   const { report, graph } = student;
 
@@ -205,7 +207,18 @@ export function PrintableStudentGraph({
           </div>
 
           {/* Action buttons (hidden in print) */}
-          <div className="flex items-center gap-2 print:hidden ml-2">
+          <div className="flex flex-wrap items-center gap-2 print:hidden ml-2">
+            {onFillPreRegistration && (
+              <button
+                type="button"
+                onClick={() => onFillPreRegistration(student)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 shadow-2xs hover:bg-emerald-100 hover:text-emerald-950 transition-colors cursor-pointer"
+                title="Fill and download the Pre-registration Form (.docx) for this student"
+              >
+                <span>📝</span>
+                <span>Pre-registration Form</span>
+              </button>
+            )}
             {onPrintStudent && (
               <button
                 type="button"

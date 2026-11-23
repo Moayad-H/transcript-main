@@ -33,7 +33,8 @@ export type AuditAction =
   | "STUDENT_DELETED"
   | "ROSTER_EXPORTED"
   | "ROSTER_IMPORTED"
-  | "ROSTER_SYNCED";
+  | "ROSTER_SYNCED"
+  | "PRE_REG_FORM_DOWNLOADED";
 
 export interface AuditLogPayload {
   action: AuditAction;
